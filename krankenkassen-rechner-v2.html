@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GKV-Vergleichsrechner 2025 – Krankenkassen im Vergleich</title>
+    <meta name="description" content="Vergleiche 92 gesetzliche Krankenkassen und berechne deinen individuellen Beitrag. Finde die günstigste Krankenkasse für deine Situation.">
+
+    <!-- ============================================================
+         KRANKENKASSEN-VERGLEICHSRECHNER 2025
+         ============================================================
+         Modularer Aufbau:
+         1. CSS: Styling (Mobile-first, responsive)
+         2. HTML: Formular + Ergebnisbereich
+         3. JavaScript:
+            a) kassenDaten – JSON-Array (leicht austauschbar)
+            b) berechnungsLogik – GKV + PV + BBG
+            c) uiController – Rendering, Events, Validierung
+         ============================================================ -->
+
+    <style>
+        /* ==========================================================
+           CSS CUSTOM PROPERTIES & RESET
+           ========================================================== */
+        :root {
+            --primary: #004283;
+            --primary-dark: #003068;
+            --primary-light: #E6F5FB;
+            --primary-glow: rgba(0,66,131,0.12);
+            --accent: #06BADD;
+            --accent-dark: #0599B5;
+            --accent-light: #E0F7FC;
+
+            --success: #00B67A;
+            --success-light: #E6F9F1;
+            --success-dark: #009963;
+            --warning: #FF8C00;
+            --warning-light: #FFF4E5;
+            --danger: #E5243B;
+
+            --g50: #F8FAFC; --g100: #F1F5F9; --g200: #E2E8F0;
+            --g300: #CBD5E1; --g400: #94A3B8; --g500: #64748B;
+            --g600: #475569; --g700: #334155; --g800: #1E293B;
+            --g900: #0F172A;
+
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+            --shadow-glow: 0 0 0 3px var(--primary-glow);
+            --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
+            --ease: .2s cubic-bezier(.4,0,.2,1);
+        }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        html { font-size:16px; scroll-behavior:smooth; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+
+        body {
+            font-family: var(--font);
+            color: var(--g800);
+            background: var(--g50);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        /* ==========================================================
+           MAIN LAYOUT – 2 Spalten
+           ========================================================== */
+        .main-wrap {
+            display:grid; grid-template-columns:400px 1fr;
+            gap:28px; max-width:1180px; margin:0 auto;
+            padding:40px 20px 72px; align-items:start;
+            width:100%;
+        }
+
+        /* ==========================================================
+           FORM PANEL
+           ========================================================== */
+        .form-panel {
+            background:#fff; border-radius:var(--r-xl);
+            box-shadow:var(--shadow-lg); padding:28px 28px 24px;
+            position:sticky; top:20px; border:1px solid var(--g200);
+        }
+        .fp-title { font-size:1.1rem; font-weight:700; color:var(--g900); margin-bottom:2px; }
+        .fp-sub { font-size:.82rem; color:var(--g500); margin-bottom:24px; }
+
+        .form-section { margin-bottom:20px; }
+        .section-label {
+            display:flex; align-items:center; gap:7px;
+            font-size:.68rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.08em; color:var(--g400);
+            margin-bottom:12px; padding-bottom:7px; border-bottom:1px solid var(--g100);
+        }
+        .section-label svg { width:13px; height:13px; opacity:.45; }
+
+        .fg { margin-bottom:14px; }
+        .fg label {
+            display:block; font-size:.83rem; font-weight:600;
+            color:var(--g700); margin-bottom:5px;
+        }
+        .fg label .hint { font-weight:400; color:var(--g400); font-size:.76rem; }
+
+        .input-wrap { position:relative; }
+        .input-wrap .suffix {
+            position:absolute; right:12px; top:50%; transform:translateY(-50%);
+            font-size:.83rem; color:var(--g400); font-weight:500; pointer-events:none;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width:100%; padding:10px 13px;
+            font-size:.9rem; font-family:var(--font);
+            border:1.5px solid var(--g200); border-radius:var(--r-sm);
+            background:#fff; color:var(--g800);
+            transition:var(--ease); outline:none;
+            -moz-appearance:textfield;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+        input:focus, select:focus { border-color:var(--primary); box-shadow:var(--shadow-glow); }
+        input.has-suffix { padding-right:36px; }
+
+        select {
+            appearance:none; cursor:pointer; padding-right:34px;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-5-5h10l-5 5z'/%3E%3C/svg%3E");
+            background-repeat:no-repeat; background-position:right 11px center;
+        }
+
+        /* Toggle Pills */
+        .toggle-group { display:flex; gap:7px; flex-wrap:wrap; }
+        .toggle-btn {
+            flex:1; min-width:0; padding:8px 10px;
+            font-size:.8rem; font-family:var(--font); font-weight:500;
+            border:1.5px solid var(--g200); border-radius:var(--r-sm);
+            background:#fff; color:var(--g600); cursor:pointer;
+            text-align:center; transition:var(--ease); white-space:nowrap;
+        }
+        .toggle-btn:hover { border-color:var(--g300); background:var(--g50); }
+        .toggle-btn.active { border-color:var(--primary); background:var(--primary-light); color:var(--primary); font-weight:600; }
+
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+        /* CTA */
+        .btn-calc {
+            width:100%; padding:13px 24px; margin-top:4px;
+            font-size:.95rem; font-weight:700; font-family:var(--font);
+            color:#fff; background:linear-gradient(135deg,#004283,#06BADD);
+            border:none; border-radius:var(--r-sm); cursor:pointer;
+            transition:var(--ease); box-shadow:0 4px 14px rgba(0,66,131,.3);
+            letter-spacing:.01em;
+        }
+        .btn-calc:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,66,131,.4); }
+        .btn-calc:active { transform:translateY(0); }
+
+        /* Validation */
+        .v-msg { font-size:.76rem; color:var(--danger); margin-top:3px; display:none; }
+        .fg.error input, .fg.error select { border-color:var(--danger); }
+        .fg.error .v-msg { display:block; }
+
+        /* PKV-Hinweis bei Gehalt über JAEG */
+        .pkv-hint {
+            display:none; margin-top:8px; padding:10px 12px;
+            background:linear-gradient(135deg,#E6F5FB,#d0f0fa);
+            border:1px solid #06BADD; border-radius:var(--r-sm);
+            font-size:.8rem; line-height:1.5; color:#004283;
+        }
+        .pkv-hint a {
+            color:#004283; font-weight:700; text-decoration:underline;
+            cursor:pointer;
+        }
+        .pkv-hint a:hover { color:#06BADD; }
+        .pkv-hint.show { display:flex; align-items:flex-start; gap:8px; }
+        .pkv-hint svg { flex-shrink:0; margin-top:1px; }
+
+        /* Info Tooltip */
+        .tip {
+            display:inline-flex; align-items:center; justify-content:center;
+            width:15px; height:15px; border-radius:50%;
+            background:var(--g200); color:var(--g500);
+            font-size:.62rem; font-weight:700; cursor:help;
+            position:relative; vertical-align:middle; margin-left:3px;
+        }
+        .tip:hover::after {
+            content:attr(data-tip); position:absolute; bottom:calc(100% + 7px);
+            left:50%; transform:translateX(-50%);
+            background:var(--g900); color:#fff; font-size:.71rem; font-weight:400;
+            padding:7px 11px; border-radius:6px; max-width:250px;
+            white-space:normal; z-index:100; box-shadow:var(--shadow-lg);
+            line-height:1.4;
+        }
+
+        /* ==========================================================
+           RESULTS PANEL
+           ========================================================== */
+        .results-panel { min-height:300px; min-width:0; overflow:hidden; }
+
+        /* Empty State */
+        .results-empty {
+            display:flex; flex-direction:column; align-items:center;
+            justify-content:center; text-align:center;
+            padding:72px 36px; background:#fff;
+            border-radius:var(--r-xl); border:2px dashed var(--g200);
+        }
+        .results-empty svg { width:52px; height:52px; color:var(--g300); margin-bottom:14px; }
+        .results-empty h3 { font-size:1.05rem; color:var(--g600); margin-bottom:5px; }
+        .results-empty p { font-size:.85rem; color:var(--g400); }
+
+        /* Summary Row */
+        .r-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+        .s-card {
+            background:#fff; border-radius:var(--r-md); padding:18px;
+            border:1px solid var(--g200); text-align:center;
+            min-width:0; overflow:hidden;
+        }
+        .s-card.hl { border-color:var(--success); background:var(--success-light); }
+        .s-label {
+            font-size:.7rem; text-transform:uppercase; letter-spacing:.06em;
+            font-weight:600; color:var(--g500); margin-bottom:4px;
+        }
+        .s-card.hl .s-label { color:var(--success-dark); }
+        .s-val { font-size:1.3rem; font-weight:800; color:var(--g900); letter-spacing:-.02em; }
+        .s-card.hl .s-val { color:var(--success-dark); }
+        .s-card-savings {
+            background:linear-gradient(135deg,#004283,#06BADD) !important;
+            border-color:transparent !important;
+            box-shadow:0 8px 28px rgba(0,66,131,.3);
+        }
+        .s-sub { font-size:.75rem; color:var(--g400); margin-top:1px; }
+
+        /* Toolbar */
+        .r-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .r-toolbar h2 { font-size:1.05rem; font-weight:700; color:var(--g800); }
+        .r-count { font-size:.8rem; color:var(--g400); }
+
+        /* Filter Quick-Chips */
+        .filter-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+        .chip {
+            padding:5px 12px; font-size:.76rem; font-weight:600;
+            font-family:var(--font); border:1.5px solid var(--g200);
+            border-radius:100px; background:#fff; color:var(--g600);
+            cursor:pointer; transition:var(--ease);
+        }
+        .chip:hover { border-color:var(--g300); }
+        .chip.active { border-color:var(--primary); background:var(--primary-light); color:var(--primary); }
+
+        /* Kasse Card */
+        .k-card {
+            background:#fff; border-radius:var(--r-md);
+            border:1px solid var(--g200); padding:22px;
+            margin-bottom:10px; transition:var(--ease);
+            position:relative; overflow:hidden;
+            animation: fadeUp .3s ease-out both;
+        }
+        .k-card:nth-child(2) { animation-delay:.04s; }
+        .k-card:nth-child(3) { animation-delay:.08s; }
+        .k-card:nth-child(4) { animation-delay:.12s; }
+        .k-card:nth-child(5) { animation-delay:.16s; }
+        .k-card:hover { border-color:var(--g300); box-shadow:var(--shadow-md); }
+
+        .k-card.best { border-color:var(--success); border-width:2px; }
+        .k-card.best::before {
+            content:''; position:absolute; top:0; left:0; right:0;
+            height:3px; background:linear-gradient(90deg,var(--success),#34D399);
+        }
+
+        .k-card.aktuell { border-color:var(--primary); border-width:2px; background:#FAFCFF; }
+        .k-card.aktuell::before {
+            content:''; position:absolute; top:0; left:0; right:0;
+            height:3px; background:linear-gradient(90deg,#004283,#06BADD);
+        }
+
+        .k-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+        .k-name { font-size:1rem; font-weight:700; color:var(--g900); }
+        .k-type { font-size:.72rem; color:var(--g400); margin-top:1px; }
+
+        .k-badge {
+            display:inline-flex; align-items:center; gap:3px;
+            padding:3px 9px; border-radius:100px;
+            font-size:.69rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+        }
+        .k-badge.best-b { background:var(--success-light); color:var(--success-dark); }
+        .k-badge.rank-b { background:var(--g100); color:var(--g500); }
+
+        .k-data {
+            display:grid; grid-template-columns:repeat(2,1fr); gap:14px;
+            padding:14px 0; border-top:1px solid var(--g100);
+            border-bottom:1px solid var(--g100);
+            overflow:hidden;
+        }
+        .k-d-item { text-align:center; min-width:0; overflow:hidden; }
+        .k-d-label {
+            font-size:.67rem; text-transform:uppercase; letter-spacing:.05em;
+            color:var(--g400); font-weight:600; margin-bottom:3px;
+        }
+        .k-d-val { font-size:1.1rem; font-weight:700; color:var(--g800); }
+        .k-d-sub { font-size:.69rem; color:var(--g400); }
+
+        .k-savings { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+        .k-rates { font-size:.78rem; color:var(--g500); }
+        .k-rates strong { color:var(--g700); }
+        .k-diff { display:flex; align-items:center; gap:3px; font-size:.83rem; font-weight:700; }
+        .k-diff.pos { color:var(--danger); }
+        .k-diff.neg { color:var(--success-dark); }
+        .k-diff.neu { color:var(--success-dark); }
+
+        .k-foot {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-top:14px; padding-top:12px; border-top:1px solid var(--g100);
+        }
+        .btn-detail {
+            padding:7px 16px; font-size:.8rem; font-weight:600; font-family:var(--font);
+            color:var(--primary); background:var(--primary-light);
+            border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease);
+        }
+        .btn-detail:hover { background:var(--primary); color:#fff; }
+        .btn-anfrage {
+            padding:7px 16px; font-size:.8rem; font-weight:600; font-family:var(--font);
+            color:#fff; background:var(--primary);
+            border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease);
+        }
+        .btn-anfrage:hover { background:var(--primary-dark); }
+
+        /* Mehr laden */
+        .btn-more {
+            display:block; width:100%; padding:12px; margin-top:8px;
+            font-size:.88rem; font-weight:600; font-family:var(--font);
+            color:var(--primary); background:var(--primary-light);
+            border:2px solid transparent; border-radius:var(--r-md);
+            cursor:pointer; transition:var(--ease); text-align:center;
+        }
+        .btn-more:hover { border-color:var(--primary); }
+
+        /* Hinweis-Box */
+        .advice-box {
+            background:#fff; border-radius:var(--r-lg);
+            border:1px solid var(--g200); padding:28px;
+            margin-top:28px; position:relative; overflow:hidden;
+        }
+        .advice-box::before {
+            content:''; position:absolute; top:0; left:0; right:0;
+            height:3px; background:linear-gradient(90deg,#004283,#06BADD);
+        }
+        .advice-icon {
+            width:44px; height:44px; border-radius:50%;
+            background:linear-gradient(135deg,#E6F5FB,#d0f0fa);
+            display:flex; align-items:center; justify-content:center;
+            margin-bottom:14px;
+        }
+        .advice-icon svg { width:22px; height:22px; color:#004283; }
+        .advice-title { font-size:1.05rem; font-weight:700; color:var(--g900); margin-bottom:6px; }
+        .advice-text { font-size:.88rem; color:var(--g600); line-height:1.65; margin-bottom:8px; }
+        .advice-highlight {
+            font-size:.85rem; font-weight:600; color:#004283;
+            margin-bottom:20px; display:flex; align-items:center; gap:6px;
+        }
+        .advice-highlight svg { width:16px; height:16px; flex-shrink:0; }
+        .advice-actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .btn-termin {
+            flex:1; min-width:200px; padding:12px 20px;
+            font-size:.88rem; font-weight:700; font-family:var(--font);
+            color:#fff; background:linear-gradient(135deg,#004283,#06BADD);
+            border:none; border-radius:var(--r-sm); cursor:pointer;
+            transition:var(--ease); display:flex; align-items:center;
+            justify-content:center; gap:8px;
+            box-shadow:0 4px 14px rgba(0,66,131,.25);
+        }
+        .btn-termin:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,66,131,.35); }
+        .btn-rueckruf {
+            flex:1; min-width:200px; padding:12px 20px;
+            font-size:.88rem; font-weight:700; font-family:var(--font);
+            color:#004283; background:#fff;
+            border:2px solid #004283; border-radius:var(--r-sm); cursor:pointer;
+            transition:var(--ease); display:flex; align-items:center;
+            justify-content:center; gap:8px;
+        }
+        .btn-rueckruf:hover { background:var(--primary-light); }
+        @media (max-width:480px) {
+            .advice-actions { flex-direction:column; }
+            .btn-termin, .btn-rueckruf { min-width:0; }
+        }
+
+        /* CTA Box */
+        .cta-box {
+            background:linear-gradient(135deg,#004283,#035a9e);
+            border-radius:var(--r-lg); padding:32px; text-align:center;
+            margin-top:28px; color:#fff;
+        }
+        .cta-box h3 { font-size:1.2rem; font-weight:700; margin-bottom:6px; }
+        .cta-box p { font-size:.88rem; color:rgba(255,255,255,.65); margin-bottom:18px; }
+        .btn-cta {
+            display:inline-flex; align-items:center; gap:7px;
+            padding:13px 28px; font-size:.95rem; font-weight:700;
+            font-family:var(--font); color:var(--g900); background:#fff;
+            border:none; border-radius:var(--r-sm); cursor:pointer;
+            transition:var(--ease); box-shadow:var(--shadow-md);
+        }
+        .btn-cta:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+
+        /* Footer */
+        .site-footer {
+            text-align:center; padding:28px 20px;
+            font-size:.76rem; color:var(--g400); border-top:1px solid var(--g200);
+        }
+
+        /* ==========================================================
+           RESPONSIVE
+           ========================================================== */
+        @media (max-width:960px) {
+            .main-wrap {
+                grid-template-columns:1fr; gap:20px;
+                padding:24px 12px 56px; max-width:100%;
+                width:100%; box-sizing:border-box;
+            }
+            .form-panel { position:static; padding:20px 16px; max-width:100%; box-sizing:border-box; }
+            .results-panel { min-width:0; max-width:100%; box-sizing:border-box; }
+            .r-summary { grid-template-columns:1fr 1fr; gap:8px; }
+            .s-card-savings { grid-column: 1 / -1; }
+            .s-card { display:flex; justify-content:space-between; align-items:center; text-align:left; padding:12px 16px; }
+            .s-val { font-size:1.1rem; }
+            .k-card { padding:18px 16px; max-width:100%; box-sizing:border-box; }
+            .k-data { grid-template-columns:1fr 1fr; gap:10px; }
+            .k-foot { flex-direction:column; gap:7px; }
+            .k-foot button { width:100%; }
+            .k-savings { flex-direction:column; gap:5px; align-items:flex-start; }
+            .advice-box { max-width:100%; box-sizing:border-box; }
+            .cta-box { max-width:100%; box-sizing:border-box; }
+        }
+        @media (max-width:480px) {
+            .main-wrap { padding:16px 10px 48px; }
+            .form-panel { padding:18px 14px; }
+            .form-row { grid-template-columns:1fr; }
+            .trust-bar { gap:10px; }
+            .cta-box { padding:20px 16px; }
+            .s-val { font-size:1rem; }
+            .s-card-savings .s-val { font-size:1.5rem !important; }
+            .r-summary { grid-template-columns:1fr; }
+            .k-d-val { font-size:1rem; }
+            .advice-box { padding:20px 14px; }
+            .advice-actions { flex-direction:column; }
+            .btn-termin, .btn-rueckruf { min-width:0; }
+        }
+
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(14px); }
+            to { opacity:1; transform:translateY(0); }
+        }
+
+        /* Hidden utility */
+        .hidden { display:none !important; }
+
+        /* DSGVO-Consent */
+        .consent-wrap {
+            margin-top:14px; padding:12px; background:var(--g50);
+            border:1px solid var(--g200); border-radius:var(--r-sm);
+        }
+        .consent-label {
+            display:flex; gap:10px; align-items:flex-start;
+            cursor:pointer; font-size:.76rem; line-height:1.55; color:var(--g600);
+        }
+        .consent-label input[type="checkbox"] {
+            margin-top:2px; flex-shrink:0; width:16px; height:16px;
+            accent-color:var(--primary);
+        }
+        .consent-text a { color:var(--primary); text-decoration:underline; }
+        .consent-confirmed {
+            display:none; margin-top:10px; padding:8px 12px;
+            background:var(--success-light); border-radius:var(--r-sm);
+            font-size:.76rem; color:var(--success-dark); font-weight:600;
+            text-align:center;
+        }
+        .consent-confirmed.show { display:block; }
+
+        /* ==========================================================
+           BERATER-BANNER (wird bei ?berater=... eingeblendet)
+           ========================================================== */
+        .berater-banner {
+            background:#fff; border-bottom:1px solid var(--g200);
+            padding:14px 20px;
+        }
+        .berater-inner {
+            max-width:1180px; margin:0 auto;
+            display:flex; align-items:center; justify-content:space-between;
+            gap:14px; flex-wrap:wrap;
+        }
+        .berater-info {
+            display:flex; align-items:center; gap:12px;
+        }
+        .berater-avatar {
+            width:52px; height:52px; border-radius:50%;
+            background:linear-gradient(135deg,#004283,#06BADD);
+            color:#fff; display:flex; align-items:center; justify-content:center;
+            font-weight:700; font-size:1rem; flex-shrink:0;
+            overflow:hidden;
+        }
+        .berater-avatar img {
+            width:100%; height:100%; border-radius:50%;
+            object-fit:cover; object-position:center 20%;
+        }
+        .berater-text { line-height:1.35; }
+        .berater-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; font-weight:600; color:var(--g400); }
+        .berater-name { font-size:.92rem; font-weight:700; color:var(--g900); }
+        .berater-contact {
+            display:flex; align-items:center; gap:8px;
+            font-size:.8rem; color:var(--g500);
+        }
+        .berater-contact a {
+            color:var(--primary); text-decoration:none; font-weight:600;
+        }
+        .berater-contact a:hover { text-decoration:underline; }
+        .berater-btn-book {
+            padding:8px 18px; font-size:.82rem; font-weight:600;
+            font-family:var(--font); color:#fff;
+            background:linear-gradient(135deg,#004283,#06BADD);
+            border:none; border-radius:var(--r-sm); cursor:pointer;
+            transition:var(--ease); white-space:nowrap;
+        }
+        .berater-btn-book:hover { opacity:.9; transform:translateY(-1px); }
+
+        /* Tracking-Info Badge (kleiner Hinweis unten) */
+        .tracking-badge {
+            display:inline-flex; align-items:center; gap:5px;
+            font-size:.7rem; color:var(--g400); margin-top:6px;
+        }
+        .tracking-badge svg { width:12px; height:12px; opacity:.4; }
+
+        @media (max-width:600px) {
+            .berater-inner { flex-direction:column; align-items:flex-start; }
+            .berater-btn-book { width:100%; text-align:center; }
+            .berater-banner { padding:12px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     BERATER-BANNER (wird per JS eingeblendet wenn ?berater=... in URL)
+     ================================================================ -->
+<div class="berater-banner hidden" id="beraterBanner">
+    <div class="berater-inner">
+        <div class="berater-info">
+            <div class="berater-avatar" id="beraterAvatar">BF</div>
+            <div class="berater-text">
+                <div class="berater-label">Dein persönlicher Berater</div>
+                <div class="berater-name" id="beraterName">–</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div class="berater-contact" id="beraterContact"></div>
+            <button class="berater-btn-book" id="beraterBookBtn" onclick="openBooking()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                Termin buchen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MAIN: Form + Results
+     ================================================================ -->
+<div class="main-wrap">
+
+    <!-- ==============================================================
+         FORMULAR
+         ============================================================== -->
+    <aside class="form-panel" id="formPanel">
+        <div class="fp-title">Deine Angaben</div>
+        <div class="fp-sub">Alle Felder ausfüllen für ein genaues Ergebnis</div>
+
+        <!-- EINKOMMEN -->
+        <div class="form-section">
+            <div class="section-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
+                Einkommen
+            </div>
+            <div class="fg" id="fgGehalt">
+                <label>Brutto-Monatsgehalt <span class="hint">(in €)</span></label>
+                <div class="input-wrap">
+                    <input type="number" id="gehalt" min="0" max="99999" step="50" placeholder="z. B. 4.000" class="has-suffix" value="4000">
+                    <span class="suffix">€</span>
+                </div>
+                <div class="v-msg">Bitte gib ein gültiges Gehalt ein.</div>
+                <div class="pkv-hint" id="pkvHint">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#004283" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <span>Dein Gehalt liegt über der Jahresarbeitsentgeltgrenze (JAEG). Damit hast du die Möglichkeit, in eine <strong>private Krankenversicherung (PKV)</strong> zu wechseln. <a onclick="pkvInfoClicked()">Jetzt informieren →</a></span>
+                </div>
+            </div>
+            <div class="fg">
+                <label>Beschäftigungsverhältnis</label>
+                <div class="toggle-group" data-field="employment">
+                    <button class="toggle-btn active" data-val="angestellt">Angestellt</button>
+                    <button class="toggle-btn" data-val="selbststaendig">Selbstständig</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERSÖNLICHES -->
+        <div class="form-section">
+            <div class="section-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Persönliche Angaben
+            </div>
+            <div class="fg">
+                <label>Familienstand</label>
+                <select id="familienstand">
+                    <option value="ledig">Ledig</option>
+                    <option value="verheiratet" selected>Verheiratet</option>
+                    <option value="verheiratet_ohne">Verheiratet – Partner nicht berufstätig</option>
+                    <option value="verheiratet_mit">Verheiratet – Partner berufstätig</option>
+                    <option value="geschieden">Geschieden</option>
+                    <option value="verwitwet">Verwitwet</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="fg">
+                    <label>Anzahl Kinder</label>
+                    <select id="kinder">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5+</option>
+                    </select>
+                </div>
+                <div class="fg" id="fgFamVers">
+                    <label>Familienversichert? <span class="tip" data-tip="Kinder und nicht berufstätige Ehepartner können beitragsfrei mitversichert werden.">?</span></label>
+                    <div class="toggle-group" data-field="famversichert">
+                        <button class="toggle-btn active" data-val="ja">Ja</button>
+                        <button class="toggle-btn" data-val="nein">Nein</button>
+                    </div>
+                </div>
+            </div>
+            <div class="fg" id="fgKinderlos">
+                <label>Kinderlos und über 23 Jahre? <span class="tip" data-tip="Zuschlag von 0,6 % auf die Pflegeversicherung für kinderlose Personen ab 23 Jahren.">?</span></label>
+                <div class="toggle-group" data-field="kinderlos23">
+                    <button class="toggle-btn" data-val="ja">Ja</button>
+                    <button class="toggle-btn active" data-val="nein">Nein</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AKTUELLE KASSE (optional) -->
+        <div class="form-section">
+            <div class="section-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Deine aktuelle Kasse
+            </div>
+            <div class="fg">
+                <label>Bei welcher GKV bist du aktuell versichert?</label>
+                <select id="aktuelleKasse">
+                    <option value="">– Bitte wählen –</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- DSGVO-Consent (nur sichtbar wenn ?kunde= in URL) -->
+        <div class="consent-wrap hidden" id="consentWrap">
+            <label class="consent-label">
+                <input type="checkbox" id="consentCheckbox">
+                <span class="consent-text">Ich bin einverstanden, dass meine Angaben gespeichert und meinem Berater <strong id="consentBeraterName">–</strong> zur Vorbereitung unseres Gesprächs bereitgestellt werden. Daten werden auf Servern in Deutschland gespeichert. <a href="https://mitnorm.de/datenschutz" target="_blank">Datenschutzerklärung</a></span>
+            </label>
+        </div>
+
+        <button class="btn-calc" id="btnCalc" onclick="berechnen()">
+            Jetzt Beitrag berechnen
+        </button>
+    </aside>
+
+    <!-- ==============================================================
+         ERGEBNISSE
+         ============================================================== -->
+    <section class="results-panel" id="resultsPanel">
+        <!-- Empty State -->
+        <div class="results-empty" id="resultsEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <h3>Dein Vergleich wartet</h3>
+            <p>Gib dein Gehalt ein, wähle deine aktuelle Kasse und klick auf „Jetzt Beitrag berechnen".</p>
+        </div>
+
+        <!-- Results Container (initially hidden) -->
+        <div id="resultsContent" class="hidden">
+            <!-- Summary -->
+            <div class="r-summary" id="summaryCards"></div>
+
+            <!-- Filter Chips -->
+            <div class="filter-chips" id="filterChips">
+                <button class="chip active" data-filter="alle" onclick="filterKassen('alle')">Alle Kassen</button>
+                <button class="chip" data-filter="aok" onclick="filterKassen('aok')">AOK</button>
+                <button class="chip" data-filter="bkk" onclick="filterKassen('bkk')">BKK</button>
+                <button class="chip" data-filter="ikk" onclick="filterKassen('ikk')">IKK</button>
+                <button class="chip" data-filter="ek" onclick="filterKassen('ek')">Ersatzkassen</button>
+                <button class="chip" data-filter="top10" onclick="filterKassen('top10')">Top 10</button>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="r-toolbar">
+                <h2 id="resultsTitle">Ergebnisse</h2>
+                <span class="r-count" id="resultsCount"></span>
+            </div>
+
+            <!-- Cards Container -->
+            <div id="kassenCards"></div>
+
+            <!-- Load More -->
+            <button class="btn-more hidden" id="btnMore" onclick="zeigeWeitere()">
+                Weitere Kassen anzeigen ▾
+            </button>
+
+            <!-- Hinweis-Box: Leistungen & Beratung -->
+            <div class="advice-box" id="adviceBox">
+                <div class="advice-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                </div>
+                <div class="advice-title">Der Preis allein entscheidet nicht!</div>
+                <div class="advice-text">
+                    Neben dem Beitrag zählen auch die Leistungen deiner Krankenkasse – zum Beispiel Bonusprogramme, Zahnzusatzleistungen, digitale Gesundheitsangebote oder Vorsorge-Extras. Die richtige Kasse sollte zu dir und deiner Lebenssituation passen.
+                </div>
+                <div class="advice-highlight">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                    Wir begleiten dich vom Antrag bis zur neuen Krankenkassenkarte.
+                </div>
+                <div class="advice-actions">
+                    <button class="btn-termin" onclick="ctaClicked()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        <span id="adviceTerminLabel">Termin vereinbaren</span>
+                    </button>
+                    <button class="btn-rueckruf" onclick="rueckrufClicked()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        Rückruf anfordern
+                    </button>
+                </div>
+            </div>
+
+            <!-- CTA Box -->
+            <div class="cta-box">
+                <h3>Bis zu <span id="ctaSavings">336 €</span> im Jahr sparen</h3>
+                <p style="max-width:480px;margin:0 auto 18px;">Mit der Wahl deiner GKV entscheidest du aktiv, welchen Beitrag du bezahlst.</p>
+                <p id="ctaText" style="font-size:.85rem;color:rgba(255,255,255,.55);margin-bottom:18px;">Lass dich kostenlos und unverbindlich beraten.</p>
+                <button class="btn-cta" id="ctaMainBtn" onclick="ctaClicked()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    <span id="ctaBtnLabel">Jetzt kostenlos beraten lassen</span>
+                </button>
+                <div class="tracking-badge hidden" id="ctaTrackingBadge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span id="ctaTrackingText">Persönliche Beratung durch deinen Berater</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer">
+    <p>Alle Angaben ohne Gewähr · Beitragssätze gem. GKV-Spitzenverband · Stand: 01.01.2025</p>
+    <p style="margin-top:4px;">Alle Berechnungen erfolgen lokal in deinem Browser. Deine Daten werden nur mit deiner ausdrücklichen Einwilligung gespeichert.</p>
+</footer>
+
+<!-- ================================================================
+     JAVASCRIPT – Modular aufgebaut
+     ================================================================ -->
+<script>
+/* ==================================================================
+   1. KASSEN-DATEN (JSON-Struktur, leicht austauschbar)
+   ==================================================================
+   Datenstruktur:
+   {
+     name:       Name der Krankenkasse
+     beitrag:    Gesamtbeitragssatz (allg. Satz + Zusatzbeitrag) als Dezimalzahl
+     typ:        Kassenart (aok, bkk, ikk, ek = Ersatzkasse, knappschaft)
+   }
+
+   HINWEIS: Um Daten zu aktualisieren, einfach dieses Array austauschen
+   oder per fetch() aus einer externen JSON-Datei laden.
+   Allgemeiner Beitragssatz 2025: 14,6 %
+   Zusatzbeitrag = beitrag - 0.146
+   ================================================================== */
+
+const KASSEN_DATEN = [
+    // === AOK ===
+    { name: "AOK Baden-Württemberg", beitrag: 0.1759, typ: "aok" },
+    { name: "AOK Bayern", beitrag: 0.1729, typ: "aok" },
+    { name: "AOK Bremen/Bremerhaven", beitrag: 0.1789, typ: "aok" },
+    { name: "AOK Hessen", beitrag: 0.1758, typ: "aok" },
+    { name: "AOK Niedersachsen", beitrag: 0.1758, typ: "aok" },
+    { name: "AOK Nordost", beitrag: 0.181, typ: "aok" },
+    { name: "AOK NordWest", beitrag: 0.1759, typ: "aok" },
+    { name: "AOK PLUS", beitrag: 0.177, typ: "aok" },
+    { name: "AOK Rheinland/Hamburg", beitrag: 0.1789, typ: "aok" },
+    { name: "AOK Rheinland-Pfalz/Saarland", beitrag: 0.1707, typ: "aok" },
+    { name: "AOK Sachsen-Anhalt", beitrag: 0.1749, typ: "aok" },
+
+    // === BKK ===
+    { name: "Audi BKK", beitrag: 0.172, typ: "bkk" },
+    { name: "BAHN-BKK", beitrag: 0.1825, typ: "bkk" },
+    { name: "Bertelsmann BKK", beitrag: 0.178, typ: "bkk" },
+    { name: "BIG direkt gesund", beitrag: 0.1829, typ: "bkk" },
+    { name: "BKK Akzo Nobel Bayern", beitrag: 0.1799, typ: "bkk" },
+    { name: "BKK B. BRAUN | AESCULAP", beitrag: 0.1825, typ: "bkk" },
+    { name: "BKK Deutsche Bank AG", beitrag: 0.18, typ: "bkk" },
+    { name: "BKK Diakonie", beitrag: 0.184, typ: "bkk" },
+    { name: "BKK EUREGIO", beitrag: 0.1799, typ: "bkk" },
+    { name: "BKK EVM", beitrag: 0.171, typ: "bkk" },
+    { name: "BKK EWE", beitrag: 0.1779, typ: "bkk" },
+    { name: "BKK exklusiv", beitrag: 0.1809, typ: "bkk" },
+    { name: "BKK Faber-Castell & Partner", beitrag: 0.1708, typ: "bkk" },
+    { name: "BKK firmus", beitrag: 0.1678, typ: "bkk" },
+    { name: "BKK Freudenberg", beitrag: 0.1759, typ: "bkk" },
+    { name: "BKK GILDEMEISTER SEIDENSTICKER", beitrag: 0.18, typ: "bkk" },
+    { name: "BKK Groz-Beckert", beitrag: 0.18, typ: "bkk" },
+    { name: "BKK Herkules", beitrag: 0.1898, typ: "bkk" },
+    { name: "BKK Linde", beitrag: 0.1759, typ: "bkk" },
+    { name: "BKK MAHLE", beitrag: 0.188, typ: "bkk" },
+    { name: "bkk melitta hmr", beitrag: 0.185, typ: "bkk" },
+    { name: "BKK Miele", beitrag: 0.178, typ: "bkk" },
+    { name: "BKK MTU", beitrag: 0.174, typ: "bkk" },
+    { name: "BKK PFAFF", beitrag: 0.1738, typ: "bkk" },
+    { name: "BKK Pfalz", beitrag: 0.185, typ: "bkk" },
+    { name: "BKK ProVita", beitrag: 0.1839, typ: "bkk" },
+    { name: "BKK Public", beitrag: 0.171, typ: "bkk" },
+    { name: "BKK PwC", beitrag: 0.174, typ: "bkk" },
+    { name: "BKK Rieker.RICOSTA.Weisser", beitrag: 0.188, typ: "bkk" },
+    { name: "BKK Salzgitter", beitrag: 0.181, typ: "bkk" },
+    { name: "BKK SBH", beitrag: 0.1739, typ: "bkk" },
+    { name: "BKK Scheufelen", beitrag: 0.1859, typ: "bkk" },
+    { name: "BKK Technoform", beitrag: 0.1809, typ: "bkk" },
+    { name: "BKK VDN", beitrag: 0.1779, typ: "bkk" },
+    { name: "BKK VerbundPlus", beitrag: 0.1849, typ: "bkk" },
+    { name: "BKK Werra-Meissner", beitrag: 0.1895, typ: "bkk" },
+    { name: "BKK Wirtschaft & Finanzen", beitrag: 0.1859, typ: "bkk" },
+    { name: "BKK Würth", beitrag: 0.1749, typ: "bkk" },
+    { name: "BKK_DürkoppAdler", beitrag: 0.1848, typ: "bkk" },
+    { name: "BKK24", beitrag: 0.1899, typ: "bkk" },
+    { name: "BMW BKK", beitrag: 0.185, typ: "bkk" },
+    { name: "Bosch BKK", beitrag: 0.1778, typ: "bkk" },
+    { name: "Continentale Betriebskrankenkasse", beitrag: 0.1793, typ: "bkk" },
+    { name: "Debeka BKK", beitrag: 0.1785, typ: "bkk" },
+    { name: "energie-BKK", beitrag: 0.1858, typ: "bkk" },
+    { name: "EY BKK", beitrag: 0.1735, typ: "bkk" },
+    { name: "Heimat Krankenkasse", beitrag: 0.185, typ: "bkk" },
+    { name: "KARL MAYER BKK", beitrag: 0.1759, typ: "bkk" },
+    { name: "Koenig & Bauer BKK", beitrag: 0.1778, typ: "bkk" },
+    { name: "KRONES BKK", beitrag: 0.168, typ: "bkk" },
+    { name: "Mercedes-Benz BKK", beitrag: 0.178, typ: "bkk" },
+    { name: "Merck BKK", beitrag: 0.1857, typ: "bkk" },
+    { name: "mhplus Betriebskrankenkasse", beitrag: 0.1846, typ: "bkk" },
+    { name: "mkk – meine krankenkasse", beitrag: 0.181, typ: "bkk" },
+    { name: "Mobil Krankenkasse", beitrag: 0.1849, typ: "bkk" },
+    { name: "novitas bkk", beitrag: 0.182, typ: "bkk" },
+    { name: "Pronova BKK", beitrag: 0.183, typ: "bkk" },
+    { name: "R+V Betriebskrankenkasse", beitrag: 0.1809, typ: "bkk" },
+    { name: "Salus BKK", beitrag: 0.1789, typ: "bkk" },
+    { name: "SBK", beitrag: 0.184, typ: "bkk" },
+    { name: "SECURVITA Krankenkasse", beitrag: 0.185, typ: "bkk" },
+    { name: "SKD BKK", beitrag: 0.1758, typ: "bkk" },
+    { name: "Südzucker BKK", beitrag: 0.175, typ: "bkk" },
+    { name: "TUI BKK", beitrag: 0.171, typ: "bkk" },
+    { name: "vivida bkk", beitrag: 0.1839, typ: "bkk" },
+    { name: "WMF BKK", beitrag: 0.1745, typ: "bkk" },
+    { name: "ZF BKK", beitrag: 0.18, typ: "bkk" },
+
+    // === IKK ===
+    { name: "IKK – Die Innovationskasse", beitrag: 0.189, typ: "ikk" },
+    { name: "IKK Brandenburg und Berlin", beitrag: 0.1895, typ: "ikk" },
+    { name: "IKK classic", beitrag: 0.18, typ: "ikk" },
+    { name: "IKK gesund plus", beitrag: 0.1799, typ: "ikk" },
+    { name: "IKK Südwest", beitrag: 0.1785, typ: "ikk" },
+
+    // === Ersatzkassen ===
+    { name: "BARMER", beitrag: 0.1789, typ: "ek" },
+    { name: "BERGISCHE KRANKENKASSE", beitrag: 0.1839, typ: "ek" },
+    { name: "DAK-Gesundheit", beitrag: 0.178, typ: "ek" },
+    { name: "HEK – Hanseatische Krankenkasse", beitrag: 0.1749, typ: "ek" },
+    { name: "hkk Krankenkasse", beitrag: 0.1719, typ: "ek" },
+    { name: "KKH Kaufmännische Krankenkasse", beitrag: 0.1838, typ: "ek" },
+    { name: "TK – Techniker Krankenkasse", beitrag: 0.1729, typ: "ek" },
+    { name: "VIACTIV Krankenkasse", beitrag: 0.1879, typ: "ek" },
+
+    // === Sonstige ===
+    { name: "KNAPPSCHAFT", beitrag: 0.189, typ: "knappschaft" },
+];
+
+
+/* ==================================================================
+   2. KONSTANTEN & PARAMETER (2025)
+   ==================================================================
+   Quelle: Bundesgesundheitsministerium / GKV-Spitzenverband
+   ================================================================== */
+
+const PARAMS = {
+    // Allgemeiner GKV-Beitragssatz (Arbeitnehmer + Arbeitgeber)
+    allgemeinerSatz: 0.146,
+
+    // Beitragsbemessungsgrenze 2025 (monatlich)
+    bbgMonat: 5512.50,
+
+    // Pflegeversicherung 2025
+    pflegeSatz: 0.036,             // Basis-Satz (3,6 %)
+    pflegeZuschlagKinderlose: 0.006, // Zuschlag für Kinderlose über 23 (0,6 %)
+
+    // Abschläge für Kinder (ab dem 2. Kind bis zum 5.)
+    // Ab Kind 2: -0,25 % je Kind, bis max. 5 Kinder
+    pflegeAbschlagProKind: 0.0025,
+    pflegeMaxKinderAbschlag: 5,    // max. berücksichtigte Kinder für Abschlag
+
+    // Sachsen: Arbeitnehmer zahlt höheren PV-Anteil
+    // (Optional, Bundesland-abhängig – hier vereinfacht)
+    sachsenPvMehrAN: 0.005,        // +0,5 % AN-Anteil in Sachsen
+
+    // Jahresarbeitsentgeltgrenze (JAEG) 2025
+    // Über dieser Grenze: PKV-Wechsel möglich
+    jaegJahr: 77400,               // 77.400 € brutto / Jahr
+    jaegMonat: 6450,               // 6.450 € brutto / Monat
+};
+
+
+/* ==================================================================
+   2b. BERATER-DATEN (Affiliate / Kampagnen-System)
+   ==================================================================
+   Jeder Berater bekommt einen eindeutigen Slug, der als URL-Parameter
+   übergeben wird: ?berater=bastian-friede
+
+   Unterstützte URL-Parameter:
+     ?berater=<slug>       → Berater-Zuordnung (Pflicht für Tracking)
+     &kampagne=<name>      → Kampagnenname (z. B. "bestandskunden-q1-2025")
+     &ref=<quelle>         → Referrer/Quelle (z. B. "email", "whatsapp", "flyer")
+     &kunde=<id>           → Optionale Kunden-ID für Bestandskunden
+
+   Beispiel-URL:
+   https://mitnorm.de/gkv-vergleich-20?berater=bastian-friede&kampagne=bk-jan25&ref=email&kunde=K12345
+
+   HINWEIS: Neue Berater einfach hier eintragen. Beim Deployment
+   kann diese Konfiguration auch per fetch() aus einer API/CMS geladen werden.
+   ================================================================== */
+
+const BERATER_DATEN = {
+    // ─────────────────────────────────────────────────────────────
+    // Schlüssel = URL-Slug (lowercase, keine Sonderzeichen)
+    // ─────────────────────────────────────────────────────────────
+    "bastian-friede": {
+        vorname: "Bastian",
+        nachname: "Friede",
+        titel: "",
+        email: "bastian.friede@mitnorm.com",
+        telefon: "+49 123 456 7890",
+        calendlyUrl: "https://outlook.office.com/book/JahresupdatemitBastianFriede@mitNORM.com/s/Gio1_VlL-Euu0rWh4GFgfA2?ismsaljsauthenabled=true",
+        bild: "",
+        team: "mitNORM",
+    },
+    "andreas-müller": {
+        vorname: "Andreas",
+        nachname: "Müller",
+        titel: "",
+        email: "andreas.mueller@mitnorm.com",
+        telefon: "+49 123 456 7893",
+        calendlyUrl: "https://outlook.office.com/book/JahresupdatemitBastianFriede@mitNORM.com/s/Gio1_VlL-Euu0rWh4GFgfA2?ismsaljsauthenabled=true",
+        bild: "",
+        team: "mitNORM",
+    },
+    "lisa-mueller": {
+        vorname: "Lisa",
+        nachname: "Müller",
+        titel: "",
+        email: "l.mueller@beispiel.de",
+        telefon: "+49 123 456 7891",
+        calendlyUrl: "https://calendly.com/lisa-mueller/gkv-beratung",
+        bild: "",
+        team: "Vertrieb Süd",
+    },
+    "max-schmidt": {
+        vorname: "Max",
+        nachname: "Schmidt",
+        titel: "",
+        email: "m.schmidt@beispiel.de",
+        telefon: "+49 123 456 7892",
+        calendlyUrl: "https://calendly.com/max-schmidt/gkv-beratung",
+        bild: "",
+        team: "Vertrieb West",
+    },
+
+    // ┌────────────────────────────────────────────────────────────┐
+    // │  FALLBACK: Wird verwendet wenn ?berater= einen unbekannten│
+    // │  Slug enthält oder kein Berater angegeben ist.             │
+    // └────────────────────────────────────────────────────────────┘
+    "_fallback": {
+        vorname: "Unser",
+        nachname: "Beratungsteam",
+        titel: "",
+        email: "beratung@beispiel.de",
+        telefon: "+49 123 456 7800",
+        calendlyUrl: "https://calendly.com/team/gkv-beratung",
+        bild: "",
+        team: "Zentrale",
+    },
+};
+
+
+/* ==================================================================
+   2c. AFFILIATE-TRACKING MODUL
+   ==================================================================
+   Liest URL-Parameter, identifiziert den Berater, speichert
+   Tracking-Daten und stellt sie für CTAs und Lead-Events bereit.
+   ================================================================== */
+
+const AffiliateTracker = (() => {
+    // Private State
+    let _beraterSlug = null;
+    let _berater = null;
+    let _kampagne = null;
+    let _ref = null;
+    let _kundeId = null;
+    let _sessionId = null;
+
+    /**
+     * Initialisiert das Tracking aus den URL-Parametern.
+     * Wird einmalig beim Laden der Seite aufgerufen.
+     */
+    function init() {
+        const params = new URLSearchParams(window.location.search);
+
+        _beraterSlug = params.get('berater') || null;
+        _kampagne    = params.get('kampagne') || params.get('campaign') || null;
+        _ref         = params.get('ref') || params.get('source') || null;
+        _kundeId     = params.get('kunde') || params.get('customer') || null;
+        _sessionId   = generateSessionId();
+
+        // Berater-Daten auflösen
+        if (_beraterSlug && BERATER_DATEN[_beraterSlug]) {
+            _berater = BERATER_DATEN[_beraterSlug];
+        } else if (_beraterSlug) {
+            // Unbekannter Slug → Fallback, aber Slug für Tracking behalten
+            _berater = BERATER_DATEN['_fallback'];
+            console.warn(`[Affiliate] Unbekannter Berater-Slug: "${_beraterSlug}" – Fallback wird verwendet.`);
+        }
+
+        // Debug-Log (in Produktion entfernen oder an Analytics senden)
+        if (_beraterSlug) {
+            console.log('[Affiliate] Tracking initialisiert:', getTrackingData());
+        }
+    }
+
+    /**
+     * Gibt den aktuellen Berater zurück (oder null).
+     */
+    function getBerater() {
+        return _berater;
+    }
+
+    /**
+     * Gibt den Berater-Slug zurück.
+     */
+    function getSlug() {
+        return _beraterSlug;
+    }
+
+    /**
+     * Prüft ob ein Berater aktiv ist.
+     */
+    function hatBerater() {
+        return _berater !== null;
+    }
+
+    /**
+     * Gibt die Booking-URL zurück (Outlook Bookings, Calendly o.ä.)
+     * Hängt automatisch Tracking-Parameter an die URL an.
+     * Funktioniert mit beliebigen Booking-Systemen (vorhandene Query-Params bleiben erhalten).
+     */
+    function getBookingUrl(kassenName) {
+        if (!_berater) return null;
+
+        const url = new URL(_berater.calendlyUrl);
+
+        // UTM/Tracking-Parameter an Calendly-URL anhängen
+        if (_beraterSlug)  url.searchParams.set('utm_source', 'gkv-rechner');
+        if (_kampagne)     url.searchParams.set('utm_campaign', _kampagne);
+        if (_ref)          url.searchParams.set('utm_medium', _ref);
+        if (_beraterSlug)  url.searchParams.set('berater', _beraterSlug);
+        if (_kundeId)      url.searchParams.set('kunde', _kundeId);
+        if (kassenName)    url.searchParams.set('kasse', kassenName);
+
+        return url.toString();
+    }
+
+    /**
+     * Gibt ein vollständiges Tracking-Datenobjekt zurück.
+     * Kann an ein Analytics-Tool, Webhook oder CRM gesendet werden.
+     */
+    function getTrackingData() {
+        return {
+            sessionId:    _sessionId,
+            beraterSlug:  _beraterSlug,
+            beraterName:  _berater ? `${_berater.vorname} ${_berater.nachname}` : null,
+            beraterTeam:  _berater?.team || null,
+            kampagne:     _kampagne,
+            ref:          _ref,
+            kundeId:      _kundeId,
+            timestamp:    new Date().toISOString(),
+            seite:        window.location.pathname,
+        };
+    }
+
+    /**
+     * Trackt ein Lead-Event (z. B. Klick auf CTA, Buchung, Berechnung).
+     * In Produktion: Hier an Google Analytics, Meta Pixel, Webhook, etc. senden.
+     *
+     * @param {string} eventName  – z. B. "cta_click", "booking_open", "berechnung"
+     * @param {Object} extraData  – Zusätzliche Daten (z. B. { kasse: "TK" })
+     */
+    function trackEvent(eventName, extraData = {}) {
+        const payload = {
+            event: eventName,
+            ...getTrackingData(),
+            ...extraData,
+        };
+
+        // ──────────────────────────────────────────────────────
+        // INTEGRATIONS-HOOKS (je nach Setup aktivieren)
+        // ──────────────────────────────────────────────────────
+
+        // 1. Console (Development)
+        console.log(`[Affiliate] Event: ${eventName}`, payload);
+
+        // 2. Google Analytics 4 (gtag)
+        // if (typeof gtag !== 'undefined') {
+        //     gtag('event', eventName, {
+        //         berater: payload.beraterSlug,
+        //         kampagne: payload.kampagne,
+        //         ref: payload.ref,
+        //         ...extraData,
+        //     });
+        // }
+
+        // 3. Meta/Facebook Pixel
+        // if (typeof fbq !== 'undefined') {
+        //     fbq('trackCustom', eventName, payload);
+        // }
+
+        // 4. Webhook / Server-Endpoint
+        // fetch('/api/tracking', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(payload),
+        // }).catch(err => console.warn('[Affiliate] Webhook-Fehler:', err));
+
+        // 5. DataLayer (Google Tag Manager)
+        // window.dataLayer = window.dataLayer || [];
+        // window.dataLayer.push({ event: eventName, ...payload });
+
+        return payload;
+    }
+
+    /** Erzeugt eine einfache Session-ID */
+    function generateSessionId() {
+        return 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+    }
+
+    // Public API
+    return {
+        init,
+        getBerater,
+        getSlug,
+        hatBerater,
+        getBookingUrl,
+        getTrackingData,
+        trackEvent,
+    };
+})();
+
+
+/* ==================================================================
+   2c. LEAD-API (Backend-Kommunikation)
+   ==================================================================
+   Sendet Daten an das Supabase-Backend.
+   Funktioniert nur wenn ?kunde= in der URL ist.
+   Ohne Consent: Nur Status-Updates (kein Personenbezug).
+   Mit Consent: Eingaben + Ergebnisse werden gespeichert.
+   ================================================================== */
+
+const LeadAPI = (() => {
+    // ── Konfiguration ──
+    // WICHTIG: Vor Go-Live die richtige Supabase-URL eintragen!
+    const API_BASE = 'https://mvakwhbykvidtjvhagsl.supabase.co/functions/v1/rechner-api';
+
+    let _kundeId = null;
+    let _aktiv = false;     // true wenn ?kunde= vorhanden
+
+    function init() {
+        const params = new URLSearchParams(window.location.search);
+        _kundeId = params.get('kunde');
+        _aktiv = !!_kundeId;
+
+        if (_aktiv) {
+            // Consent-Box anzeigen
+            const wrap = document.getElementById('consentWrap');
+            if (wrap) wrap.classList.remove('hidden');
+
+            // Berater-Name im Consent-Text
+            const berater = AffiliateTracker.getBerater();
+            if (berater) {
+                const nameEl = document.getElementById('consentBeraterName');
+                if (nameEl) nameEl.textContent = `${berater.vorname} ${berater.nachname}`;
+            }
+
+            // Page-View tracken
+            _send('page-view', {
+                kunde_id: _kundeId,
+                berater_slug: AffiliateTracker.getTrackingData()?.beraterSlug || null,
+                session_id: AffiliateTracker.getTrackingData()?.sessionId || null,
+            });
+        }
+    }
+
+    function istAktiv() {
+        return _aktiv;
+    }
+
+    function hatConsent() {
+        const cb = document.getElementById('consentCheckbox');
+        return cb && cb.checked;
+    }
+
+    /** Berechnung an Backend senden */
+    function sendeBerechnung(eingaben, ergebnisse) {
+        if (!_aktiv) return;
+
+        const consent = hatConsent();
+
+        _send('berechnung', {
+            kunde_id: _kundeId,
+            session_id: AffiliateTracker.getTrackingData()?.sessionId || null,
+            consent,
+            eingaben: consent ? eingaben : null,
+            ergebnisse: consent ? ergebnisse : null,
+        }).then(res => {
+            if (res && res.gespeichert) {
+                _showToast('Deine Ergebnisse wurden deinem Berater bereitgestellt.');
+            }
+        });
+    }
+
+    /** Event an Backend senden */
+    function sendeEvent(eventType, eventData) {
+        if (!_aktiv) return;
+
+        _send('event', {
+            kunde_id: _kundeId,
+            session_id: AffiliateTracker.getTrackingData()?.sessionId || null,
+            event_type: eventType,
+            event_data: eventData || {},
+        });
+    }
+
+    /** API-Call (fire-and-forget, blockiert UI nicht) */
+    async function _send(endpoint, data) {
+        try {
+            const res = await fetch(`${API_BASE}/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            return await res.json();
+        } catch (err) {
+            // Offline oder Fehler → ignorieren, Rechner läuft trotzdem
+            console.warn('LeadAPI:', err.message);
+            return null;
+        }
+    }
+
+    /** Toast-Benachrichtigung */
+    function _showToast(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+            background:#004283; color:#fff; padding:12px 24px; border-radius:8px;
+            font-size:.85rem; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.2);
+            z-index:9999; opacity:0; transition:opacity .3s ease;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.style.opacity = '1');
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    return Object.freeze({
+        init,
+        istAktiv,
+        hatConsent,
+        sendeBerechnung,
+        sendeEvent,
+    });
+})();
+
+
+/* ==================================================================
+   3. BERECHNUNGSLOGIK
+   ==================================================================
+   Saubere Trennung: Berechnung gibt reine Zahlen zurück,
+   kein DOM-Zugriff hier.
+   ================================================================== */
+
+/**
+ * Berechnet die GKV-Beiträge für eine Kasse auf Basis der Nutzereingaben.
+ *
+ * @param {Object} kasse      – Kassendaten { name, beitrag, typ }
+ * @param {Object} eingaben   – Nutzereingaben (s.u.)
+ * @returns {Object}          – Berechnungsergebnis
+ */
+function berechneKasse(kasse, eingaben) {
+    const {
+        gehalt,           // Brutto-Monatsgehalt
+        employment,       // 'angestellt' oder 'selbststaendig'
+        kinder,           // Anzahl Kinder (0-5)
+        kinderlos23,      // Boolean: kinderlos und über 23?
+    } = eingaben;
+
+    // ──────────────────────────────────────────
+    // a) Beitragspflichtiges Einkommen (gedeckelt)
+    // ──────────────────────────────────────────
+    const beitragspflichtig = Math.min(gehalt, PARAMS.bbgMonat);
+
+    // ──────────────────────────────────────────
+    // b) GKV-Beitrag (Krankenkasse)
+    // ──────────────────────────────────────────
+    const gkvGesamt = beitragspflichtig * kasse.beitrag;
+
+    // Zusatzbeitrag berechnen
+    const zusatzbeitragSatz = +(kasse.beitrag - PARAMS.allgemeinerSatz).toFixed(4);
+
+    let gkvAN, gkvAG;
+    if (employment === 'angestellt') {
+        // Arbeitnehmer: Allgemeiner Satz hälftig + Zusatzbeitrag hälftig
+        gkvAN = beitragspflichtig * (PARAMS.allgemeinerSatz / 2 + zusatzbeitragSatz / 2);
+        gkvAG = beitragspflichtig * (PARAMS.allgemeinerSatz / 2 + zusatzbeitragSatz / 2);
+    } else {
+        // Selbstständige: tragen den vollen Beitrag allein
+        gkvAN = gkvGesamt;
+        gkvAG = 0;
+    }
+
+    // ──────────────────────────────────────────
+    // c) Pflegeversicherung
+    // ──────────────────────────────────────────
+    let pvSatz = PARAMS.pflegeSatz;
+
+    // Zuschlag für Kinderlose über 23
+    if (kinderlos23 && kinder === 0) {
+        pvSatz += PARAMS.pflegeZuschlagKinderlose;
+    }
+
+    // Abschlag für Kinder (ab dem 2. Kind, max. 5 Kinder)
+    if (kinder >= 2) {
+        const abschlagKinder = Math.min(kinder, PARAMS.pflegeMaxKinderAbschlag) - 1;
+        pvSatz -= abschlagKinder * PARAMS.pflegeAbschlagProKind;
+    }
+
+    // Pflegeversicherung nicht unter 0
+    pvSatz = Math.max(pvSatz, 0);
+
+    const pvGesamt = beitragspflichtig * pvSatz;
+    let pvAN, pvAG;
+
+    if (employment === 'angestellt') {
+        // PV wird grundsätzlich hälftig geteilt
+        // Zuschlag für Kinderlose zahlt AN allein
+        const basisHaelfte = beitragspflichtig * (PARAMS.pflegeSatz / 2);
+        const kinderloserZuschlag = (kinderlos23 && kinder === 0)
+            ? beitragspflichtig * PARAMS.pflegeZuschlagKinderlose
+            : 0;
+        const kinderAbschlag = (kinder >= 2)
+            ? beitragspflichtig * (Math.min(kinder, PARAMS.pflegeMaxKinderAbschlag) - 1) * PARAMS.pflegeAbschlagProKind
+            : 0;
+
+        pvAN = basisHaelfte + kinderloserZuschlag - kinderAbschlag;
+        pvAG = basisHaelfte;
+
+        // AN-Anteil mindestens 0
+        pvAN = Math.max(pvAN, 0);
+    } else {
+        // Selbstständige: voller Beitrag
+        pvAN = pvGesamt;
+        pvAG = 0;
+    }
+
+    // ──────────────────────────────────────────
+    // d) Gesamtbeiträge
+    // ──────────────────────────────────────────
+    const gesamtAN = gkvAN + pvAN;   // Was der Arbeitnehmer zahlt
+    const gesamtAG = gkvAG + pvAG;   // Was der Arbeitgeber zahlt
+    const gesamt = gesamtAN + gesamtAG;
+
+    return {
+        name: kasse.name,
+        typ: kasse.typ,
+        beitragssatz: kasse.beitrag,
+        zusatzbeitrag: zusatzbeitragSatz,
+        beitragspflichtig,
+        gkvGesamt: round2(gkvGesamt),
+        gkvAN: round2(gkvAN),
+        gkvAG: round2(gkvAG),
+        pvGesamt: round2(pvGesamt),
+        pvAN: round2(pvAN),
+        pvAG: round2(pvAG),
+        gesamtAN: round2(gesamtAN),
+        gesamtAG: round2(gesamtAG),
+        gesamt: round2(gesamt),
+        jahresAN: round2(gesamtAN * 12),
+        jahresGesamt: round2(gesamt * 12),
+    };
+}
+
+/** Runden auf 2 Nachkommastellen */
+function round2(n) { return Math.round(n * 100) / 100; }
+
+
+/* ==================================================================
+   4. UI-CONTROLLER
+   ================================================================== */
+
+// State
+let ergebnisse = [];           // Alle berechneten Ergebnisse
+let gefilterteErgebnisse = []; // Nach Filter
+let angezeigteBis = 10;        // Pagination: wie viele angezeigt
+let aktiverFilter = 'alle';
+let hatAktuelleKasse = false;  // Ob eine aktuelle Kasse gewählt wurde
+
+/**
+ * Liest alle Eingaben aus dem Formular und gibt sie als Objekt zurück.
+ */
+function leseEingaben() {
+    const gehalt = parseFloat(document.getElementById('gehalt').value) || 0;
+    const employment = getToggleValue('employment');
+    const familienstand = document.getElementById('familienstand').value;
+    const kinder = parseInt(document.getElementById('kinder').value) || 0;
+    const famversichert = getToggleValue('famversichert');
+    const kinderlos23 = getToggleValue('kinderlos23') === 'ja';
+
+    return { gehalt, employment, familienstand, kinder, famversichert, kinderlos23 };
+}
+
+/**
+ * Hauptfunktion: Berechnet für alle Kassen und rendert Ergebnisse.
+ */
+function berechnen() {
+    // Eingaben lesen & validieren
+    const eingaben = leseEingaben();
+
+    // Validierung
+    const fgGehalt = document.getElementById('fgGehalt');
+    if (!eingaben.gehalt || eingaben.gehalt < 0) {
+        fgGehalt.classList.add('error');
+        return;
+    }
+    fgGehalt.classList.remove('error');
+
+    // Für alle Kassen berechnen
+    ergebnisse = KASSEN_DATEN.map(kasse => berechneKasse(kasse, eingaben));
+
+    // Nach Arbeitnehmer-Anteil sortieren (günstigste zuerst)
+    ergebnisse.sort((a, b) => a.gesamtAN - b.gesamtAN);
+
+    // Günstigste ermitteln
+    const guenstigste = ergebnisse[0];
+    const teuerste = ergebnisse[ergebnisse.length - 1];
+
+    // Aktuelle Kasse des Nutzers ermitteln
+    const aktuelleKasseName = document.getElementById('aktuelleKasse').value;
+    const aktuelleKasse = aktuelleKasseName
+        ? ergebnisse.find(e => e.name === aktuelleKasseName)
+        : null;
+    hatAktuelleKasse = !!aktuelleKasse;
+
+    // Differenz und Ersparnis berechnen
+    // Referenz: aktuelle Kasse des Nutzers (falls gewählt), sonst günstigste
+    const referenzKasse = aktuelleKasse || guenstigste;
+
+    ergebnisse.forEach((e, i) => {
+        e.rang = i + 1;
+        // Diff vs. aktuelle Kasse (negativ = Ersparnis, positiv = Mehrkosten)
+        e.diffMonatVsAktuell = round2(e.gesamtAN - referenzKasse.gesamtAN);
+        e.diffJahrVsAktuell = round2(e.diffMonatVsAktuell * 12);
+        // Diff vs. günstigste (für interne Nutzung)
+        e.diffMonat = round2(e.gesamtAN - guenstigste.gesamtAN);
+        e.diffJahr = round2(e.diffMonat * 12);
+        e.istGuenstigste = i === 0;
+        e.istAktuelle = aktuelleKasse && e.name === aktuelleKasse.name;
+    });
+
+    // UI aktualisieren
+    const maxErsparnis = round2((teuerste.gesamtAN - guenstigste.gesamtAN) * 12);
+    const sparpotenzial = aktuelleKasse
+        ? round2((aktuelleKasse.gesamtAN - guenstigste.gesamtAN) * 12)
+        : maxErsparnis;
+    ergebnisse[0].maxErsparnis = maxErsparnis;
+    ergebnisse[0].sparpotenzial = sparpotenzial;
+
+    renderSummary(guenstigste, teuerste, aktuelleKasse, eingaben);
+    aktiverFilter = 'alle';
+    setActiveChip('alle');
+    gefilterteErgebnisse = [...ergebnisse];
+    angezeigteBis = 10;
+    renderCards();
+
+    // Empty State verstecken, Ergebnisse zeigen
+    document.getElementById('resultsEmpty').classList.add('hidden');
+    document.getElementById('resultsContent').classList.remove('hidden');
+
+    // CTA-Ersparnis aktualisieren
+    document.getElementById('ctaSavings').textContent = formatEuro(sparpotenzial);
+
+    // Affiliate-Tracking: Berechnung als Event loggen
+    AffiliateTracker.trackEvent('berechnung', {
+        gehalt: eingaben.gehalt,
+        guenstigste: guenstigste.name,
+        aktuelleKasse: aktuelleKasseName || null,
+        maxErsparnis,
+    });
+
+    // Lead-API: Berechnung an Backend senden (nur mit ?kunde= in URL)
+    if (LeadAPI.istAktiv()) {
+        const top5 = ergebnisse.slice(0, 5).map(e => ({
+            kasse: e.name,
+            beitrag: e.gesamtAN,
+            ersparnis_jahr: aktuelleKasse ? round2((aktuelleKasse.gesamtAN - e.gesamtAN) * 12) : 0,
+        }));
+
+        LeadAPI.sendeBerechnung(
+            {
+                gehalt: eingaben.gehalt,
+                beschaeftigung: eingaben.employment,
+                familienstand: eingaben.familienstand,
+                kinder: eingaben.kinder,
+                familienversichert: eingaben.famversichert === 'ja',
+                kinderlosUeber23: eingaben.kinderlos23,
+                aktuelleKasse: aktuelleKasseName || null,
+            },
+            {
+                guenstigsteKasse: guenstigste.name,
+                guenstigsterBeitrag: guenstigste.gesamtAN,
+                aktuellerBeitrag: aktuelleKasse ? aktuelleKasse.gesamtAN : null,
+                sparpotenzialJahr: sparpotenzial,
+                sparpotenzialMonat: aktuelleKasse ? round2(aktuelleKasse.gesamtAN - guenstigste.gesamtAN) : null,
+                pkvHinweis: eingaben.gehalt > PARAMS.jaegMonat,
+                top5,
+            }
+        );
+    }
+
+    // Smooth scroll to results on mobile
+    if (window.innerWidth <= 960) {
+        document.getElementById('resultsContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+/**
+ * Rendert die Zusammenfassungskarten oben.
+ */
+function renderSummary(guenstigste, teuerste, aktuelleKasse, eingaben) {
+    const container = document.getElementById('summaryCards');
+    const sparpotenzial = aktuelleKasse
+        ? round2((aktuelleKasse.gesamtAN - guenstigste.gesamtAN) * 12)
+        : round2((teuerste.gesamtAN - guenstigste.gesamtAN) * 12);
+    const sparpotenzialMonat = aktuelleKasse
+        ? round2(aktuelleKasse.gesamtAN - guenstigste.gesamtAN)
+        : round2(teuerste.gesamtAN - guenstigste.gesamtAN);
+
+    // Karte 1: Dein aktueller Beitrag
+    const card1 = aktuelleKasse
+        ? `<div class="s-card">
+                <div>
+                    <div class="s-label">Dein aktueller Beitrag</div>
+                    <div class="s-val">${formatEuro(aktuelleKasse.gesamtAN)}</div>
+                    <div class="s-sub">${aktuelleKasse.name}</div>
+                </div>
+           </div>`
+        : `<div class="s-card">
+                <div>
+                    <div class="s-label">Günstigste Kasse</div>
+                    <div class="s-val">${formatEuro(guenstigste.gesamtAN)}</div>
+                    <div class="s-sub">${guenstigste.name}</div>
+                </div>
+           </div>`;
+
+    // Karte 2: Spanne – "Du hast die Wahl"
+    const card2 = `
+        <div class="s-card">
+            <div>
+                <div class="s-label">Beitragsspanne</div>
+                <div class="s-val" style="font-size:1.15rem;">${formatEuro(guenstigste.gesamtAN)} – ${formatEuro(teuerste.gesamtAN)}</div>
+                <div class="s-sub">Du hast die Wahl aus ${ergebnisse.length} Kassen</div>
+            </div>
+        </div>`;
+
+    // Karte 3: Mögliche Einsparung – groß & auffällig
+    const card3 = `
+        <div class="s-card s-card-savings">
+            <div>
+                <div class="s-label" style="color:#fff;opacity:.85;">Deine mögliche Einsparung</div>
+                <div class="s-val" style="color:#fff;font-size:1.8rem;">${formatEuro(sparpotenzial)}</div>
+                <div class="s-sub" style="color:rgba(255,255,255,.7);">${aktuelleKasse ? 'pro Jahr vs. günstigste Kasse' : 'pro Jahr zwischen günstigster & teuerster'}</div>
+                <div style="margin-top:6px;font-size:.78rem;color:rgba(255,255,255,.55);">(${formatEuro(sparpotenzialMonat)} / Monat)</div>
+            </div>
+        </div>`;
+
+    container.innerHTML = card1 + card2 + card3;
+}
+
+/**
+ * Rendert die Kassenkarten.
+ */
+function renderCards() {
+    const container = document.getElementById('kassenCards');
+    const anzuzeigen = gefilterteErgebnisse.slice(0, angezeigteBis);
+
+    container.innerHTML = anzuzeigen.map(e => kasseCardHTML(e)).join('');
+
+    // Count
+    document.getElementById('resultsCount').textContent =
+        `${Math.min(angezeigteBis, gefilterteErgebnisse.length)} von ${gefilterteErgebnisse.length} Kassen`;
+
+    // Load More Button
+    const btnMore = document.getElementById('btnMore');
+    if (angezeigteBis < gefilterteErgebnisse.length) {
+        btnMore.classList.remove('hidden');
+        const remaining = gefilterteErgebnisse.length - angezeigteBis;
+        btnMore.textContent = `Weitere ${Math.min(remaining, 10)} Kassen anzeigen ▾`;
+    } else {
+        btnMore.classList.add('hidden');
+    }
+}
+
+/**
+ * Erzeugt das HTML für eine einzelne Kassen-Karte.
+ */
+function kasseCardHTML(e) {
+    const isBest = e.istGuenstigste;
+    const isAktuell = e.istAktuelle;
+    const typLabel = { aok: 'AOK', bkk: 'Betriebskrankenkasse', ikk: 'Innungskrankenkasse', ek: 'Ersatzkasse', knappschaft: 'Knappschaft' };
+
+    // Badge: Günstigste, Deine aktuelle, oder Platz
+    let badgeHtml;
+    if (isBest) {
+        badgeHtml = `<span class="k-badge best-b">★ Günstigste</span>`;
+    } else if (isAktuell) {
+        badgeHtml = `<span class="k-badge" style="background:var(--primary-light);color:var(--primary);">● Deine Kasse</span>`;
+    } else {
+        badgeHtml = `<span class="k-badge rank-b">Platz ${e.rang}</span>`;
+    }
+
+    // Diff-Spalte: vs. aktuelle Kasse
+    let diffColHtml;
+    if (isAktuell) {
+        // Die aktuelle Kasse selbst → Dein aktueller Beitrag
+        diffColHtml = `<div class="k-d-val" style="color:var(--g500)">—</div><div class="k-d-sub">Dein aktueller Beitrag</div>`;
+    } else if (e.diffJahrVsAktuell < 0) {
+        // Günstiger als aktuelle → grün, Ersparnis – PROMINENT
+        diffColHtml = `
+            <div style="background:var(--success-light);border-radius:8px;padding:8px 12px;text-align:center;">
+                <div class="k-d-val" style="color:var(--success-dark);font-size:1.35rem;font-weight:800;">${formatEuro(Math.abs(e.diffJahrVsAktuell))}</div>
+                <div class="k-d-sub" style="color:var(--success-dark);font-weight:600;">Ersparnis / Jahr</div>
+            </div>`;
+    } else if (e.diffJahrVsAktuell > 0) {
+        // Teurer als aktuelle → rot
+        diffColHtml = `<div class="k-d-val" style="color:var(--danger)">+${formatEuro(e.diffJahrVsAktuell)}</div><div class="k-d-sub">Mehrkosten / Jahr</div>`;
+    } else {
+        // Gleicher Beitrag
+        diffColHtml = `<div class="k-d-val" style="color:var(--g500)">0,00 €</div><div class="k-d-sub">Gleicher Beitrag</div>`;
+    }
+
+    // Savings-Zeile: Ersparnis vs. aktuelle
+    let savingsHtml;
+    if (isAktuell) {
+        savingsHtml = `<span class="k-diff" style="color:var(--primary);">Deine aktuelle Kasse</span>`;
+    } else if (e.diffMonatVsAktuell < 0) {
+        savingsHtml = `<span class="k-diff neg" style="background:var(--success-light);padding:4px 10px;border-radius:20px;font-size:.85rem;">${formatEuro(Math.abs(e.diffMonatVsAktuell))} günstiger / Monat</span>`;
+    } else if (e.diffMonatVsAktuell > 0) {
+        savingsHtml = `<span class="k-diff pos">+${formatEuro(e.diffMonatVsAktuell)} / Monat</span>`;
+    } else {
+        savingsHtml = `<span class="k-diff neu">Gleicher Beitrag</span>`;
+    }
+
+    // CTA-Button: Berater-aware Label
+    const berater = AffiliateTracker.getBerater();
+    const ctaLabel = berater
+        ? `Termin bei ${berater.vorname} buchen`
+        : 'Jetzt wechseln';
+
+    // Card CSS class
+    const cardClass = isBest ? 'best' : (isAktuell ? 'aktuell' : '');
+
+    return `
+    <div class="k-card ${cardClass}">
+        <div class="k-head">
+            <div>
+                <div class="k-name">${e.name}</div>
+                <div class="k-type">${typLabel[e.typ] || e.typ}</div>
+            </div>
+            ${badgeHtml}
+        </div>
+        <div class="k-data">
+            <div class="k-d-item">
+                <div class="k-d-label">Dein Beitrag / Monat</div>
+                <div class="k-d-val">${formatEuro(e.gesamtAN)}</div>
+                <div class="k-d-sub">inkl. PV</div>
+            </div>
+            <div class="k-d-item">
+                <div class="k-d-label">${hatAktuelleKasse ? 'vs. deine Kasse' : 'Diff. / Jahr'}</div>
+                ${diffColHtml}
+            </div>
+        </div>
+        <div class="k-savings">
+            <div class="k-rates">
+                Beitragssatz: <strong>${(e.beitragssatz * 100).toFixed(2)} %</strong>
+                (Zusatzbeitrag: ${(e.zusatzbeitrag * 100).toFixed(2)} %)
+            </div>
+            ${savingsHtml}
+        </div>
+        <div class="k-foot">
+            <button class="btn-detail" onclick="zeigeDetail('${e.name.replace(/'/g, "\\'")}')">Details anzeigen</button>
+            <button class="btn-anfrage" onclick="ctaClicked('${e.name.replace(/'/g, "\\'")}')">${ctaLabel}</button>
+        </div>
+    </div>`;
+}
+
+/**
+ * Zeigt weitere 10 Kassen an.
+ */
+function zeigeWeitere() {
+    angezeigteBis += 10;
+    renderCards();
+}
+
+/**
+ * Filtert nach Kassentyp.
+ */
+function filterKassen(filter) {
+    aktiverFilter = filter;
+    setActiveChip(filter);
+
+    if (filter === 'alle') {
+        gefilterteErgebnisse = [...ergebnisse];
+    } else if (filter === 'top10') {
+        gefilterteErgebnisse = ergebnisse.slice(0, 10);
+    } else {
+        gefilterteErgebnisse = ergebnisse.filter(e => e.typ === filter);
+    }
+
+    angezeigteBis = 10;
+    renderCards();
+
+    // Titel aktualisieren
+    const labels = { alle: 'Alle Kassen', aok: 'AOK', bkk: 'Betriebskrankenkassen', ikk: 'Innungskrankenkassen', ek: 'Ersatzkassen', top10: 'Top 10' };
+    document.getElementById('resultsTitle').textContent = labels[filter] || 'Ergebnisse';
+}
+
+function setActiveChip(filter) {
+    document.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.filter === filter);
+    });
+}
+
+
+/* ==================================================================
+   5. HILFSFUNKTIONEN
+   ================================================================== */
+
+/** Euro-Formatierung */
+function formatEuro(val) {
+    return val.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00A0€';
+}
+
+/** Liest den Wert einer Toggle-Gruppe */
+function getToggleValue(field) {
+    const group = document.querySelector(`[data-field="${field}"]`);
+    const active = group?.querySelector('.toggle-btn.active');
+    return active ? active.dataset.val : null;
+}
+
+/** Detail-Alert (Platzhalter für spätere Modal-/Drawer-Implementierung) */
+function zeigeDetail(name) {
+    const e = ergebnisse.find(x => x.name === name);
+    if (!e) return;
+
+    const msg = [
+        `📋 ${e.name}`,
+        `──────────────────────────`,
+        `Beitragssatz:        ${(e.beitragssatz * 100).toFixed(2)} %`,
+        `  davon Zusatzbeitrag: ${(e.zusatzbeitrag * 100).toFixed(2)} %`,
+        ``,
+        `Beitragspfl. Einkommen: ${formatEuro(e.beitragspflichtig)}`,
+        ``,
+        `GKV Arbeitnehmer:    ${formatEuro(e.gkvAN)}`,
+        `GKV Arbeitgeber:     ${formatEuro(e.gkvAG)}`,
+        `GKV Gesamt:          ${formatEuro(e.gkvGesamt)}`,
+        ``,
+        `PV Arbeitnehmer:     ${formatEuro(e.pvAN)}`,
+        `PV Arbeitgeber:      ${formatEuro(e.pvAG)}`,
+        `PV Gesamt:           ${formatEuro(e.pvGesamt)}`,
+        ``,
+        `═══════════════════════`,
+        `AN-Beitrag / Monat:  ${formatEuro(e.gesamtAN)}`,
+        `AG-Beitrag / Monat:  ${formatEuro(e.gesamtAG)}`,
+        `Gesamt / Monat:      ${formatEuro(e.gesamt)}`,
+        `Gesamt / Jahr:       ${formatEuro(e.jahresGesamt)}`,
+    ].join('\n');
+
+    alert(msg);
+}
+
+/** CTA Handler – Berater-aware mit Tracking */
+function ctaClicked(kasse) {
+    // Event tracken
+    AffiliateTracker.trackEvent('cta_click', {
+        kasse: kasse || 'allgemein',
+        position: kasse ? 'kassen_card' : 'footer_cta',
+    });
+    LeadAPI.sendeEvent('cta_click', { kasse: kasse || 'allgemein' });
+
+    if (AffiliateTracker.hatBerater()) {
+        // Berater vorhanden → Booking-URL öffnen
+        const url = AffiliateTracker.getBookingUrl(kasse);
+        window.open(url, '_blank', 'noopener');
+    } else {
+        // Kein Berater → generischer CTA (Kontaktformular, Landingpage etc.)
+        // In Produktion: Eigenen Booking-Link oder Formular hier einsetzen
+        const msg = kasse
+            ? `Vielen Dank! Deine Anfrage für "${kasse}" wird bearbeitet.\n\nIn einer Produktivumgebung würde hier ein Kontaktformular oder eine Weiterleitung erscheinen.`
+            : `Vielen Dank für dein Interesse!\n\nIn einer Produktivumgebung würde hier ein Beratungsformular erscheinen.`;
+        alert(msg);
+    }
+}
+
+/** Öffnet die Booking-Seite des aktuellen Beraters (Banner-Button) */
+function openBooking() {
+    AffiliateTracker.trackEvent('booking_open', { position: 'berater_banner' });
+    LeadAPI.sendeEvent('booking_open', { position: 'berater_banner' });
+
+    const url = AffiliateTracker.getBookingUrl();
+    if (url) {
+        window.open(url, '_blank', 'noopener');
+    }
+}
+
+/** Rückruf-Handler */
+function rueckrufClicked() {
+    AffiliateTracker.trackEvent('rueckruf_click', { position: 'advice_box' });
+    LeadAPI.sendeEvent('rueckruf_click', { position: 'advice_box' });
+
+    const berater = AffiliateTracker.getBerater();
+    if (berater && berater.telefon) {
+        // Direkt anrufen oder Rückruf-Seite
+        const ok = confirm(
+            `Möchtest du ${berater.vorname} ${berater.nachname} direkt erreichen?\n\n` +
+            `📞  ${berater.telefon}\n\n` +
+            `OK = Jetzt anrufen\nAbbrechen = Später`
+        );
+        if (ok) {
+            window.location.href = `tel:${berater.telefon}`;
+        }
+    } else {
+        // Fallback ohne Berater
+        alert(
+            `Vielen Dank für dein Interesse!\n\n` +
+            `In einer Produktivumgebung würde hier ein Rückrufformular erscheinen.`
+        );
+    }
+}
+
+/** PKV-Info Handler – Berater-Booking oder Fallback-Seite */
+function pkvInfoClicked() {
+    AffiliateTracker.trackEvent('pkv_info_click', { position: 'gehalt_hint' });
+    LeadAPI.sendeEvent('pkv_info_click', { position: 'gehalt_hint' });
+
+    if (AffiliateTracker.hatBerater()) {
+        const url = AffiliateTracker.getBookingUrl('PKV-Beratung');
+        window.open(url, '_blank', 'noopener');
+    } else {
+        window.open('https://mitnorm.de/lets-talk-pkv', '_blank', 'noopener');
+    }
+}
+
+
+/* ==================================================================
+   6. INITIALISIERUNG
+   ================================================================== */
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // ══════════════════════════════════════════════════════════
+    // AFFILIATE-TRACKING INITIALISIEREN
+    // ══════════════════════════════════════════════════════════
+    AffiliateTracker.init();
+    LeadAPI.init();
+
+    if (AffiliateTracker.hatBerater()) {
+        const berater = AffiliateTracker.getBerater();
+
+        // ── Berater-Banner einblenden ──
+        const banner = document.getElementById('beraterBanner');
+        banner.classList.remove('hidden');
+
+        // Avatar (Bild oder Initialen)
+        const avatarEl = document.getElementById('beraterAvatar');
+        if (berater.bild) {
+            avatarEl.innerHTML = `<img src="${berater.bild}" alt="${berater.vorname} ${berater.nachname}">`;
+        } else {
+            avatarEl.textContent = berater.vorname[0] + berater.nachname[0];
+        }
+
+        // Name
+        const fullName = [berater.titel, berater.vorname, berater.nachname].filter(Boolean).join(' ');
+        document.getElementById('beraterName').textContent = fullName;
+
+        // Kontakt
+        const contactEl = document.getElementById('beraterContact');
+        const contactParts = [];
+        if (berater.telefon) contactParts.push(`<a href="tel:${berater.telefon}">${berater.telefon}</a>`);
+        if (berater.email)   contactParts.push(`<a href="mailto:${berater.email}">${berater.email}</a>`);
+        contactEl.innerHTML = contactParts.join(' · ');
+
+        // ── CTA-Box personalisieren ──
+        document.getElementById('ctaText').textContent =
+            `${berater.vorname} ${berater.nachname} berät dich persönlich – kostenlos und unverbindlich.`;
+        document.getElementById('ctaBtnLabel').textContent =
+            `Termin bei ${berater.vorname} buchen`;
+        const trackingBadge = document.getElementById('ctaTrackingBadge');
+        trackingBadge.classList.remove('hidden');
+        document.getElementById('ctaTrackingText').textContent =
+            `Persönliche Beratung durch ${berater.vorname} ${berater.nachname}`;
+
+        // ── Hinweis-Box personalisieren ──
+        document.getElementById('adviceTerminLabel').textContent =
+            `Termin bei ${berater.vorname} vereinbaren`;
+
+        // Tracking: Seitenaufruf mit Berater
+        AffiliateTracker.trackEvent('page_view');
+    }
+
+    // ── Toggle-Buttons interaktiv machen ──
+    document.querySelectorAll('.toggle-group').forEach(group => {
+        group.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Kinderlos-Feld verstecken wenn Kinder > 0
+                syncKinderlosField();
+            });
+        });
+    });
+
+    // ── Kinder-Dropdown: Kinderlos-Feld synchronisieren ──
+    document.getElementById('kinder').addEventListener('change', syncKinderlosField);
+
+    // ── Dropdown mit Kassennamen befüllen ──
+    const select = document.getElementById('aktuelleKasse');
+    const sorted = [...KASSEN_DATEN].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    sorted.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k.name;
+        opt.textContent = k.name;
+        select.appendChild(opt);
+    });
+
+    // ── Enter-Taste zum Berechnen ──
+    document.getElementById('gehalt').addEventListener('keydown', e => {
+        if (e.key === 'Enter') berechnen();
+    });
+
+    // ── PKV-Hinweis bei Gehaltseingabe prüfen ──
+    document.getElementById('gehalt').addEventListener('input', checkPkvHint);
+
+    // ── Initial: Kinderlos-Feld sync + PKV-Check ──
+    syncKinderlosField();
+    checkPkvHint();
+});
+
+/**
+ * Zeigt den PKV-Hinweis wenn Gehalt über JAEG liegt.
+ */
+function checkPkvHint() {
+    const gehalt = parseFloat(document.getElementById('gehalt').value) || 0;
+    const hint = document.getElementById('pkvHint');
+    if (gehalt > PARAMS.jaegMonat) {
+        hint.classList.add('show');
+    } else {
+        hint.classList.remove('show');
+    }
+}
+
+/**
+ * Zeigt/versteckt das "Kinderlos über 23"-Feld basierend auf Kinderanzahl.
+ */
+function syncKinderlosField() {
+    const kinder = parseInt(document.getElementById('kinder').value) || 0;
+    const fg = document.getElementById('fgKinderlos');
+
+    if (kinder > 0) {
+        fg.style.opacity = '0.4';
+        fg.style.pointerEvents = 'none';
+        // Auto-set to "nein"
+        const group = fg.querySelector('.toggle-group');
+        group.querySelectorAll('.toggle-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.val === 'nein');
+        });
+    } else {
+        fg.style.opacity = '1';
+        fg.style.pointerEvents = 'auto';
+    }
+}
+</script>
+
+</body>
+</html>
