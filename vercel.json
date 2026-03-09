@@ -8,5 +8,9 @@
                 { "key": "X-Content-Type-Options", "value": "nosniff" }
             ]
         }
+    ],
+    "rewrites": [
+        { "source": "/api/send-email", "destination": "/api/send-email" },
+        { "source": "/api/brevo-webhook", "destination": "/api/brevo-webhook" }
     ]
 }
