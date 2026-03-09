@@ -290,6 +290,26 @@
         }
         .modal-box textarea:focus { outline:none; border-color:var(--primary); }
         .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+
+        /* Anrede Toggle + Vorlagen */
+        .anrede-toggle { display:flex; gap:0; margin-bottom:16px; }
+        .anrede-btn {
+            flex:1; padding:8px; font-size:.82rem; font-weight:600;
+            font-family:var(--font); border:1.5px solid var(--g200);
+            background:#fff; color:var(--g600); cursor:pointer; transition:var(--ease);
+        }
+        .anrede-btn:first-child { border-radius:var(--r-sm) 0 0 var(--r-sm); border-right:none; }
+        .anrede-btn:last-child { border-radius:0 var(--r-sm) var(--r-sm) 0; }
+        .anrede-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .vorlage-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .vorlage-chip {
+            padding:6px 14px; font-size:.78rem; font-weight:600;
+            font-family:var(--font); color:var(--g600);
+            background:#fff; border:1px solid var(--g200);
+            border-radius:20px; cursor:pointer; transition:var(--ease);
+        }
+        .vorlage-chip.active { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
+        .vorlage-chip:hover:not(.active) { background:var(--g100); }
         .btn-cancel { padding:10px 20px; font-size:.85rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; }
         .btn-send { padding:10px 20px; font-size:.85rem; font-weight:700; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
         .btn-send:hover { background:var(--primary-dark); }
@@ -485,13 +505,34 @@
     <div class="modal-box">
         <h2>Email an Kunden senden</h2>
         <p class="sub" id="emailModalSub">0 Kunden ausgewählt</p>
+
+        <!-- Anrede: Du / Sie -->
+        <div class="fg">
+            <label>Anrede</label>
+            <div class="anrede-toggle">
+                <button type="button" class="anrede-btn" data-anrede="du" onclick="setAnrede('du')">Du</button>
+                <button type="button" class="anrede-btn active" data-anrede="sie" onclick="setAnrede('sie')">Sie</button>
+            </div>
+        </div>
+
+        <!-- Vorlagen -->
+        <div class="fg">
+            <label>Vorlage</label>
+            <div class="vorlage-chips">
+                <span class="vorlage-chip active" data-vorlage="jahresupdate" onclick="setVorlage('jahresupdate')">Jahresupdate</span>
+                <span class="vorlage-chip" data-vorlage="erstansprache" onclick="setVorlage('erstansprache')">Erstansprache</span>
+                <span class="vorlage-chip" data-vorlage="erinnerung" onclick="setVorlage('erinnerung')">Erinnerung</span>
+                <span class="vorlage-chip" data-vorlage="eigene" onclick="setVorlage('eigene')">Eigene Nachricht</span>
+            </div>
+        </div>
+
         <div class="fg">
             <label for="emailSubject">Betreff</label>
             <input type="text" id="emailSubject" value="Ihr persönlicher GKV-Vergleich" style="width:100%;padding:10px 14px;font-size:.92rem;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-family:var(--font);">
         </div>
         <div class="fg">
-            <label for="emailText">Nachricht (optional – leer = Standard-Vorlage)</label>
-            <textarea id="emailText" placeholder="Leer lassen für die Standard-Vorlage. Platzhalter: {{vorname}}, {{nachname}}, {{link}}"></textarea>
+            <label for="emailText">Vorschau / Nachricht</label>
+            <textarea id="emailText" placeholder="Platzhalter: {{vorname}}, {{nachname}}, {{link}}" rows="8"></textarea>
         </div>
         <p style="font-size:.75rem;color:var(--g400);margin-top:8px;">Platzhalter: <code>{{vorname}}</code>, <code>{{nachname}}</code>, <code>{{link}}</code> werden automatisch ersetzt.</p>
         <div class="modal-actions">
@@ -1201,10 +1242,142 @@ function emailAlleOhne() {
     openEmailModal();
 }
 
+/* ==================================================================
+   EMAIL VORLAGEN
+   ================================================================== */
+let currentAnrede = 'sie';
+let currentVorlage = 'jahresupdate';
+
+const VORLAGEN = {
+    jahresupdate: {
+        sie: {
+            subject: 'Ihr persönlicher GKV-Vergleich {{vorname}}',
+            text: `Hallo {{vorname}},
+
+es ist wieder Zeit für Ihr jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüfen Sie jetzt, ob Sie sparen können.
+
+Ich habe Ihnen einen persönlichen Vergleichsrechner erstellt:
+{{link}}
+
+Der Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: 'Dein persönlicher GKV-Vergleich {{vorname}}',
+            text: `Hallo {{vorname}},
+
+es ist wieder Zeit für dein jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüf jetzt, ob du sparen kannst.
+
+Ich habe dir einen persönlichen Vergleichsrechner erstellt:
+{{link}}
+
+Der Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    erstansprache: {
+        sie: {
+            subject: 'Sparen Sie bei Ihrer Krankenkasse? Persönlicher Vergleich für Sie',
+            text: `Hallo {{vorname}},
+
+wussten Sie, dass der Unterschied zwischen der günstigsten und teuersten Krankenkasse mehrere hundert Euro im Jahr betragen kann?
+
+Ich habe Ihnen einen persönlichen Vergleichsrechner vorbereitet. In nur 30 Sekunden sehen Sie, wie viel Sie sparen können:
+{{link}}
+
+Falls Sie Fragen haben oder eine persönliche Beratung wünschen, stehe ich Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: 'Sparst du bei deiner Krankenkasse? Persönlicher Vergleich für dich',
+            text: `Hallo {{vorname}},
+
+wusstest du, dass der Unterschied zwischen der günstigsten und teuersten Krankenkasse mehrere hundert Euro im Jahr betragen kann?
+
+Ich habe dir einen persönlichen Vergleichsrechner vorbereitet. In nur 30 Sekunden siehst du, wie viel du sparen kannst:
+{{link}}
+
+Falls du Fragen hast oder eine persönliche Beratung möchtest, melde dich gerne bei mir.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    erinnerung: {
+        sie: {
+            subject: 'Erinnerung: Haben Sie schon Ihren Kassenbeitrag verglichen?',
+            text: `Hallo {{vorname}},
+
+vor kurzem hatte ich Ihnen Ihren persönlichen GKV-Vergleichsrechner zugeschickt. Haben Sie schon reingeschaut?
+
+Falls nicht – hier nochmal Ihr persönlicher Link:
+{{link}}
+
+Der Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.
+
+Bei Fragen stehe ich Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: 'Erinnerung: Hast du schon deinen Kassenbeitrag verglichen?',
+            text: `Hallo {{vorname}},
+
+vor kurzem hatte ich dir deinen persönlichen GKV-Vergleichsrechner geschickt. Hast du schon reingeschaut?
+
+Falls nicht – hier nochmal dein persönlicher Link:
+{{link}}
+
+Der Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.
+
+Bei Fragen melde dich gerne bei mir.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    eigene: {
+        sie: { subject: '', text: '' },
+        du: { subject: '', text: '' }
+    }
+};
+
+function setAnrede(anrede) {
+    currentAnrede = anrede;
+    document.querySelectorAll('.anrede-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.anrede === anrede);
+    });
+    applyVorlage();
+}
+
+function setVorlage(vorlage) {
+    currentVorlage = vorlage;
+    document.querySelectorAll('.vorlage-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.vorlage === vorlage);
+    });
+    applyVorlage();
+}
+
+function applyVorlage() {
+    const v = VORLAGEN[currentVorlage]?.[currentAnrede];
+    if (!v) return;
+    if (currentVorlage === 'eigene') return; // Don't overwrite custom text
+    document.getElementById('emailSubject').value = v.subject;
+    document.getElementById('emailText').value = v.text;
+}
+
 function openEmailModal() {
     if (selectedKundenIds.size === 0) return;
     document.getElementById('emailModalSub').textContent = `${selectedKundenIds.size} Kunden ausgewählt`;
     document.getElementById('emailSendStatus').className = 'upload-status';
+    applyVorlage();
     document.getElementById('emailModal').classList.add('active');
 }
 
