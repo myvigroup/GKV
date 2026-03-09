@@ -1275,96 +1275,90 @@ const AffiliateTracker = (() => {
    ================================================================== */
 
 const LeadAPI = (() => {
-    // ── Konfiguration ──
-    // WICHTIG: Vor Go-Live die richtige Supabase-URL eintragen!
-    const API_BASE = 'https://mvakwhbykvidtjvhagsl.supabase.co/functions/v1/rechner-api';
+    let _kundeCode = null;
+    let _kundeRecord = null;
+    let _aktiv = false;
 
-    let _kundeId = null;
-    let _aktiv = false;     // true wenn ?kunde= vorhanden
-
-    function init() {
+    async function init() {
         const params = new URLSearchParams(window.location.search);
-        _kundeId = params.get('kunde');
-        _aktiv = !!_kundeId;
+        _kundeCode = params.get('kunde') || params.get('customer') || null;
+        _aktiv = !!_kundeCode;
 
         if (_aktiv) {
+            // Kunde aus Supabase laden
+            const sb = getSupabase();
+            if (sb) {
+                try {
+                    const { data } = await sb
+                        .from('kunden')
+                        .select('*')
+                        .eq('code', _kundeCode)
+                        .single();
+                    if (data) {
+                        _kundeRecord = data;
+                        console.log('[LeadAPI] Kunde geladen:', data.vorname, data.nachname);
+                    }
+                } catch (err) {
+                    console.warn('[LeadAPI] Kunde nicht gefunden:', _kundeCode);
+                }
+            }
+
             // Consent-Box anzeigen
             const wrap = document.getElementById('consentWrap');
             if (wrap) wrap.classList.remove('hidden');
 
-            // Berater-Name im Consent-Text
             const berater = AffiliateTracker.getBerater();
             if (berater) {
                 const nameEl = document.getElementById('consentBeraterName');
                 if (nameEl) nameEl.textContent = `${berater.vorname} ${berater.nachname}`;
             }
-
-            // Page-View tracken
-            _send('page-view', {
-                kunde_id: _kundeId,
-                berater_slug: AffiliateTracker.getTrackingData()?.beraterSlug || null,
-                session_id: AffiliateTracker.getTrackingData()?.sessionId || null,
-            });
         }
     }
 
-    function istAktiv() {
-        return _aktiv;
-    }
+    function istAktiv() { return _aktiv; }
+    function getKunde() { return _kundeRecord; }
 
     function hatConsent() {
         const cb = document.getElementById('consentCheckbox');
         return cb && cb.checked;
     }
 
-    /** Berechnung an Backend senden */
-    function sendeBerechnung(eingaben, ergebnisse) {
-        if (!_aktiv) return;
+    /** Berechnung direkt in Supabase speichern */
+    async function sendeBerechnung(eingaben, ergebnisseData) {
+        if (!_aktiv || !_kundeRecord) return;
 
-        const consent = hatConsent();
+        const sb = getSupabase();
+        if (!sb) return;
 
-        _send('berechnung', {
-            kunde_id: _kundeId,
-            session_id: AffiliateTracker.getTrackingData()?.sessionId || null,
-            consent,
-            eingaben: consent ? eingaben : null,
-            ergebnisse: consent ? ergebnisse : null,
-        }).then(res => {
-            if (res && res.gespeichert) {
-                _showToast('Deine Ergebnisse wurden deinem Berater bereitgestellt.');
-            }
-        });
-    }
-
-    /** Event an Backend senden */
-    function sendeEvent(eventType, eventData) {
-        if (!_aktiv) return;
-
-        _send('event', {
-            kunde_id: _kundeId,
-            session_id: AffiliateTracker.getTrackingData()?.sessionId || null,
-            event_type: eventType,
-            event_data: eventData || {},
-        });
-    }
-
-    /** API-Call (fire-and-forget, blockiert UI nicht) */
-    async function _send(endpoint, data) {
         try {
-            const res = await fetch(`${API_BASE}/${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+            const berater = AffiliateTracker.getBerater();
+            await sb.from('kunden_berechnungen').insert({
+                kunde_id: _kundeRecord.id,
+                berater_id: _kundeRecord.berater_id,
+                gehalt: eingaben.gehalt,
+                beschaeftigung: eingaben.beschaeftigung || eingaben.employment,
+                familienstand: eingaben.familienstand,
+                kinder: eingaben.kinder,
+                aktuelle_kasse: eingaben.aktuelleKasse || null,
+                guenstigste_kasse: ergebnisseData.guenstigsteKasse,
+                guenstigster_beitrag: ergebnisseData.guenstigsterBeitrag,
+                aktueller_beitrag: ergebnisseData.aktuellerBeitrag,
+                sparpotenzial_jahr: ergebnisseData.sparpotenzialJahr,
+                top5: ergebnisseData.top5 || null,
             });
-            return await res.json();
+            _showToast('Deine Ergebnisse wurden deinem Berater bereitgestellt.');
         } catch (err) {
-            // Offline oder Fehler → ignorieren, Rechner läuft trotzdem
-            console.warn('LeadAPI:', err.message);
-            return null;
+            console.warn('[LeadAPI] Berechnung speichern fehlgeschlagen:', err.message);
         }
     }
 
-    /** Toast-Benachrichtigung */
+    /** Event tracken (fire-and-forget) */
+    function sendeEvent(eventType, eventData) {
+        // Nur loggen, keine Edge Function nötig
+        if (!_aktiv) return;
+        console.log('[LeadAPI] Event:', eventType, eventData);
+    }
+
     function _showToast(message) {
         const toast = document.createElement('div');
         toast.style.cssText = `
@@ -1385,6 +1379,7 @@ const LeadAPI = (() => {
     return Object.freeze({
         init,
         istAktiv,
+        getKunde,
         hatConsent,
         sendeBerechnung,
         sendeEvent,
@@ -2063,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // AFFILIATE-TRACKING INITIALISIEREN
     // ══════════════════════════════════════════════════════════
     await AffiliateTracker.init();
-    LeadAPI.init();
+    await LeadAPI.init();
 
     if (AffiliateTracker.hatBerater()) {
         const berater = AffiliateTracker.getBerater();

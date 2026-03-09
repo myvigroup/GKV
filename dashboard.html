@@ -142,10 +142,59 @@
 
         .loading { text-align:center; padding:40px; color:var(--g400); }
 
+        /* Tabs */
+        .tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--g200); }
+        .tab-btn {
+            padding:10px 20px; font-size:.85rem; font-weight:600;
+            font-family:var(--font); color:var(--g500); background:none;
+            border:none; border-bottom:2px solid transparent;
+            margin-bottom:-2px; cursor:pointer; transition:var(--ease);
+        }
+        .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .tab-btn:hover:not(.active) { color:var(--g700); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* Kunden Box */
+        .kunden-add {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:24px;
+        }
+        .kunden-add h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+        .kunden-form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+        .kunden-form .fg { margin-bottom:0; }
+        .btn-add { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; }
+        .btn-add:hover { background:var(--primary-dark); }
+
+        .kunde-link {
+            display:flex; align-items:center; gap:8px;
+            font-size:.78rem; font-family:monospace; color:var(--g500);
+            background:var(--g50); padding:4px 8px; border-radius:4px;
+            cursor:pointer;
+        }
+        .kunde-link:hover { background:var(--g100); }
+
+        .kunde-calc-count {
+            display:inline-block; padding:2px 8px; border-radius:10px;
+            font-size:.72rem; font-weight:700;
+        }
+        .kunde-calc-count.has { background:var(--success-light); color:#047857; }
+        .kunde-calc-count.none { background:var(--g100); color:var(--g400); }
+
+        /* Berechnungen Detail */
+        .calc-detail {
+            background:var(--g50); border-radius:var(--r-sm);
+            padding:12px 16px; margin-top:8px; font-size:.82rem;
+        }
+        .calc-detail .calc-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--g100); }
+        .calc-detail .calc-row:last-child { border-bottom:none; }
+
         @media (max-width:768px) {
             .dash-body { padding:16px; }
             .stats { grid-template-columns:1fr 1fr; }
             .affiliate-link-row { flex-direction:column; }
+            .kunden-form { grid-template-columns:1fr; }
         }
     </style>
 </head>
@@ -216,37 +265,87 @@
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="filters">
-            <span class="filter-label">Status:</span>
-            <button class="filter-btn active" data-filter="alle" onclick="filterLeads('alle')">Alle</button>
-            <button class="filter-btn" data-filter="neu" onclick="filterLeads('neu')">Neu</button>
-            <button class="filter-btn" data-filter="kontaktiert" onclick="filterLeads('kontaktiert')">Kontaktiert</button>
-            <button class="filter-btn" data-filter="termin" onclick="filterLeads('termin')">Termin</button>
-            <button class="filter-btn" data-filter="abgeschlossen" onclick="filterLeads('abgeschlossen')">Abgeschlossen</button>
-            <button class="filter-btn" data-filter="storniert" onclick="filterLeads('storniert')">Storniert</button>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="leads" onclick="switchTab('leads')">Leads</button>
+            <button class="tab-btn" data-tab="kunden" onclick="switchTab('kunden')">Meine Kunden</button>
         </div>
 
-        <!-- Leads Table -->
-        <div class="table-wrap">
-            <div class="loading" id="leadsLoading">Leads werden geladen...</div>
-            <table id="leadsTable" style="display:none;">
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Name</th>
-                        <th>Kontakt</th>
-                        <th>Gewählte Kasse</th>
-                        <th>Sparpotenzial</th>
-                        <th>Status</th>
-                        <th>Notizen</th>
-                    </tr>
-                </thead>
-                <tbody id="leadsBody"></tbody>
-            </table>
-            <div class="empty-state" id="leadsEmpty" style="display:none;">
-                <h3>Noch keine Leads</h3>
-                <p>Teile deinen persönlichen Link, um Leads zu generieren.</p>
+        <!-- TAB: Leads -->
+        <div class="tab-content active" id="tabLeads">
+            <div class="filters">
+                <span class="filter-label">Status:</span>
+                <button class="filter-btn active" data-filter="alle" onclick="filterLeads('alle')">Alle</button>
+                <button class="filter-btn" data-filter="neu" onclick="filterLeads('neu')">Neu</button>
+                <button class="filter-btn" data-filter="kontaktiert" onclick="filterLeads('kontaktiert')">Kontaktiert</button>
+                <button class="filter-btn" data-filter="termin" onclick="filterLeads('termin')">Termin</button>
+                <button class="filter-btn" data-filter="abgeschlossen" onclick="filterLeads('abgeschlossen')">Abgeschlossen</button>
+                <button class="filter-btn" data-filter="storniert" onclick="filterLeads('storniert')">Storniert</button>
+            </div>
+            <div class="table-wrap">
+                <div class="loading" id="leadsLoading">Leads werden geladen...</div>
+                <table id="leadsTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Name</th>
+                            <th>Kontakt</th>
+                            <th>Gewählte Kasse</th>
+                            <th>Sparpotenzial</th>
+                            <th>Status</th>
+                            <th>Notizen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsBody"></tbody>
+                </table>
+                <div class="empty-state" id="leadsEmpty" style="display:none;">
+                    <h3>Noch keine Leads</h3>
+                    <p>Teile deinen persönlichen Link, um Leads zu generieren.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Kunden -->
+        <div class="tab-content" id="tabKunden">
+            <!-- Kunde hinzufügen -->
+            <div class="kunden-add">
+                <h3>Neuen Kunden einladen</h3>
+                <form class="kunden-form" id="kundeForm" onsubmit="addKunde(event)">
+                    <div class="fg">
+                        <label for="kundeVorname">Vorname *</label>
+                        <input type="text" id="kundeVorname" required>
+                    </div>
+                    <div class="fg">
+                        <label for="kundeNachname">Nachname *</label>
+                        <input type="text" id="kundeNachname" required>
+                    </div>
+                    <div class="fg">
+                        <label for="kundeEmail">E-Mail</label>
+                        <input type="email" id="kundeEmail">
+                    </div>
+                    <button type="submit" class="btn-add" id="kundeAddBtn">Hinzufügen</button>
+                </form>
+            </div>
+
+            <!-- Kunden-Liste -->
+            <div class="table-wrap">
+                <div class="loading" id="kundenLoading">Kunden werden geladen...</div>
+                <table id="kundenTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>E-Mail</th>
+                            <th>Individueller Link</th>
+                            <th>Berechnungen</th>
+                            <th>Letzte Berechnung</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kundenBody"></tbody>
+                </table>
+                <div class="empty-state" id="kundenEmpty" style="display:none;">
+                    <h3>Noch keine Kunden</h3>
+                    <p>Lege Kunden an und teile ihren persönlichen Rechner-Link.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -265,6 +364,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // State
 let allLeads = [];
+let allKunden = [];
+let kundenBerechnungen = {};
 let currentFilter = 'alle';
 let beraterRecord = null;
 
@@ -334,7 +435,7 @@ async function showDashboard(user) {
         document.getElementById('userName').textContent = user.email;
     }
 
-    await loadLeads();
+    await Promise.all([loadLeads(), loadKunden()]);
 }
 
 async function loadLeads() {
@@ -473,6 +574,159 @@ async function updateNotizen(leadId, notizen) {
     if (error) {
         console.error('Notizen-Update fehlgeschlagen:', error);
     }
+}
+
+/* ==================================================================
+   TABS
+   ================================================================== */
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    });
+}
+
+/* ==================================================================
+   KUNDEN
+   ================================================================== */
+async function loadKunden() {
+    document.getElementById('kundenLoading').style.display = 'block';
+    document.getElementById('kundenTable').style.display = 'none';
+    document.getElementById('kundenEmpty').style.display = 'none';
+
+    const { data: kunden } = await sb
+        .from('kunden')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    allKunden = kunden || [];
+
+    // Berechnungen für alle Kunden laden
+    if (allKunden.length > 0) {
+        const kundenIds = allKunden.map(k => k.id);
+        const { data: berechnungen } = await sb
+            .from('kunden_berechnungen')
+            .select('*')
+            .in('kunde_id', kundenIds)
+            .order('created_at', { ascending: false });
+
+        kundenBerechnungen = {};
+        (berechnungen || []).forEach(b => {
+            if (!kundenBerechnungen[b.kunde_id]) kundenBerechnungen[b.kunde_id] = [];
+            kundenBerechnungen[b.kunde_id].push(b);
+        });
+    }
+
+    renderKunden();
+}
+
+function renderKunden() {
+    document.getElementById('kundenLoading').style.display = 'none';
+
+    if (allKunden.length === 0) {
+        document.getElementById('kundenTable').style.display = 'none';
+        document.getElementById('kundenEmpty').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('kundenTable').style.display = 'table';
+    document.getElementById('kundenEmpty').style.display = 'none';
+
+    const baseUrl = window.location.origin;
+    const tbody = document.getElementById('kundenBody');
+    tbody.innerHTML = allKunden.map(kunde => {
+        const berechnungen = kundenBerechnungen[kunde.id] || [];
+        const link = `${baseUrl}/?berater=${beraterRecord.slug}&kunde=${kunde.code}`;
+        const letzte = berechnungen[0];
+
+        let letzteHtml = '–';
+        if (letzte) {
+            const date = new Date(letzte.created_at);
+            const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+            const sparStr = letzte.sparpotenzial_jahr
+                ? `${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
+                : '';
+            letzteHtml = `
+                <div style="font-weight:600;">${dateStr}</div>
+                ${letzte.guenstigste_kasse ? `<div style="font-size:.75rem;color:var(--g500);">Beste: ${esc(letzte.guenstigste_kasse)}</div>` : ''}
+                ${sparStr ? `<div style="font-size:.75rem;color:var(--success);font-weight:600;">Ersparnis: ${sparStr}/Jahr</div>` : ''}
+                ${letzte.gehalt ? `<div style="font-size:.75rem;color:var(--g400);">${letzte.gehalt.toLocaleString('de-DE')} \u20AC brutto</div>` : ''}
+            `;
+        }
+
+        const countClass = berechnungen.length > 0 ? 'has' : 'none';
+
+        return `<tr>
+            <td>
+                <div class="lead-name">${esc(kunde.vorname)} ${esc(kunde.nachname)}</div>
+            </td>
+            <td>
+                ${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="font-size:.82rem;color:var(--primary);">${esc(kunde.email)}</a>` : '–'}
+            </td>
+            <td>
+                <div class="kunde-link" onclick="copyKundeLink(this, '${esc(link)}')" title="Klicken zum Kopieren">
+                    ${esc(link.replace(baseUrl, '...'))}
+                </div>
+            </td>
+            <td style="text-align:center;">
+                <span class="kunde-calc-count ${countClass}">${berechnungen.length}</span>
+            </td>
+            <td>${letzteHtml}</td>
+        </tr>`;
+    }).join('');
+}
+
+async function addKunde(event) {
+    event.preventDefault();
+    if (!beraterRecord) return;
+
+    const btn = document.getElementById('kundeAddBtn');
+    btn.disabled = true;
+
+    const vorname = document.getElementById('kundeVorname').value.trim();
+    const nachname = document.getElementById('kundeNachname').value.trim();
+    const email = document.getElementById('kundeEmail').value.trim() || null;
+
+    // Code generieren: vorname-nachname + random suffix
+    const slug = (vorname + '-' + nachname)
+        .toLowerCase()
+        .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
+        .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    const code = slug + '-' + Math.random().toString(36).substr(2, 4);
+
+    const { error } = await sb.from('kunden').insert({
+        berater_id: beraterRecord.id,
+        code,
+        vorname,
+        nachname,
+        email,
+    });
+
+    btn.disabled = false;
+
+    if (error) {
+        console.error('Kunde anlegen fehlgeschlagen:', error);
+        alert('Fehler beim Anlegen: ' + error.message);
+        return;
+    }
+
+    // Reset form
+    document.getElementById('kundeForm').reset();
+    await loadKunden();
+}
+
+function copyKundeLink(el, link) {
+    navigator.clipboard.writeText(link).then(() => {
+        const orig = el.textContent;
+        el.textContent = 'Kopiert!';
+        el.style.color = 'var(--success)';
+        setTimeout(() => {
+            el.textContent = orig;
+            el.style.color = '';
+        }, 2000);
+    });
 }
 
 /* ==================================================================
