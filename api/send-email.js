@@ -124,6 +124,10 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                     sender: {
+                        name: `${berater.vorname} ${berater.nachname} – mitNORM`,
+                        email: 'service@mitnorm.com',
+                    },
+                    replyTo: {
                         name: `${berater.vorname} ${berater.nachname}`,
                         email: berater.email,
                     },
