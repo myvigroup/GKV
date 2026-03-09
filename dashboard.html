@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berater-Dashboard – GKV-Rechner</title>
+    <style>
+        :root {
+            --primary: #004283;
+            --primary-dark: #003068;
+            --primary-light: #E6F5FB;
+            --accent: #06BADD;
+            --success: #00B67A;
+            --success-light: #E6F9F1;
+            --warning: #FF8C00;
+            --warning-light: #FFF4E5;
+            --danger: #E5243B;
+            --g50: #F8FAFC; --g100: #F1F5F9; --g200: #E2E8F0;
+            --g300: #CBD5E1; --g400: #94A3B8; --g500: #64748B;
+            --g600: #475569; --g700: #334155; --g800: #1E293B;
+            --g900: #0F172A;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+            --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+            --ease: .2s cubic-bezier(.4,0,.2,1);
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { font-size:16px; -webkit-font-smoothing:antialiased; }
+        body { font-family:var(--font); color:var(--g800); background:var(--g50); line-height:1.6; min-height:100vh; }
+
+        /* Login */
+        .login-wrap {
+            display:flex; align-items:center; justify-content:center;
+            min-height:100vh; padding:20px;
+        }
+        .login-card {
+            background:#fff; border-radius:var(--r-lg); padding:40px;
+            max-width:400px; width:100%; box-shadow:var(--shadow-lg);
+        }
+        .login-card h1 { font-size:1.3rem; color:var(--g900); margin-bottom:4px; }
+        .login-card .sub { font-size:.85rem; color:var(--g500); margin-bottom:24px; }
+        .fg { margin-bottom:16px; }
+        .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--g600); margin-bottom:4px; }
+        .fg input { width:100%; padding:10px 14px; font-size:.92rem; border:1.5px solid var(--g200); border-radius:var(--r-sm); font-family:var(--font); transition:var(--ease); }
+        .fg input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.12); }
+        .btn { width:100%; padding:12px; font-size:.95rem; font-weight:700; font-family:var(--font); color:#fff; border:none; background:var(--primary); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn:hover { background:var(--primary-dark); }
+        .btn:disabled { opacity:.5; cursor:not-allowed; }
+        .error-msg { color:var(--danger); font-size:.82rem; margin-top:8px; display:none; }
+
+        /* Dashboard */
+        .dashboard { display:none; }
+        .dash-header {
+            background:#fff; border-bottom:1px solid var(--g200); padding:16px 24px;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .dash-header h1 { font-size:1.1rem; color:var(--g900); }
+        .dash-header .user-info { display:flex; align-items:center; gap:12px; }
+        .dash-header .user-name { font-size:.85rem; color:var(--g600); }
+        .btn-sm { padding:6px 14px; font-size:.8rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-sm:hover { background:var(--g200); }
+
+        .dash-body { max-width:1200px; margin:0 auto; padding:24px; }
+
+        /* Stats */
+        .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card { background:#fff; border-radius:var(--r-md); padding:20px; box-shadow:var(--shadow-sm); border:1px solid var(--g100); }
+        .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); margin-bottom:4px; }
+        .stat-val { font-size:1.6rem; font-weight:800; color:var(--g900); }
+        .stat-sub { font-size:.78rem; color:var(--g500); margin-top:2px; }
+
+        /* Affiliate Link */
+        .affiliate-box {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:24px;
+        }
+        .affiliate-box h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:8px; }
+        .affiliate-link-row { display:flex; gap:8px; }
+        .affiliate-input {
+            flex:1; padding:10px 14px; font-size:.85rem; font-family:monospace;
+            border:1.5px solid var(--g200); border-radius:var(--r-sm);
+            background:var(--g50); color:var(--g700);
+        }
+        .btn-copy { padding:10px 18px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
+        .btn-copy:hover { background:var(--primary-dark); }
+
+        /* Filters */
+        .filters { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+        .filter-label { font-size:.78rem; font-weight:600; color:var(--g500); }
+        .filter-btn {
+            padding:6px 14px; font-size:.78rem; font-weight:600;
+            font-family:var(--font); color:var(--g600);
+            background:#fff; border:1px solid var(--g200);
+            border-radius:20px; cursor:pointer; transition:var(--ease);
+        }
+        .filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .filter-btn:hover:not(.active) { background:var(--g100); }
+
+        /* Table */
+        .table-wrap { background:#fff; border-radius:var(--r-md); box-shadow:var(--shadow-sm); border:1px solid var(--g100); overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:.85rem; }
+        thead th { padding:12px 16px; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); border-bottom:2px solid var(--g100); background:var(--g50); white-space:nowrap; }
+        tbody td { padding:12px 16px; border-bottom:1px solid var(--g100); vertical-align:top; }
+        tbody tr:hover { background:var(--g50); }
+        .lead-name { font-weight:600; color:var(--g900); }
+        .lead-contact { font-size:.78rem; color:var(--g500); }
+        .lead-kasse { font-weight:600; }
+        .lead-savings { color:var(--success); font-weight:700; }
+
+        /* Status Badge */
+        .status-badge {
+            display:inline-block; padding:3px 10px; border-radius:20px;
+            font-size:.72rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.04em;
+        }
+        .status-neu { background:#EEF2FF; color:#4F46E5; }
+        .status-kontaktiert { background:var(--warning-light); color:#B45309; }
+        .status-termin { background:var(--primary-light); color:var(--primary); }
+        .status-abgeschlossen { background:var(--success-light); color:#047857; }
+        .status-storniert { background:#FEF2F2; color:#991B1B; }
+
+        /* Status Select */
+        .status-select {
+            padding:4px 8px; font-size:.78rem; font-family:var(--font);
+            border:1px solid var(--g200); border-radius:var(--r-sm);
+            background:#fff; cursor:pointer;
+        }
+
+        /* Notizen */
+        .notizen-input {
+            width:100%; min-width:150px; padding:6px 10px; font-size:.8rem;
+            font-family:var(--font); border:1px solid var(--g200);
+            border-radius:var(--r-sm); resize:none; height:32px;
+        }
+        .notizen-input:focus { outline:none; border-color:var(--primary); }
+
+        .empty-state { text-align:center; padding:60px 20px; color:var(--g400); }
+        .empty-state h3 { font-size:1.1rem; margin-bottom:8px; color:var(--g500); }
+
+        .loading { text-align:center; padding:40px; color:var(--g400); }
+
+        @media (max-width:768px) {
+            .dash-body { padding:16px; }
+            .stats { grid-template-columns:1fr 1fr; }
+            .affiliate-link-row { flex-direction:column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     LOGIN
+     ================================================================ -->
+<div class="login-wrap" id="loginView">
+    <div class="login-card">
+        <h1>Berater-Dashboard</h1>
+        <p class="sub">Melde dich an, um deine Leads zu sehen.</p>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="fg">
+                <label for="loginEmail">E-Mail</label>
+                <input type="email" id="loginEmail" required autocomplete="email">
+            </div>
+            <div class="fg">
+                <label for="loginPassword">Passwort</label>
+                <input type="password" id="loginPassword" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn" id="loginBtn">Anmelden</button>
+            <div class="error-msg" id="loginError"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ================================================================
+     DASHBOARD
+     ================================================================ -->
+<div class="dashboard" id="dashboardView">
+    <div class="dash-header">
+        <h1>GKV-Rechner Dashboard</h1>
+        <div class="user-info">
+            <span class="user-name" id="userName"></span>
+            <button class="btn-sm" onclick="handleLogout()">Abmelden</button>
+        </div>
+    </div>
+
+    <div class="dash-body">
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Leads gesamt</div>
+                <div class="stat-val" id="statTotal">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Neue Leads</div>
+                <div class="stat-val" id="statNeu">–</div>
+                <div class="stat-sub">Noch nicht kontaktiert</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Diesen Monat</div>
+                <div class="stat-val" id="statMonth">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Abgeschlossen</div>
+                <div class="stat-val" id="statDone">–</div>
+            </div>
+        </div>
+
+        <!-- Affiliate Link -->
+        <div class="affiliate-box">
+            <h3>Dein persönlicher Rechner-Link</h3>
+            <div class="affiliate-link-row">
+                <input type="text" class="affiliate-input" id="affiliateLink" readonly>
+                <button class="btn-copy" onclick="copyAffiliateLink()">Kopieren</button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <span class="filter-label">Status:</span>
+            <button class="filter-btn active" data-filter="alle" onclick="filterLeads('alle')">Alle</button>
+            <button class="filter-btn" data-filter="neu" onclick="filterLeads('neu')">Neu</button>
+            <button class="filter-btn" data-filter="kontaktiert" onclick="filterLeads('kontaktiert')">Kontaktiert</button>
+            <button class="filter-btn" data-filter="termin" onclick="filterLeads('termin')">Termin</button>
+            <button class="filter-btn" data-filter="abgeschlossen" onclick="filterLeads('abgeschlossen')">Abgeschlossen</button>
+            <button class="filter-btn" data-filter="storniert" onclick="filterLeads('storniert')">Storniert</button>
+        </div>
+
+        <!-- Leads Table -->
+        <div class="table-wrap">
+            <div class="loading" id="leadsLoading">Leads werden geladen...</div>
+            <table id="leadsTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Name</th>
+                        <th>Kontakt</th>
+                        <th>Gewählte Kasse</th>
+                        <th>Sparpotenzial</th>
+                        <th>Status</th>
+                        <th>Notizen</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsBody"></tbody>
+            </table>
+            <div class="empty-state" id="leadsEmpty" style="display:none;">
+                <h3>Noch keine Leads</h3>
+                <p>Teile deinen persönlichen Link, um Leads zu generieren.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+/* ==================================================================
+   SUPABASE CLIENT
+   ================================================================== */
+const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// State
+let allLeads = [];
+let currentFilter = 'alle';
+let beraterRecord = null;
+
+/* ==================================================================
+   AUTH
+   ================================================================== */
+async function checkSession() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+        await showDashboard(session.user);
+    }
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const errorEl = document.getElementById('loginError');
+    btn.disabled = true;
+    errorEl.style.display = 'none';
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        errorEl.textContent = 'Anmeldung fehlgeschlagen: ' + error.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        return;
+    }
+
+    await showDashboard(data.user);
+}
+
+async function handleLogout() {
+    await sb.auth.signOut();
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('dashboardView').style.display = 'none';
+}
+
+/* ==================================================================
+   DASHBOARD
+   ================================================================== */
+async function showDashboard(user) {
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+
+    // Berater-Daten laden
+    const { data: berater } = await sb
+        .from('berater')
+        .select('*')
+        .eq('auth_user_id', user.id)
+        .single();
+
+    beraterRecord = berater;
+
+    if (berater) {
+        document.getElementById('userName').textContent =
+            `${berater.vorname} ${berater.nachname}`;
+
+        // Affiliate-Link setzen
+        const baseUrl = window.location.origin;
+        document.getElementById('affiliateLink').value =
+            `${baseUrl}/?berater=${berater.slug}`;
+    } else {
+        document.getElementById('userName').textContent = user.email;
+    }
+
+    await loadLeads();
+}
+
+async function loadLeads() {
+    document.getElementById('leadsLoading').style.display = 'block';
+    document.getElementById('leadsTable').style.display = 'none';
+    document.getElementById('leadsEmpty').style.display = 'none';
+
+    const { data, error } = await sb
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    allLeads = data || [];
+
+    updateStats();
+    renderLeads();
+}
+
+function updateStats() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    document.getElementById('statTotal').textContent = allLeads.length;
+    document.getElementById('statNeu').textContent =
+        allLeads.filter(l => l.status === 'neu').length;
+    document.getElementById('statMonth').textContent =
+        allLeads.filter(l => l.created_at >= monthStart).length;
+    document.getElementById('statDone').textContent =
+        allLeads.filter(l => l.status === 'abgeschlossen').length;
+}
+
+function renderLeads() {
+    const filtered = currentFilter === 'alle'
+        ? allLeads
+        : allLeads.filter(l => l.status === currentFilter);
+
+    document.getElementById('leadsLoading').style.display = 'none';
+
+    if (filtered.length === 0) {
+        document.getElementById('leadsTable').style.display = 'none';
+        document.getElementById('leadsEmpty').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('leadsTable').style.display = 'table';
+    document.getElementById('leadsEmpty').style.display = 'none';
+
+    const tbody = document.getElementById('leadsBody');
+    tbody.innerHTML = filtered.map(lead => {
+        const date = new Date(lead.created_at);
+        const dateStr = date.toLocaleDateString('de-DE', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+        const timeStr = date.toLocaleTimeString('de-DE', {
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        const statusClass = `status-${lead.status}`;
+        const savings = lead.sparpotenzial_jahr
+            ? `${lead.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
+            : '–';
+
+        return `<tr>
+            <td>
+                <div style="font-weight:600;">${dateStr}</div>
+                <div style="font-size:.75rem;color:var(--g400);">${timeStr}</div>
+            </td>
+            <td>
+                <div class="lead-name">${esc(lead.vorname)} ${esc(lead.nachname)}</div>
+                ${lead.gehalt ? `<div style="font-size:.75rem;color:var(--g400);">${lead.gehalt.toLocaleString('de-DE')} \u20AC brutto</div>` : ''}
+            </td>
+            <td>
+                <div class="lead-contact">
+                    <a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a>
+                </div>
+                ${lead.telefon ? `<div class="lead-contact"><a href="tel:${esc(lead.telefon)}">${esc(lead.telefon)}</a></div>` : ''}
+            </td>
+            <td>
+                <div class="lead-kasse">${esc(lead.gewaehlte_kasse || '–')}</div>
+                ${lead.aktuelle_kasse ? `<div style="font-size:.75rem;color:var(--g400);">Aktuell: ${esc(lead.aktuelle_kasse)}</div>` : ''}
+            </td>
+            <td class="lead-savings">${savings}</td>
+            <td>
+                <select class="status-select" onchange="updateStatus('${lead.id}', this.value)">
+                    <option value="neu" ${lead.status === 'neu' ? 'selected' : ''}>Neu</option>
+                    <option value="kontaktiert" ${lead.status === 'kontaktiert' ? 'selected' : ''}>Kontaktiert</option>
+                    <option value="termin" ${lead.status === 'termin' ? 'selected' : ''}>Termin</option>
+                    <option value="abgeschlossen" ${lead.status === 'abgeschlossen' ? 'selected' : ''}>Abgeschlossen</option>
+                    <option value="storniert" ${lead.status === 'storniert' ? 'selected' : ''}>Storniert</option>
+                </select>
+            </td>
+            <td>
+                <textarea class="notizen-input"
+                    placeholder="Notizen..."
+                    onblur="updateNotizen('${lead.id}', this.value)"
+                >${esc(lead.notizen || '')}</textarea>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function filterLeads(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    renderLeads();
+}
+
+/* ==================================================================
+   LEAD UPDATES
+   ================================================================== */
+async function updateStatus(leadId, newStatus) {
+    const { error } = await sb
+        .from('leads')
+        .update({ status: newStatus })
+        .eq('id', leadId);
+
+    if (error) {
+        console.error('Status-Update fehlgeschlagen:', error);
+        return;
+    }
+
+    // Local state update
+    const lead = allLeads.find(l => l.id === leadId);
+    if (lead) lead.status = newStatus;
+    updateStats();
+}
+
+async function updateNotizen(leadId, notizen) {
+    const { error } = await sb
+        .from('leads')
+        .update({ notizen })
+        .eq('id', leadId);
+
+    if (error) {
+        console.error('Notizen-Update fehlgeschlagen:', error);
+    }
+}
+
+/* ==================================================================
+   HELPERS
+   ================================================================== */
+function copyAffiliateLink() {
+    const input = document.getElementById('affiliateLink');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.textContent = 'Kopiert!';
+        setTimeout(() => btn.textContent = 'Kopieren', 2000);
+    });
+}
+
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/* ==================================================================
+   INIT
+   ================================================================== */
+checkSession();
+</script>
+
+</body>
+</html>

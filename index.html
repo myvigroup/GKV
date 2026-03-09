@@ -530,6 +530,60 @@
             .berater-btn-book { width:100%; text-align:center; }
             .berater-banner { padding:12px; }
         }
+
+        /* ==========================================================
+           LEAD-MODAL
+           ========================================================== */
+        .modal-overlay {
+            position:fixed; inset:0; z-index:10000;
+            background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+            display:flex; align-items:center; justify-content:center;
+            padding:20px; opacity:1; transition:opacity .2s ease;
+        }
+        .modal-overlay.hidden { display:none; }
+        .modal-card {
+            background:#fff; border-radius:var(--r-xl); padding:32px;
+            max-width:480px; width:100%; box-shadow:var(--shadow-lg);
+            position:relative; max-height:90vh; overflow-y:auto;
+        }
+        .modal-close {
+            position:absolute; top:12px; right:16px;
+            background:none; border:none; font-size:1.5rem;
+            color:var(--g400); cursor:pointer; line-height:1;
+        }
+        .modal-close:hover { color:var(--g800); }
+        .modal-card h3 { font-size:1.15rem; font-weight:700; color:var(--g900); margin-bottom:4px; }
+        .modal-sub { font-size:.85rem; color:var(--g500); margin-bottom:20px; }
+        .modal-card .fg { margin-bottom:14px; }
+        .modal-card .fg label {
+            display:block; font-size:.78rem; font-weight:600;
+            color:var(--g600); margin-bottom:4px;
+        }
+        .modal-card .fg input {
+            width:100%; padding:10px 14px; font-size:.92rem;
+            border:1.5px solid var(--g200); border-radius:var(--r-sm);
+            font-family:var(--font); transition:var(--ease);
+        }
+        .modal-card .fg input:focus {
+            outline:none; border-color:var(--primary);
+            box-shadow:var(--shadow-glow);
+        }
+        .modal-card .btn-submit {
+            width:100%; padding:14px; font-size:.95rem; font-weight:700;
+            font-family:var(--font); color:#fff; border:none;
+            background:linear-gradient(135deg,var(--primary),var(--accent));
+            border-radius:var(--r-sm); cursor:pointer; margin-top:8px;
+            transition:var(--ease);
+        }
+        .modal-card .btn-submit:hover { opacity:.9; transform:translateY(-1px); }
+        .modal-card .btn-submit:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+        .modal-success {
+            text-align:center; padding:24px 0;
+        }
+        .modal-success svg { width:56px; height:56px; color:var(--success); margin-bottom:12px; }
+        .modal-success h4 { font-size:1.1rem; color:var(--g900); margin-bottom:6px; }
+        .modal-success p { font-size:.88rem; color:var(--g500); }
+        .modal-error { color:var(--danger); font-size:.82rem; margin-top:8px; display:none; }
     </style>
 </head>
 <body>
@@ -763,6 +817,20 @@
      JAVASCRIPT – Modular aufgebaut
      ================================================================ -->
 <script>
+/* ==================================================================
+   0. SUPABASE CLIENT
+   ================================================================== */
+const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
+let _supabaseClient = null;
+
+function getSupabase() {
+    if (!_supabaseClient && window.supabase) {
+        _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    return _supabaseClient;
+}
+
 /* ==================================================================
    1. KASSEN-DATEN (JSON-Struktur, leicht austauschbar)
    ==================================================================
@@ -1017,8 +1085,9 @@ const AffiliateTracker = (() => {
     /**
      * Initialisiert das Tracking aus den URL-Parametern.
      * Wird einmalig beim Laden der Seite aufgerufen.
+     * Versucht Berater aus Supabase zu laden, Fallback auf BERATER_DATEN.
      */
-    function init() {
+    async function init() {
         const params = new URLSearchParams(window.location.search);
 
         _beraterSlug = params.get('berater') || null;
@@ -1027,17 +1096,43 @@ const AffiliateTracker = (() => {
         _kundeId     = params.get('kunde') || params.get('customer') || null;
         _sessionId   = generateSessionId();
 
-        // Berater-Daten auflösen
-        if (_beraterSlug && BERATER_DATEN[_beraterSlug]) {
-            _berater = BERATER_DATEN[_beraterSlug];
-        } else if (_beraterSlug) {
-            // Unbekannter Slug → Fallback, aber Slug für Tracking behalten
-            _berater = BERATER_DATEN['_fallback'];
-            console.warn(`[Affiliate] Unbekannter Berater-Slug: "${_beraterSlug}" – Fallback wird verwendet.`);
-        }
-
-        // Debug-Log (in Produktion entfernen oder an Analytics senden)
+        // Berater-Daten auflösen: erst Supabase, dann lokales Fallback
         if (_beraterSlug) {
+            const sb = getSupabase();
+            if (sb) {
+                try {
+                    const { data } = await sb
+                        .from('berater')
+                        .select('*')
+                        .eq('slug', _beraterSlug)
+                        .eq('aktiv', true)
+                        .single();
+                    if (data) {
+                        _berater = {
+                            vorname: data.vorname,
+                            nachname: data.nachname,
+                            titel: data.titel || '',
+                            email: data.email,
+                            telefon: data.telefon,
+                            calendlyUrl: data.calendly_url,
+                            bild: data.bild_url || '',
+                            team: data.team,
+                            _dbId: data.id,  // DB-ID für Lead-Zuordnung
+                        };
+                    }
+                } catch (err) {
+                    console.warn('[Affiliate] Supabase-Lookup fehlgeschlagen, nutze lokales Fallback:', err.message);
+                }
+            }
+
+            // Fallback auf BERATER_DATEN falls Supabase nicht verfügbar
+            if (!_berater && BERATER_DATEN[_beraterSlug]) {
+                _berater = BERATER_DATEN[_beraterSlug];
+            } else if (!_berater) {
+                _berater = BERATER_DATEN['_fallback'];
+                console.warn(`[Affiliate] Unbekannter Berater-Slug: "${_beraterSlug}" – Fallback wird verwendet.`);
+            }
+
             console.log('[Affiliate] Tracking initialisiert:', getTrackingData());
         }
     }
@@ -1812,26 +1907,117 @@ function zeigeDetail(name) {
     alert(msg);
 }
 
-/** CTA Handler – Berater-aware mit Tracking */
+/** CTA Handler – öffnet Lead-Modal */
 function ctaClicked(kasse) {
-    // Event tracken
     AffiliateTracker.trackEvent('cta_click', {
         kasse: kasse || 'allgemein',
         position: kasse ? 'kassen_card' : 'footer_cta',
     });
     LeadAPI.sendeEvent('cta_click', { kasse: kasse || 'allgemein' });
+    openLeadModal(kasse);
+}
 
-    if (AffiliateTracker.hatBerater()) {
-        // Berater vorhanden → Booking-URL öffnen
-        const url = AffiliateTracker.getBookingUrl(kasse);
-        window.open(url, '_blank', 'noopener');
-    } else {
-        // Kein Berater → generischer CTA (Kontaktformular, Landingpage etc.)
-        // In Produktion: Eigenen Booking-Link oder Formular hier einsetzen
-        const msg = kasse
-            ? `Vielen Dank! Deine Anfrage für "${kasse}" wird bearbeitet.\n\nIn einer Produktivumgebung würde hier ein Kontaktformular oder eine Weiterleitung erscheinen.`
-            : `Vielen Dank für dein Interesse!\n\nIn einer Produktivumgebung würde hier ein Beratungsformular erscheinen.`;
-        alert(msg);
+/** Lead-Modal öffnen */
+function openLeadModal(kasse) {
+    const modal = document.getElementById('leadModal');
+    modal.classList.remove('hidden');
+    document.getElementById('leadModalKasse').textContent =
+        kasse ? `Interesse an: ${kasse}` : 'Lass dich kostenlos beraten';
+    modal._kasse = kasse || null;
+
+    // Reset
+    document.getElementById('leadForm').classList.remove('hidden');
+    document.getElementById('leadSuccess').classList.add('hidden');
+    document.getElementById('leadError').style.display = 'none';
+    document.getElementById('leadSubmitBtn').disabled = false;
+
+    // Berater-Info im Modal
+    const berater = AffiliateTracker.getBerater();
+    if (berater) {
+        document.getElementById('leadModalKasse').textContent =
+            kasse
+                ? `${berater.vorname} ${berater.nachname} berät dich zu: ${kasse}`
+                : `Persönliche Beratung durch ${berater.vorname} ${berater.nachname}`;
+    }
+}
+
+/** Lead-Modal schließen */
+function closeLeadModal() {
+    document.getElementById('leadModal').classList.add('hidden');
+}
+
+/** Lead an Supabase senden */
+async function submitLead(event) {
+    event.preventDefault();
+
+    const btn = document.getElementById('leadSubmitBtn');
+    const errorEl = document.getElementById('leadError');
+    btn.disabled = true;
+    btn.textContent = 'Wird gesendet...';
+    errorEl.style.display = 'none';
+
+    const eingaben = leseEingaben();
+    const aktuelleKasseName = document.getElementById('aktuelleKasse').value;
+    const kasse = document.getElementById('leadModal')._kasse;
+
+    // Sparpotenzial berechnen
+    const guenstigste = ergebnisse[0];
+    const aktuelleKasse = aktuelleKasseName
+        ? ergebnisse.find(e => e.name === aktuelleKasseName)
+        : null;
+    const sparpotenzial = aktuelleKasse && guenstigste
+        ? round2((aktuelleKasse.gesamtAN - guenstigste.gesamtAN) * 12)
+        : null;
+
+    // Berater-DB-ID ermitteln
+    const berater = AffiliateTracker.getBerater();
+    const beraterId = berater?._dbId || null;
+
+    const sb = getSupabase();
+    if (!sb) {
+        errorEl.textContent = 'Verbindung zum Server fehlgeschlagen. Bitte versuche es erneut.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Beratung anfordern';
+        return;
+    }
+
+    const { error } = await sb.from('leads').insert({
+        vorname: document.getElementById('leadVorname').value.trim(),
+        nachname: document.getElementById('leadNachname').value.trim(),
+        email: document.getElementById('leadEmail').value.trim(),
+        telefon: document.getElementById('leadTelefon').value.trim() || null,
+        berater_id: beraterId,
+        berater_slug: AffiliateTracker.getSlug(),
+        kampagne: AffiliateTracker.getTrackingData().kampagne,
+        ref_source: AffiliateTracker.getTrackingData().ref,
+        gewaehlte_kasse: kasse,
+        aktuelle_kasse: aktuelleKasseName || null,
+        gehalt: eingaben.gehalt || null,
+        beschaeftigung: eingaben.employment,
+        familienstand: eingaben.familienstand,
+        kinder: eingaben.kinder,
+        sparpotenzial_jahr: sparpotenzial,
+        session_id: AffiliateTracker.getTrackingData().sessionId,
+    });
+
+    if (error) {
+        console.error('[Lead] Fehler:', error);
+        errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Beratung anfordern';
+        return;
+    }
+
+    // Erfolg
+    AffiliateTracker.trackEvent('lead_submitted', { kasse });
+    document.getElementById('leadForm').classList.add('hidden');
+    document.getElementById('leadSuccess').classList.remove('hidden');
+
+    if (berater) {
+        document.getElementById('leadSuccessText').textContent =
+            `${berater.vorname} ${berater.nachname} wird sich in Kürze bei dir melden.`;
     }
 }
 
@@ -1846,29 +2032,11 @@ function openBooking() {
     }
 }
 
-/** Rückruf-Handler */
+/** Rückruf-Handler – öffnet Lead-Modal */
 function rueckrufClicked() {
     AffiliateTracker.trackEvent('rueckruf_click', { position: 'advice_box' });
     LeadAPI.sendeEvent('rueckruf_click', { position: 'advice_box' });
-
-    const berater = AffiliateTracker.getBerater();
-    if (berater && berater.telefon) {
-        // Direkt anrufen oder Rückruf-Seite
-        const ok = confirm(
-            `Möchtest du ${berater.vorname} ${berater.nachname} direkt erreichen?\n\n` +
-            `📞  ${berater.telefon}\n\n` +
-            `OK = Jetzt anrufen\nAbbrechen = Später`
-        );
-        if (ok) {
-            window.location.href = `tel:${berater.telefon}`;
-        }
-    } else {
-        // Fallback ohne Berater
-        alert(
-            `Vielen Dank für dein Interesse!\n\n` +
-            `In einer Produktivumgebung würde hier ein Rückrufformular erscheinen.`
-        );
-    }
+    openLeadModal(null);
 }
 
 /** PKV-Info Handler – Berater-Booking oder Fallback-Seite */
@@ -1889,12 +2057,12 @@ function pkvInfoClicked() {
    6. INITIALISIERUNG
    ================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
     // ══════════════════════════════════════════════════════════
     // AFFILIATE-TRACKING INITIALISIEREN
     // ══════════════════════════════════════════════════════════
-    AffiliateTracker.init();
+    await AffiliateTracker.init();
     LeadAPI.init();
 
     if (AffiliateTracker.hatBerater()) {
@@ -2014,6 +2182,53 @@ function syncKinderlosField() {
     }
 }
 </script>
+
+<!-- ================================================================
+     LEAD-MODAL (wird per JS eingeblendet bei CTA-Klick)
+     ================================================================ -->
+<div class="modal-overlay hidden" id="leadModal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeLeadModal()">&times;</button>
+        <h3>Kostenlose Beratung anfordern</h3>
+        <p class="modal-sub" id="leadModalKasse"></p>
+
+        <form id="leadForm" onsubmit="submitLead(event)">
+            <div class="fg">
+                <label for="leadVorname">Vorname *</label>
+                <input type="text" id="leadVorname" required autocomplete="given-name">
+            </div>
+            <div class="fg">
+                <label for="leadNachname">Nachname *</label>
+                <input type="text" id="leadNachname" required autocomplete="family-name">
+            </div>
+            <div class="fg">
+                <label for="leadEmail">E-Mail *</label>
+                <input type="email" id="leadEmail" required autocomplete="email">
+            </div>
+            <div class="fg">
+                <label for="leadTelefon">Telefon</label>
+                <input type="tel" id="leadTelefon" autocomplete="tel">
+            </div>
+            <div class="consent-wrap">
+                <label class="consent-label">
+                    <input type="checkbox" id="leadConsent" required>
+                    <span class="consent-text">Ich bin einverstanden, dass meine Daten zur Kontaktaufnahme gespeichert werden. <a href="https://mitnorm.de/datenschutz" target="_blank">Datenschutz</a></span>
+                </label>
+            </div>
+            <button type="submit" class="btn-submit" id="leadSubmitBtn">Beratung anfordern</button>
+            <div class="modal-error" id="leadError"></div>
+        </form>
+
+        <div class="modal-success hidden" id="leadSuccess">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+            <h4>Vielen Dank!</h4>
+            <p id="leadSuccessText">Wir melden uns in Kürze bei dir.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 </body>
 </html>
