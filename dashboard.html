@@ -182,13 +182,119 @@
         .kunde-calc-count.has { background:var(--success-light); color:#047857; }
         .kunde-calc-count.none { background:var(--g100); color:var(--g400); }
 
-        /* Berechnungen Detail */
-        .calc-detail {
-            background:var(--g50); border-radius:var(--r-sm);
-            padding:12px 16px; margin-top:8px; font-size:.82rem;
+        /* Excel Upload */
+        .excel-upload-box {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:24px;
         }
-        .calc-detail .calc-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--g100); }
-        .calc-detail .calc-row:last-child { border-bottom:none; }
+        .excel-upload-box h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:4px; }
+        .excel-upload-box .sub { font-size:.78rem; color:var(--g500); margin-bottom:12px; }
+        .excel-upload-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .excel-file-input {
+            flex:1; min-width:200px; padding:8px 12px; font-size:.85rem;
+            font-family:var(--font); border:1.5px dashed var(--g300);
+            border-radius:var(--r-sm); background:var(--g50); cursor:pointer;
+        }
+        .excel-file-input:hover { border-color:var(--primary); background:var(--primary-light); }
+        .btn-upload { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--success); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; }
+        .btn-upload:hover { background:#009966; }
+        .btn-upload:disabled { opacity:.5; cursor:not-allowed; }
+        .btn-template { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; text-decoration:none; display:inline-flex; align-items:center; }
+        .btn-template:hover { background:var(--g200); }
+        .upload-status { font-size:.82rem; margin-top:10px; padding:8px 12px; border-radius:var(--r-sm); display:none; }
+        .upload-status.success { display:block; background:var(--success-light); color:#047857; }
+        .upload-status.error { display:block; background:#FEF2F2; color:#991B1B; }
+        .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
+        .upload-preview { margin-top:12px; max-height:200px; overflow-y:auto; }
+        .upload-preview table { font-size:.8rem; }
+        .upload-preview th { font-size:.7rem; }
+
+        /* Kunden-Detail-Zeile */
+        .kunde-row { cursor:pointer; transition:background .15s ease; }
+        .kunde-row:hover { background:var(--primary-light) !important; }
+        .kunde-detail-row td { padding:0 !important; border-bottom:1px solid var(--g100); }
+        .kunde-detail-row.hidden td { display:none; }
+        .kunde-detail {
+            padding:16px 20px 20px; background:var(--g50);
+        }
+        .kunde-detail h4 { font-size:.85rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+        .calc-timeline { position:relative; padding-left:20px; }
+        .calc-item {
+            position:relative; padding:12px 16px; margin-bottom:12px;
+            background:#fff; border-radius:var(--r-sm); border:1px solid var(--g100);
+            box-shadow:var(--shadow-sm);
+        }
+        .calc-item::before {
+            content:''; position:absolute; left:-16px; top:18px;
+            width:10px; height:10px; border-radius:50%;
+            background:var(--primary); border:2px solid #fff;
+            box-shadow:0 0 0 2px var(--primary-light);
+        }
+        .calc-item:not(:last-child)::after {
+            content:''; position:absolute; left:-12px; top:28px;
+            width:2px; height:calc(100% + 4px); background:var(--g200);
+        }
+        .calc-date { font-size:.72rem; font-weight:600; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+        .calc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; }
+        .calc-field-label { font-size:.68rem; font-weight:600; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; }
+        .calc-field-val { font-size:.88rem; font-weight:600; color:var(--g800); }
+        .calc-field-val.savings { color:var(--success); font-weight:800; }
+        .calc-no-data { font-size:.82rem; color:var(--g400); padding:12px 0; }
+
+        /* Email Status */
+        .email-status {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:700;
+            text-transform:uppercase; letter-spacing:.03em;
+        }
+        .email-status.sent { background:#EEF2FF; color:#4F46E5; }
+        .email-status.delivered { background:var(--primary-light); color:var(--primary); }
+        .email-status.opened { background:var(--warning-light); color:#B45309; }
+        .email-status.clicked { background:var(--success-light); color:#047857; }
+        .email-status.bounced { background:#FEF2F2; color:#991B1B; }
+        .email-status.none { background:var(--g100); color:var(--g400); }
+
+        .email-dot { width:6px; height:6px; border-radius:50%; }
+        .email-dot.sent { background:#4F46E5; }
+        .email-dot.delivered { background:var(--primary); }
+        .email-dot.opened { background:#B45309; }
+        .email-dot.clicked { background:#047857; }
+        .email-dot.bounced { background:#991B1B; }
+
+        .btn-email { padding:5px 12px; font-size:.75rem; font-weight:600; font-family:var(--font); color:var(--primary); background:var(--primary-light); border:1px solid rgba(0,66,131,.2); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
+        .btn-email:hover { background:var(--primary); color:#fff; }
+        .btn-email:disabled { opacity:.4; cursor:not-allowed; }
+
+        .email-actions { display:flex; gap:8px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+
+        /* Email senden Modal */
+        .modal-overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+            z-index:1000; align-items:center; justify-content:center; padding:20px;
+        }
+        .modal-overlay.active { display:flex; }
+        .modal-box {
+            background:#fff; border-radius:var(--r-lg); padding:28px;
+            max-width:600px; width:100%; box-shadow:var(--shadow-lg);
+            max-height:90vh; overflow-y:auto;
+        }
+        .modal-box h2 { font-size:1.1rem; margin-bottom:4px; }
+        .modal-box .sub { font-size:.82rem; color:var(--g500); margin-bottom:20px; }
+        .modal-box textarea {
+            width:100%; min-height:120px; padding:10px 14px; font-size:.88rem;
+            font-family:var(--font); border:1.5px solid var(--g200);
+            border-radius:var(--r-sm); resize:vertical;
+        }
+        .modal-box textarea:focus { outline:none; border-color:var(--primary); }
+        .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+        .btn-cancel { padding:10px 20px; font-size:.85rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; }
+        .btn-send { padding:10px 20px; font-size:.85rem; font-weight:700; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-send:hover { background:var(--primary-dark); }
+        .btn-send:disabled { opacity:.5; cursor:not-allowed; }
+
+        .select-all-row { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:.82rem; color:var(--g600); }
+        .kunde-checkbox { width:16px; height:16px; cursor:pointer; }
 
         @media (max-width:768px) {
             .dash-body { padding:16px; }
@@ -327,14 +433,35 @@
                 </form>
             </div>
 
+            <!-- Excel Upload -->
+            <div class="excel-upload-box">
+                <h3>Kunden per Excel hochladen</h3>
+                <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional)</p>
+                <div class="excel-upload-row">
+                    <input type="file" class="excel-file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
+                    <button class="btn-upload" id="excelUploadBtn" onclick="uploadExcelKunden()" disabled>Hochladen</button>
+                    <button class="btn-template" onclick="downloadTemplate()">Vorlage herunterladen</button>
+                </div>
+                <div class="upload-status" id="uploadStatus"></div>
+                <div class="upload-preview" id="uploadPreview"></div>
+            </div>
+
+            <!-- Email Aktionen -->
+            <div class="email-actions" id="emailActions" style="display:none;">
+                <button class="btn-email" onclick="openEmailModal()" id="btnEmailSelected">Ausgewählte anschreiben (0)</button>
+                <button class="btn-email" onclick="emailAlleOhne()" title="Alle Kunden anschreiben, die noch keine Email erhalten haben">Alle ohne Email anschreiben</button>
+            </div>
+
             <!-- Kunden-Liste -->
             <div class="table-wrap">
                 <div class="loading" id="kundenLoading">Kunden werden geladen...</div>
                 <table id="kundenTable" style="display:none;">
                     <thead>
                         <tr>
+                            <th style="width:30px;"><input type="checkbox" class="kunde-checkbox" onchange="toggleAlleKunden(this)"></th>
                             <th>Name</th>
                             <th>E-Mail</th>
+                            <th>Email-Status</th>
                             <th>Individueller Link</th>
                             <th>Berechnungen</th>
                             <th>Letzte Berechnung</th>
@@ -351,8 +478,32 @@
     </div>
 </div>
 
+<!-- Email Modal -->
+<div class="modal-overlay" id="emailModal">
+    <div class="modal-box">
+        <h2>Email an Kunden senden</h2>
+        <p class="sub" id="emailModalSub">0 Kunden ausgewählt</p>
+        <div class="fg">
+            <label for="emailSubject">Betreff</label>
+            <input type="text" id="emailSubject" value="Ihr persönlicher GKV-Vergleich" style="width:100%;padding:10px 14px;font-size:.92rem;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-family:var(--font);">
+        </div>
+        <div class="fg">
+            <label for="emailText">Nachricht (optional – leer = Standard-Vorlage)</label>
+            <textarea id="emailText" placeholder="Leer lassen für die Standard-Vorlage. Platzhalter: {{vorname}}, {{nachname}}, {{link}}"></textarea>
+        </div>
+        <p style="font-size:.75rem;color:var(--g400);margin-top:8px;">Platzhalter: <code>{{vorname}}</code>, <code>{{nachname}}</code>, <code>{{link}}</code> werden automatisch ersetzt.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeEmailModal()">Abbrechen</button>
+            <button class="btn-send" id="btnSendEmail" onclick="sendEmails()">Senden</button>
+        </div>
+        <div class="upload-status" id="emailSendStatus" style="margin-top:12px;"></div>
+    </div>
+</div>
+
 <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- SheetJS for Excel parsing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
 /* ==================================================================
@@ -366,6 +517,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let allLeads = [];
 let allKunden = [];
 let kundenBerechnungen = {};
+let kundenEmails = {};
+let selectedKundenIds = new Set();
 let currentFilter = 'alle';
 let beraterRecord = null;
 
@@ -603,22 +756,28 @@ async function loadKunden() {
 
     allKunden = kunden || [];
 
-    // Berechnungen für alle Kunden laden
+    // Berechnungen und Emails für alle Kunden laden
     if (allKunden.length > 0) {
         const kundenIds = allKunden.map(k => k.id);
-        const { data: berechnungen } = await sb
-            .from('kunden_berechnungen')
-            .select('*')
-            .in('kunde_id', kundenIds)
-            .order('created_at', { ascending: false });
+        const [berechRes, emailRes] = await Promise.all([
+            sb.from('kunden_berechnungen').select('*').in('kunde_id', kundenIds).order('created_at', { ascending: false }),
+            sb.from('kunden_emails').select('*').in('kunde_id', kundenIds).order('created_at', { ascending: false }),
+        ]);
 
         kundenBerechnungen = {};
-        (berechnungen || []).forEach(b => {
+        ((berechRes.data) || []).forEach(b => {
             if (!kundenBerechnungen[b.kunde_id]) kundenBerechnungen[b.kunde_id] = [];
             kundenBerechnungen[b.kunde_id].push(b);
         });
+
+        kundenEmails = {};
+        ((emailRes.data) || []).forEach(e => {
+            if (!kundenEmails[e.kunde_id]) kundenEmails[e.kunde_id] = [];
+            kundenEmails[e.kunde_id].push(e);
+        });
     }
 
+    selectedKundenIds.clear();
     renderKunden();
 }
 
@@ -628,18 +787,22 @@ function renderKunden() {
     if (allKunden.length === 0) {
         document.getElementById('kundenTable').style.display = 'none';
         document.getElementById('kundenEmpty').style.display = 'block';
+        document.getElementById('emailActions').style.display = 'none';
         return;
     }
 
     document.getElementById('kundenTable').style.display = 'table';
     document.getElementById('kundenEmpty').style.display = 'none';
+    document.getElementById('emailActions').style.display = 'flex';
 
     const baseUrl = window.location.origin;
     const tbody = document.getElementById('kundenBody');
     tbody.innerHTML = allKunden.map(kunde => {
         const berechnungen = kundenBerechnungen[kunde.id] || [];
+        const emails = kundenEmails[kunde.id] || [];
         const link = `${baseUrl}/?berater=${beraterRecord.slug}&kunde=${kunde.code}`;
         const letzte = berechnungen[0];
+        const letzteEmail = emails[0];
 
         let letzteHtml = '–';
         if (letzte) {
@@ -658,14 +821,63 @@ function renderKunden() {
 
         const countClass = berechnungen.length > 0 ? 'has' : 'none';
 
-        return `<tr>
+        // Email-Status bestimmen
+        let emailStatusHtml;
+        if (berechnungen.length > 0) {
+            emailStatusHtml = '<span class="email-status clicked"><span class="email-dot clicked"></span> Berechnet</span>';
+        } else if (letzteEmail) {
+            const statusLabels = {
+                sent: 'Gesendet', delivered: 'Zugestellt',
+                opened: 'Geöffnet', clicked: 'Geklickt', bounced: 'Fehlgeschlagen'
+            };
+            const label = statusLabels[letzteEmail.status] || letzteEmail.status;
+            emailStatusHtml = `<span class="email-status ${letzteEmail.status}"><span class="email-dot ${letzteEmail.status}"></span> ${label}</span>`;
+        } else {
+            emailStatusHtml = '<span class="email-status none">Nicht gesendet</span>';
+        }
+
+        const checked = selectedKundenIds.has(kunde.id) ? 'checked' : '';
+        const hasEmail = kunde.email ? '' : 'disabled';
+
+        // Detail-Zeile mit allen Berechnungen
+        let detailHtml = '';
+        if (berechnungen.length > 0) {
+            const calcItems = berechnungen.map(b => {
+                const d = new Date(b.created_at);
+                const dStr = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                const spar = b.sparpotenzial_jahr
+                    ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/Jahr`
+                    : '–';
+                const gehaltStr = b.gehalt ? `${b.gehalt.toLocaleString('de-DE')} \u20AC` : '–';
+                return `<div class="calc-item">
+                    <div class="calc-date">${dStr}</div>
+                    <div class="calc-grid">
+                        <div><div class="calc-field-label">Gehalt</div><div class="calc-field-val">${gehaltStr}</div></div>
+                        <div><div class="calc-field-label">Beschäftigung</div><div class="calc-field-val">${esc(b.beschaeftigung || '–')}</div></div>
+                        <div><div class="calc-field-label">Aktuelle Kasse</div><div class="calc-field-val">${esc(b.aktuelle_kasse || '–')}</div></div>
+                        <div><div class="calc-field-label">Günstigste</div><div class="calc-field-val">${esc(b.guenstigste_kasse || '–')}</div></div>
+                        <div><div class="calc-field-label">Sparpotenzial</div><div class="calc-field-val savings">${spar}</div></div>
+                        <div><div class="calc-field-label">Beitrag günstigste</div><div class="calc-field-val">${b.guenstigster_beitrag ? b.guenstigster_beitrag.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' \u20AC/Monat' : '–'}</div></div>
+                    </div>
+                </div>`;
+            }).join('');
+            detailHtml = `<div class="calc-timeline">${calcItems}</div>`;
+        } else {
+            detailHtml = '<div class="calc-no-data">Noch keine Berechnungen durchgeführt.</div>';
+        }
+
+        const colCount = 7; // Anzahl Spalten in der Tabelle
+
+        return `<tr class="kunde-row" onclick="toggleKundeDetail('${kunde.id}', event)">
+            <td><input type="checkbox" class="kunde-checkbox" value="${kunde.id}" ${checked} ${hasEmail} onchange="toggleKundeSelection(this)" onclick="event.stopPropagation()"></td>
             <td>
                 <div class="lead-name">${esc(kunde.vorname)} ${esc(kunde.nachname)}</div>
             </td>
-            <td>
-                ${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="font-size:.82rem;color:var(--primary);">${esc(kunde.email)}</a>` : '–'}
+            <td onclick="event.stopPropagation()">
+                ${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="font-size:.82rem;color:var(--primary);">${esc(kunde.email)}</a>` : '<span style="font-size:.78rem;color:var(--g400);">Keine Email</span>'}
             </td>
-            <td>
+            <td>${emailStatusHtml}</td>
+            <td onclick="event.stopPropagation()">
                 <div class="kunde-link" onclick="copyKundeLink(this, '${esc(link)}')" title="Klicken zum Kopieren">
                     ${esc(link.replace(baseUrl, '...'))}
                 </div>
@@ -674,8 +886,18 @@ function renderKunden() {
                 <span class="kunde-calc-count ${countClass}">${berechnungen.length}</span>
             </td>
             <td>${letzteHtml}</td>
+        </tr>
+        <tr class="kunde-detail-row hidden" id="detail-${kunde.id}">
+            <td colspan="${colCount}">
+                <div class="kunde-detail">
+                    <h4>Berechnungen von ${esc(kunde.vorname)} ${esc(kunde.nachname)}</h4>
+                    ${detailHtml}
+                </div>
+            </td>
         </tr>`;
     }).join('');
+
+    updateEmailButton();
 }
 
 async function addKunde(event) {
@@ -717,6 +939,11 @@ async function addKunde(event) {
     await loadKunden();
 }
 
+function toggleKundeDetail(kundeId, event) {
+    const row = document.getElementById('detail-' + kundeId);
+    if (row) row.classList.toggle('hidden');
+}
+
 function copyKundeLink(el, link) {
     navigator.clipboard.writeText(link).then(() => {
         const orig = el.textContent;
@@ -727,6 +954,315 @@ function copyKundeLink(el, link) {
             el.style.color = '';
         }, 2000);
     });
+}
+
+/* ==================================================================
+   EXCEL UPLOAD
+   ================================================================== */
+let excelKunden = [];
+
+function previewExcel(input) {
+    const file = input.files[0];
+    const statusEl = document.getElementById('uploadStatus');
+    const previewEl = document.getElementById('uploadPreview');
+    const uploadBtn = document.getElementById('excelUploadBtn');
+
+    statusEl.className = 'upload-status';
+    previewEl.innerHTML = '';
+    excelKunden = [];
+    uploadBtn.disabled = true;
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const workbook = XLSX.read(e.target.result, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+            if (rows.length === 0) {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = 'Die Datei enthält keine Daten.';
+                return;
+            }
+
+            // Spalten-Mapping (flexibel)
+            const colMap = detectColumns(Object.keys(rows[0]));
+            if (!colMap.vorname || !colMap.nachname) {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = 'Spalten "Vorname" und "Nachname" wurden nicht gefunden. Gefundene Spalten: ' + Object.keys(rows[0]).join(', ');
+                return;
+            }
+
+            excelKunden = rows.map(row => ({
+                vorname: String(row[colMap.vorname] || '').trim(),
+                nachname: String(row[colMap.nachname] || '').trim(),
+                email: colMap.email ? String(row[colMap.email] || '').trim() || null : null,
+            })).filter(k => k.vorname && k.nachname);
+
+            if (excelKunden.length === 0) {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = 'Keine gültigen Kunden gefunden (Vorname und Nachname müssen ausgefüllt sein).';
+                return;
+            }
+
+            statusEl.className = 'upload-status info';
+            statusEl.textContent = `${excelKunden.length} Kunden erkannt. Vorschau:`;
+            uploadBtn.disabled = false;
+
+            // Preview table
+            const maxPreview = Math.min(excelKunden.length, 10);
+            let html = '<table><thead><tr><th>Vorname</th><th>Nachname</th><th>E-Mail</th></tr></thead><tbody>';
+            for (let i = 0; i < maxPreview; i++) {
+                const k = excelKunden[i];
+                html += `<tr><td>${esc(k.vorname)}</td><td>${esc(k.nachname)}</td><td>${esc(k.email || '–')}</td></tr>`;
+            }
+            if (excelKunden.length > 10) {
+                html += `<tr><td colspan="3" style="text-align:center;color:var(--g400);">... und ${excelKunden.length - 10} weitere</td></tr>`;
+            }
+            html += '</tbody></table>';
+            previewEl.innerHTML = html;
+
+        } catch (err) {
+            statusEl.className = 'upload-status error';
+            statusEl.textContent = 'Fehler beim Lesen der Datei: ' + err.message;
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function detectColumns(headers) {
+    const map = { vorname: null, nachname: null, email: null };
+    const lower = headers.map(h => h.toLowerCase().trim());
+
+    for (let i = 0; i < headers.length; i++) {
+        const l = lower[i];
+        if (!map.vorname && (l === 'vorname' || l === 'first name' || l === 'firstname' || l === 'first_name' || l === 'vname')) {
+            map.vorname = headers[i];
+        }
+        if (!map.nachname && (l === 'nachname' || l === 'last name' || l === 'lastname' || l === 'last_name' || l === 'nname' || l === 'name')) {
+            map.nachname = headers[i];
+        }
+        if (!map.email && (l === 'email' || l === 'e-mail' || l === 'mail' || l === 'emailadresse' || l === 'e-mail-adresse')) {
+            map.email = headers[i];
+        }
+    }
+    return map;
+}
+
+async function uploadExcelKunden() {
+    if (!beraterRecord || excelKunden.length === 0) return;
+
+    const btn = document.getElementById('excelUploadBtn');
+    const statusEl = document.getElementById('uploadStatus');
+    btn.disabled = true;
+    statusEl.className = 'upload-status info';
+    statusEl.textContent = `Prüfe auf Duplikate...`;
+
+    // Bestehende Kunden laden für Duplikat-Prüfung
+    const existingSet = new Set(
+        allKunden.map(k => (k.vorname + '|' + k.nachname + '|' + (k.email || '')).toLowerCase())
+    );
+
+    const neueKunden = [];
+    const duplikate = [];
+
+    for (const kunde of excelKunden) {
+        const key = (kunde.vorname + '|' + kunde.nachname + '|' + (kunde.email || '')).toLowerCase();
+        if (existingSet.has(key)) {
+            duplikate.push(kunde);
+        } else {
+            neueKunden.push(kunde);
+            existingSet.add(key); // Auch innerhalb der Excel-Datei Duplikate verhindern
+        }
+    }
+
+    if (neueKunden.length === 0) {
+        statusEl.className = 'upload-status error';
+        statusEl.textContent = `Alle ${duplikate.length} Kunden existieren bereits. Keine neuen Kunden zum Hochladen.`;
+        return;
+    }
+
+    statusEl.textContent = `Lade ${neueKunden.length} neue Kunden hoch...` +
+        (duplikate.length > 0 ? ` (${duplikate.length} Duplikate übersprungen)` : '');
+
+    let success = 0;
+    let errors = 0;
+
+    for (const kunde of neueKunden) {
+        const slug = (kunde.vorname + '-' + kunde.nachname)
+            .toLowerCase()
+            .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
+            .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+        const code = slug + '-' + Math.random().toString(36).substr(2, 4);
+
+        const { error } = await sb.from('kunden').insert({
+            berater_id: beraterRecord.id,
+            code,
+            vorname: kunde.vorname,
+            nachname: kunde.nachname,
+            email: kunde.email,
+        });
+
+        if (error) {
+            errors++;
+            console.error('Fehler bei Kunde:', kunde, error);
+        } else {
+            success++;
+        }
+    }
+
+    let msg = `${success} Kunden erfolgreich hochgeladen!`;
+    if (duplikate.length > 0) msg += ` ${duplikate.length} Duplikate übersprungen.`;
+    if (errors > 0) msg += ` ${errors} fehlgeschlagen.`;
+
+    statusEl.className = errors > 0 ? 'upload-status error' : 'upload-status success';
+    statusEl.textContent = msg;
+
+    // Reset
+    excelKunden = [];
+    document.getElementById('excelFileInput').value = '';
+    document.getElementById('uploadPreview').innerHTML = '';
+
+    await loadKunden();
+}
+
+function downloadTemplate() {
+    const ws = XLSX.utils.aoa_to_sheet([
+        ['Vorname', 'Nachname', 'Email'],
+        ['Max', 'Mustermann', 'max@beispiel.de'],
+        ['Erika', 'Musterfrau', 'erika@beispiel.de'],
+    ]);
+    ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 30 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Kunden');
+    XLSX.writeFile(wb, 'Kunden-Vorlage.xlsx');
+}
+
+/* ==================================================================
+   EMAIL VERSAND
+   ================================================================== */
+function toggleKundeSelection(checkbox) {
+    if (checkbox.checked) {
+        selectedKundenIds.add(checkbox.value);
+    } else {
+        selectedKundenIds.delete(checkbox.value);
+    }
+    updateEmailButton();
+}
+
+function toggleAlleKunden(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('#kundenBody .kunde-checkbox:not(:disabled)');
+    checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+        if (masterCheckbox.checked) {
+            selectedKundenIds.add(cb.value);
+        } else {
+            selectedKundenIds.delete(cb.value);
+        }
+    });
+    updateEmailButton();
+}
+
+function updateEmailButton() {
+    const btn = document.getElementById('btnEmailSelected');
+    const count = selectedKundenIds.size;
+    btn.textContent = `Ausgewählte anschreiben (${count})`;
+    btn.disabled = count === 0;
+}
+
+function emailAlleOhne() {
+    // Alle Kunden mit Email selektieren, die noch keine Email bekommen haben
+    selectedKundenIds.clear();
+    allKunden.forEach(k => {
+        if (k.email && !(kundenEmails[k.id] && kundenEmails[k.id].length > 0)) {
+            selectedKundenIds.add(k.id);
+        }
+    });
+
+    if (selectedKundenIds.size === 0) {
+        alert('Alle Kunden mit E-Mail wurden bereits angeschrieben.');
+        return;
+    }
+
+    // Checkboxen updaten
+    document.querySelectorAll('#kundenBody .kunde-checkbox').forEach(cb => {
+        cb.checked = selectedKundenIds.has(cb.value);
+    });
+    updateEmailButton();
+    openEmailModal();
+}
+
+function openEmailModal() {
+    if (selectedKundenIds.size === 0) return;
+    document.getElementById('emailModalSub').textContent = `${selectedKundenIds.size} Kunden ausgewählt`;
+    document.getElementById('emailSendStatus').className = 'upload-status';
+    document.getElementById('emailModal').classList.add('active');
+}
+
+function closeEmailModal() {
+    document.getElementById('emailModal').classList.remove('active');
+}
+
+async function sendEmails() {
+    if (selectedKundenIds.size === 0) return;
+
+    const btn = document.getElementById('btnSendEmail');
+    const statusEl = document.getElementById('emailSendStatus');
+    btn.disabled = true;
+    statusEl.className = 'upload-status info';
+    statusEl.textContent = `Sende ${selectedKundenIds.size} Emails...`;
+
+    const subject = document.getElementById('emailSubject').value.trim() || 'Ihr persönlicher GKV-Vergleich';
+    const textContent = document.getElementById('emailText').value.trim() || undefined;
+
+    // Supabase Session für Auth-Token
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+        statusEl.className = 'upload-status error';
+        statusEl.textContent = 'Nicht eingeloggt. Bitte neu anmelden.';
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+                kundeIds: Array.from(selectedKundenIds),
+                subject,
+                textContent,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            statusEl.className = 'upload-status success';
+            statusEl.textContent = `${result.sent} Email(s) erfolgreich gesendet!` +
+                (result.errors > 0 ? ` ${result.errors} fehlgeschlagen.` : '');
+
+            // Reset & Reload
+            selectedKundenIds.clear();
+            setTimeout(() => {
+                closeEmailModal();
+                loadKunden();
+            }, 2000);
+        } else {
+            statusEl.className = 'upload-status error';
+            statusEl.textContent = result.error || 'Fehler beim Senden.';
+        }
+    } catch (err) {
+        statusEl.className = 'upload-status error';
+        statusEl.textContent = 'Netzwerkfehler: ' + err.message;
+    }
+
+    btn.disabled = false;
 }
 
 /* ==================================================================
