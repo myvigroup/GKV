@@ -211,8 +211,10 @@
         .upload-preview th { font-size:.7rem; }
 
         /* Kunden-Detail-Zeile */
-        .kunde-row { cursor:pointer; transition:background .15s ease; }
+        .kunde-row { cursor:pointer; transition:background .15s ease; user-select:none; }
         .kunde-row:hover { background:var(--primary-light) !important; }
+        .kunde-expand { display:inline-block; width:20px; font-size:.75rem; color:var(--g400); transition:transform .2s ease; margin-right:4px; }
+        .kunde-row.open .kunde-expand { transform:rotate(90deg); color:var(--primary); }
         .kunde-detail-row td { padding:0 !important; border-bottom:1px solid var(--g100); }
         .kunde-detail-row.hidden td { display:none; }
         .kunde-detail {
@@ -868,13 +870,14 @@ function renderKunden() {
 
         const colCount = 7; // Anzahl Spalten in der Tabelle
 
-        return `<tr class="kunde-row" onclick="toggleKundeDetail('${kunde.id}', event)">
-            <td><input type="checkbox" class="kunde-checkbox" value="${kunde.id}" ${checked} ${hasEmail} onchange="toggleKundeSelection(this)" onclick="event.stopPropagation()"></td>
+        return `<tr class="kunde-row" onclick="toggleKundeDetail('${kunde.id}')">
+            <td onclick="event.stopPropagation()"><input type="checkbox" class="kunde-checkbox" value="${kunde.id}" ${checked} ${hasEmail} onchange="toggleKundeSelection(this)"></td>
             <td>
-                <div class="lead-name">${esc(kunde.vorname)} ${esc(kunde.nachname)}</div>
+                <span class="kunde-expand">&#9654;</span>
+                <span class="lead-name">${esc(kunde.vorname)} ${esc(kunde.nachname)}</span>
             </td>
-            <td onclick="event.stopPropagation()">
-                ${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="font-size:.82rem;color:var(--primary);">${esc(kunde.email)}</a>` : '<span style="font-size:.78rem;color:var(--g400);">Keine Email</span>'}
+            <td>
+                ${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="font-size:.82rem;color:var(--primary);" onclick="event.stopPropagation()">${esc(kunde.email)}</a>` : '<span style="font-size:.78rem;color:var(--g400);">Keine Email</span>'}
             </td>
             <td>${emailStatusHtml}</td>
             <td onclick="event.stopPropagation()">
@@ -939,9 +942,13 @@ async function addKunde(event) {
     await loadKunden();
 }
 
-function toggleKundeDetail(kundeId, event) {
-    const row = document.getElementById('detail-' + kundeId);
-    if (row) row.classList.toggle('hidden');
+function toggleKundeDetail(kundeId) {
+    const detailRow = document.getElementById('detail-' + kundeId);
+    const mainRow = detailRow?.previousElementSibling;
+    if (detailRow) {
+        detailRow.classList.toggle('hidden');
+        mainRow?.classList.toggle('open');
+    }
 }
 
 function copyKundeLink(el, link) {
