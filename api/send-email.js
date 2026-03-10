@@ -52,36 +52,57 @@ export default async function handler(req, res) {
     }
 
     const berater = beraterData[0];
-    const { kundeIds, subject, htmlContent, textContent } = req.body;
+    const { kundeIds, leadIds, subject, htmlContent, textContent } = req.body;
 
-    if (!kundeIds || !Array.isArray(kundeIds) || kundeIds.length === 0) {
-        return res.status(400).json({ error: 'kundeIds fehlt' });
+    // Support both: kundeIds only (legacy) or kundeIds + leadIds (new)
+    const hasKunden = kundeIds && Array.isArray(kundeIds) && kundeIds.length > 0;
+    const hasLeads = leadIds && Array.isArray(leadIds) && leadIds.length > 0;
+
+    if (!hasKunden && !hasLeads) {
+        return res.status(400).json({ error: 'Keine Empfänger ausgewählt (kundeIds oder leadIds fehlt)' });
     }
+
+    const isAdmin = berater.is_admin === true;
+    let empfaenger = [];
 
     // Kunden laden
-    const kundenRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/kunden?id=in.(${kundeIds.join(',')})&select=*`,
-        {
-            headers: {
-                apikey: SUPABASE_SERVICE_KEY,
-                Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+    if (hasKunden) {
+        const kundenRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/kunden?id=in.(${kundeIds.join(',')})&select=*`,
+            {
+                headers: {
+                    apikey: SUPABASE_SERVICE_KEY,
+                    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+                }
             }
-        }
-    );
-    const kunden = await kundenRes.json();
-
-    // Zugriffsprüfung: Nur eigene Kunden oder Admin
-    const isAdmin = berater.is_admin === true;
-    const erlaubteKunden = isAdmin
-        ? kunden
-        : kunden.filter(k => k.berater_id === berater.id);
-
-    if (erlaubteKunden.length === 0) {
-        return res.status(403).json({ error: 'Keine berechtigten Kunden' });
+        );
+        const kunden = await kundenRes.json();
+        const erlaubt = isAdmin ? kunden : kunden.filter(k => k.berater_id === berater.id);
+        empfaenger.push(...erlaubt.map(k => ({ ...k, _type: 'kunde' })));
     }
 
-    // Kunden ohne Email rausfiltern
-    const kundenMitEmail = erlaubteKunden.filter(k => k.email);
+    // Leads laden
+    if (hasLeads) {
+        const leadsRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/leads?id=in.(${leadIds.join(',')})&select=*`,
+            {
+                headers: {
+                    apikey: SUPABASE_SERVICE_KEY,
+                    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+                }
+            }
+        );
+        const leads = await leadsRes.json();
+        const erlaubt = isAdmin ? leads : leads.filter(l => l.berater_id === berater.id);
+        empfaenger.push(...erlaubt.map(l => ({ ...l, _type: 'lead' })));
+    }
+
+    if (empfaenger.length === 0) {
+        return res.status(403).json({ error: 'Keine berechtigten Empfänger gefunden' });
+    }
+
+    // Empfänger ohne Email rausfiltern
+    const kundenMitEmail = empfaenger.filter(k => k.email);
 
     if (kundenMitEmail.length === 0) {
         return res.status(400).json({ error: 'Keine Kunden mit E-Mail-Adresse' });
@@ -91,8 +112,10 @@ export default async function handler(req, res) {
     const baseUrl = req.headers.origin || 'https://gkv-rechner.de';
 
     for (const kunde of kundenMitEmail) {
-        // Individuellen Link erstellen
-        const kundeLink = `${baseUrl}/?berater=${berater.slug}&kunde=${kunde.code}`;
+        // Individuellen Link erstellen (Kunden haben code, Leads nicht)
+        const kundeLink = kunde.code
+            ? `${baseUrl}/?berater=${berater.slug}&kunde=${kunde.code}`
+            : `${baseUrl}/?berater=${berater.slug}`;
 
         // Email-Body mit Platzhaltern ersetzen
         const finalHtml = (htmlContent || defaultHtmlTemplate(berater))
@@ -145,30 +168,32 @@ export default async function handler(req, res) {
             const brevoData = await brevoRes.json();
 
             if (brevoRes.ok) {
-                // Email-Tracking in DB speichern
-                await fetch(`${SUPABASE_URL}/rest/v1/kunden_emails`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        apikey: SUPABASE_SERVICE_KEY,
-                        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                        Prefer: 'return=minimal',
-                    },
-                    body: JSON.stringify({
-                        kunde_id: kunde.id,
-                        berater_id: berater.id,
-                        brevo_message_id: brevoData.messageId || null,
-                        subject: finalSubject,
-                        status: 'sent',
-                    }),
-                });
+                // Email-Tracking in DB speichern (nur für Kunden, nicht Leads)
+                if (kunde._type === 'kunde') {
+                    await fetch(`${SUPABASE_URL}/rest/v1/kunden_emails`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            apikey: SUPABASE_SERVICE_KEY,
+                            Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+                            Prefer: 'return=minimal',
+                        },
+                        body: JSON.stringify({
+                            kunde_id: kunde.id,
+                            berater_id: berater.id,
+                            brevo_message_id: brevoData.messageId || null,
+                            subject: finalSubject,
+                            status: 'sent',
+                        }),
+                    });
+                }
 
-                results.push({ kunde_id: kunde.id, status: 'sent', email: kunde.email });
+                results.push({ id: kunde.id, type: kunde._type, status: 'sent', email: kunde.email });
             } else {
-                results.push({ kunde_id: kunde.id, status: 'error', error: brevoData.message || 'Brevo-Fehler' });
+                results.push({ id: kunde.id, type: kunde._type, status: 'error', error: brevoData.message || JSON.stringify(brevoData) });
             }
         } catch (err) {
-            results.push({ kunde_id: kunde.id, status: 'error', error: err.message });
+            results.push({ id: kunde.id, type: kunde._type, status: 'error', error: err.message });
         }
     }
 

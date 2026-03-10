@@ -1394,7 +1394,8 @@ async function sendEmails() {
                 'Authorization': `Bearer ${session.access_token}`,
             },
             body: JSON.stringify({
-                kundeIds: Array.from(selectedKundenIds),
+                kundeIds: allContacts.filter(c => c.type === 'kunde' && selectedKundenIds.has(c.id)).map(c => c.id),
+                leadIds: allContacts.filter(c => c.type === 'lead' && selectedKundenIds.has(c.id)).map(c => c.id),
                 subject, textContent,
             }),
         });
@@ -1402,18 +1403,23 @@ async function sendEmails() {
         const result = await response.json();
 
         if (response.ok) {
-            statusEl.className = 'upload-status success';
-            statusEl.textContent = `${result.sent} Email(s) gesendet!` +
-                (result.errors > 0 ? ` ${result.errors} fehlgeschlagen.` : '');
-
-            selectedKundenIds.clear();
-            setTimeout(() => {
-                closeEmailModal();
-                loadAllData();
-            }, 2000);
+            const failedDetails = (result.results || []).filter(r => r.status === 'error').map(r => r.error).join(', ');
+            if (result.sent > 0) {
+                statusEl.className = 'upload-status success';
+                statusEl.textContent = `${result.sent} Email(s) gesendet!` +
+                    (result.errors > 0 ? ` ${result.errors} fehlgeschlagen: ${failedDetails}` : '');
+                selectedKundenIds.clear();
+                setTimeout(() => {
+                    closeEmailModal();
+                    loadAllData();
+                }, 2000);
+            } else {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = `Alle fehlgeschlagen: ${failedDetails || 'Unbekannter Fehler'}`;
+            }
         } else {
             statusEl.className = 'upload-status error';
-            statusEl.textContent = result.error || 'Fehler beim Senden.';
+            statusEl.textContent = result.error || JSON.stringify(result);
         }
     } catch (err) {
         statusEl.className = 'upload-status error';
