@@ -42,9 +42,8 @@
             max-width:400px; width:100%; box-shadow:var(--shadow-lg);
         }
         .login-logo { text-align:center; margin-bottom:24px; }
-        .login-logo .logo-text { font-size:1.8rem; font-weight:900; color:var(--primary); letter-spacing:-.03em; }
-        .login-logo .logo-text span { color:var(--accent); }
-        .login-logo .logo-sub { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.15em; color:var(--g400); margin-top:2px; }
+        .login-logo svg { height:40px; width:auto; }
+        .login-logo .logo-sub { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.18em; color:var(--g400); margin-top:6px; }
         .login-card h1 { font-size:1.2rem; color:var(--g900); margin-bottom:4px; text-align:center; }
         .login-card .sub { font-size:.85rem; color:var(--g500); margin-bottom:24px; text-align:center; }
         .fg { margin-bottom:16px; }
@@ -64,8 +63,7 @@
             position:sticky; top:0; z-index:100;
         }
         .dash-header-left { display:flex; align-items:center; gap:10px; }
-        .dash-header-logo { font-size:1.15rem; font-weight:900; color:var(--primary); letter-spacing:-.02em; }
-        .dash-header-logo span { color:var(--accent); }
+        .dash-header-left svg { height:22px; width:auto; }
         .dash-header-divider { width:1px; height:24px; background:var(--g200); }
         .dash-header-title { font-size:.82rem; font-weight:600; color:var(--g500); }
         .dash-header .user-info { display:flex; align-items:center; gap:12px; }
@@ -412,8 +410,15 @@
 <div class="login-wrap" id="loginView">
     <div class="login-card">
         <div class="login-logo">
-            <div class="logo-text">mit<span>NORM</span></div>
-            <div class="logo-sub">GKV-Vergleichsrechner</div>
+            <svg viewBox="0 0 520 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="72" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="82" fill="#004283" letter-spacing="-2">mit</text>
+                <text x="155" y="72" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="82" fill="#004283" letter-spacing="-2">N</text>
+                <circle cx="270" cy="42" r="38" fill="#004283"/>
+                <rect x="264" y="16" width="12" height="52" rx="3" fill="#fff"/>
+                <rect x="247" y="36" width="46" height="12" rx="3" fill="#fff"/>
+                <text x="312" y="72" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="82" fill="#004283" letter-spacing="-2">RM</text>
+            </svg>
+            <div class="logo-sub">Finanzplanung | DIN 77230</div>
         </div>
         <h1>Berater-Dashboard</h1>
         <p class="sub">Melden Sie sich mit Ihrem Berater-Zugang an</p>
@@ -438,7 +443,14 @@
     <!-- Header -->
     <div class="dash-header">
         <div class="dash-header-left">
-            <div class="dash-header-logo">mit<span>NORM</span></div>
+            <svg viewBox="0 0 520 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="72" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="82" fill="#004283" letter-spacing="-2">mit</text>
+                <text x="155" y="72" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="82" fill="#004283" letter-spacing="-2">N</text>
+                <circle cx="270" cy="42" r="38" fill="#004283"/>
+                <rect x="264" y="16" width="12" height="52" rx="3" fill="#fff"/>
+                <rect x="247" y="36" width="46" height="12" rx="3" fill="#fff"/>
+                <text x="312" y="72" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="82" fill="#004283" letter-spacing="-2">RM</text>
+            </svg>
             <div class="dash-header-divider"></div>
             <div class="dash-header-title">Berater-Dashboard</div>
         </div>
