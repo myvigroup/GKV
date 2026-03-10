@@ -101,6 +101,21 @@ export default async function handler(req, res) {
             break;
         }
 
+        case 'missed_call': {
+            const name = data.vorname && data.nachname ? `${data.vorname} ${data.nachname}` : data.telefon;
+            subject = `Verpasster Anruf: ${name}`;
+            htmlContent = buildNotificationHtml(berater, `
+                <h2 style="margin:0 0 8px;font-size:18px;color:#0F172A;">Verpasster Anruf</h2>
+                <p style="margin:0 0 16px;color:#64748B;">Du hast einen Anruf verpasst.</p>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+                    ${data.vorname ? `<tr><td style="padding:8px 0;color:#64748B;font-size:14px;width:140px;">Kontakt</td><td style="padding:8px 0;font-weight:600;font-size:14px;">${esc(data.vorname)} ${esc(data.nachname)}</td></tr>` : ''}
+                    <tr><td style="padding:8px 0;color:#64748B;font-size:14px;">Telefon</td><td style="padding:8px 0;font-size:14px;">${esc(data.telefon || '–')}</td></tr>
+                </table>
+                ${ctaButton(dashboardUrl, 'Im Dashboard ansehen')}
+            `);
+            break;
+        }
+
         case 'berater_welcome': {
             subject = `Willkommen bei mitNORM, ${berater.vorname}!`;
             const hasPassword = data.password;

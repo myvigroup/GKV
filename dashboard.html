@@ -700,6 +700,7 @@ let kundenEmails = {};
 let selectedKundenIds = new Set();
 let currentFilter = 'alle';
 let searchQuery = '';
+let kontaktAnrufe = {};
 let beraterRecord = null;
 let openSidebarContact = null;
 
@@ -810,6 +811,21 @@ async function loadAllData() {
 
     kundenBerechnungen = {};
     kundenEmails = {};
+    kontaktAnrufe = {};
+
+    // Anrufe laden (für diesen Berater)
+    if (beraterRecord) {
+        const { data: anrufe } = await sb
+            .from('anrufe').select('*')
+            .eq('berater_id', beraterRecord.id)
+            .order('created_at', { ascending: false });
+
+        (anrufe || []).forEach(a => {
+            const key = `${a.kontakt_type}_${a.kontakt_id}`;
+            if (!kontaktAnrufe[key]) kontaktAnrufe[key] = [];
+            kontaktAnrufe[key].push(a);
+        });
+    }
 
     if (allKunden.length > 0) {
         const kundenIds = allKunden.map(k => k.id);
@@ -851,10 +867,11 @@ function buildUnifiedContacts() {
             else if (emails.length > 0) status = 'kontaktiert';
         }
 
+        const anrufe = kontaktAnrufe[`kunde_${kunde.id}`] || [];
         allContacts.push({
             type: 'kunde', id: kunde.id, vorname: kunde.vorname, nachname: kunde.nachname,
             email: kunde.email, telefon: kunde.telefon || null, status, created_at: kunde.created_at,
-            code: kunde.code, link, berechnungen, emails, notizen: kunde.notizen || '', _raw: kunde,
+            code: kunde.code, link, berechnungen, emails, anrufe, notizen: kunde.notizen || '', _raw: kunde,
         });
     }
 
@@ -862,9 +879,10 @@ function buildUnifiedContacts() {
         let status = lead.status || 'neu';
         if (status === 'kontaktiert' && lead.sparpotenzial_jahr) status = 'berechnet';
 
+        const anrufe = kontaktAnrufe[`lead_${lead.id}`] || [];
         allContacts.push({
             type: 'lead', id: lead.id, vorname: lead.vorname, nachname: lead.nachname,
-            email: lead.email, telefon: lead.telefon || null, status, created_at: lead.created_at,
+            email: lead.email, telefon: lead.telefon || null, status, created_at: lead.created_at, anrufe,
             gehalt: lead.gehalt, aktuelle_kasse: lead.aktuelle_kasse,
             gewaehlte_kasse: lead.gewaehlte_kasse, sparpotenzial_jahr: lead.sparpotenzial_jahr,
             notizen: lead.notizen || '', _raw: lead,
@@ -978,6 +996,7 @@ function renderContacts() {
 
         // Activity
         let activityHtml = '';
+        const anrufe = contact.anrufe || [];
         if (isKunde) {
             const emails = contact.emails || [];
             const berechnungen = contact.berechnungen || [];
@@ -988,6 +1007,12 @@ function renderContacts() {
                 const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
                 parts.push(`<span class="email-dot-inline"><span class="dot ${last.status}"></span> ${emailLabels[last.status] || last.status}</span>`);
             }
+            if (anrufe.length > 0) {
+                const last = anrufe[0];
+                const icon = last.direction === 'in' ? '📞' : '📱';
+                const missed = last.hangup_type === 'missed' ? ' (verpasst)' : '';
+                parts.push(`<span class="activity-item">${icon} ${anrufe.length}x Anruf${missed}</span>`);
+            }
             activityHtml = parts.length > 0
                 ? `<div class="activity-items">${parts.join('')}</div>`
                 : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
@@ -995,6 +1020,11 @@ function renderContacts() {
             const parts = [];
             if (contact.gewaehlte_kasse) parts.push(`<span class="activity-item">${esc(contact.gewaehlte_kasse)}</span>`);
             if (contact.gehalt) parts.push(`<span class="activity-item" style="color:var(--g400);">${contact.gehalt.toLocaleString('de-DE')} € brutto</span>`);
+            if (anrufe.length > 0) {
+                const last = anrufe[0];
+                const missed = last.hangup_type === 'missed' ? ' (verpasst)' : '';
+                parts.push(`<span class="activity-item">📞 ${anrufe.length}x Anruf${missed}</span>`);
+            }
             activityHtml = parts.length > 0
                 ? `<div class="activity-items">${parts.join('')}</div>`
                 : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
