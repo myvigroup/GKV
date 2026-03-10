@@ -993,17 +993,32 @@ async function saveBerater() {
 
     const data = { vorname, nachname, email, telefon, team, calendly_url, slug };
 
-    let error;
+    let error, newBerater;
     if (id) {
         ({ error } = await sb.from('berater').update(data).eq('id', id));
     } else {
-        ({ error } = await sb.from('berater').insert(data));
+        const res = await sb.from('berater').insert(data).select();
+        error = res.error;
+        newBerater = res.data ? res.data[0] : null;
     }
 
     if (error) {
         errorEl.textContent = 'Fehler: ' + error.message;
         errorEl.style.display = 'block';
         return;
+    }
+
+    // Willkommens-Mail an neuen Berater senden
+    if (!id && newBerater) {
+        fetch('/api/notify-berater', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event: 'berater_welcome',
+                berater_id: newBerater.id,
+                data: {}
+            })
+        }).catch(() => {});
     }
 
     closeBeraterModal();

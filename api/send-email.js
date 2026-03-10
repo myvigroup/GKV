@@ -206,6 +206,30 @@ export default async function handler(req, res) {
     const sent = results.filter(r => r.status === 'sent').length;
     const errors = results.filter(r => r.status === 'error').length;
 
+    // Berater benachrichtigen (fire-and-forget, nicht blockierend)
+    if (sent > 0) {
+        const sentResults = results.filter(r => r.status === 'sent');
+        for (const r of sentResults) {
+            const kontakt = kundenMitEmail.find(k => k.id === r.id);
+            if (kontakt) {
+                fetch(`${req.headers.origin || 'https://gkv-phi.vercel.app'}/api/notify-berater`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'email_sent',
+                        berater_id: berater.id,
+                        data: {
+                            vorname: kontakt.vorname,
+                            nachname: kontakt.nachname,
+                            email: kontakt.email,
+                            subject: subject || 'Ihr persönlicher GKV-Vergleich',
+                        }
+                    })
+                }).catch(() => {});
+            }
+        }
+    }
+
     return res.status(200).json({ sent, errors, results });
 }
 
