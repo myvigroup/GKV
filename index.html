@@ -398,11 +398,22 @@
         }
         .btn-cta:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
 
+        /* Site Header */
+        .site-header {
+            background:var(--primary); padding:16px 24px;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .site-header img { height:30px; }
+
         /* Footer */
         .site-footer {
             text-align:center; padding:28px 20px;
             font-size:.76rem; color:var(--g400); border-top:1px solid var(--g200);
         }
+        .site-footer a { color:var(--g500); text-decoration:none; }
+        .site-footer a:hover { color:var(--primary); text-decoration:underline; }
+        .footer-links { margin-top:8px; }
+        .footer-links a { margin:0 8px; }
 
         /* ==========================================================
            RESPONSIVE
@@ -587,6 +598,13 @@
     </style>
 </head>
 <body>
+
+<!-- ================================================================
+     SITE HEADER
+     ================================================================ -->
+<header class="site-header">
+    <img src="mitnorm-logo-weiss.png" alt="mitNORM">
+</header>
 
 <!-- ================================================================
      BERATER-BANNER (wird per JS eingeblendet wenn ?berater=... in URL)
@@ -811,6 +829,11 @@
 <footer class="site-footer">
     <p>Alle Angaben ohne Gewähr · Beitragssätze gem. GKV-Spitzenverband · Stand: 01.01.2025</p>
     <p style="margin-top:4px;">Alle Berechnungen erfolgen lokal in deinem Browser. Deine Daten werden nur mit deiner ausdrücklichen Einwilligung gespeichert.</p>
+    <div class="footer-links">
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+    </div>
+    <p style="margin-top:8px;">&copy; 2025 mitNORM GmbH</p>
 </footer>
 
 <!-- ================================================================
