@@ -17,6 +17,12 @@
             --warning-light: #FFF4E5;
             --danger: #E5243B;
             --danger-light: #FEF2F2;
+            --hot: #DC2626;
+            --hot-light: #FEF2F2;
+            --warm: #F59E0B;
+            --warm-light: #FFFBEB;
+            --cold: #94A3B8;
+            --cold-light: #F1F5F9;
             --g50: #F8FAFC; --g100: #F1F5F9; --g200: #E2E8F0;
             --g300: #CBD5E1; --g400: #94A3B8; --g500: #64748B;
             --g600: #475569; --g700: #334155; --g800: #1E293B;
@@ -56,7 +62,7 @@
         .btn-login:disabled { opacity:.5; cursor:not-allowed; }
         .error-msg { color:var(--danger); font-size:.82rem; margin-top:8px; display:none; }
 
-        /* ===== DASHBOARD LAYOUT ===== */
+        /* ===== DASHBOARD ===== */
         .dashboard { display:none; }
         .dash-header {
             background:#fff; border-bottom:1px solid var(--g200); padding:0 24px; height:56px;
@@ -73,52 +79,81 @@
         .user-name { font-size:.85rem; color:var(--g600); font-weight:500; }
         .btn-logout { padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font); color:var(--g500); background:transparent; border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
         .btn-logout:hover { background:var(--g100); color:var(--g700); }
-
         .dash-body { max-width:1400px; margin:0 auto; padding:20px 24px; }
 
-        /* ===== STAT CARDS ===== */
-        .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:16px; }
-        .stat-card {
-            background:#fff; border-radius:var(--r-md); padding:16px 20px;
-            border:1.5px solid var(--g100); cursor:pointer; transition:var(--ease);
-            display:flex; align-items:center; gap:14px;
+        /* ===== ACTION CARDS (Handlungsbedarf) ===== */
+        .action-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+        .action-card {
+            background:#fff; border-radius:var(--r-md); padding:18px 20px;
+            border-left:4px solid var(--g200); cursor:pointer; transition:var(--ease);
+            display:flex; align-items:flex-start; gap:14px;
         }
-        .stat-card:hover { border-color:var(--g300); transform:translateY(-1px); box-shadow:var(--shadow-sm); }
-        .stat-card.active { border-color:var(--primary); background:var(--primary-light); }
-        .stat-icon {
-            width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;
-            font-size:1.1rem; flex-shrink:0;
+        .action-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
+        .action-card.hot { border-left-color:var(--hot); }
+        .action-card.warm { border-left-color:var(--warm); }
+        .action-card.success { border-left-color:var(--success); }
+        .action-card.info { border-left-color:var(--accent); }
+        .action-icon {
+            width:42px; height:42px; border-radius:10px; display:flex; align-items:center;
+            justify-content:center; flex-shrink:0; font-size:1.2rem;
         }
-        .stat-icon.total { background:var(--primary-light); color:var(--primary); }
-        .stat-icon.neu { background:#EEF2FF; color:#4F46E5; }
-        .stat-icon.berechnet { background:var(--accent-light); color:var(--accent); }
-        .stat-icon.done { background:var(--success-light); color:var(--success); }
-        .stat-content { min-width:0; }
-        .stat-val { font-size:1.5rem; font-weight:800; color:var(--g900); line-height:1.2; }
-        .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); }
+        .action-icon.hot { background:var(--hot-light); color:var(--hot); }
+        .action-icon.warm { background:var(--warm-light); color:var(--warm); }
+        .action-icon.success { background:var(--success-light); color:var(--success); }
+        .action-icon.info { background:var(--accent-light); color:var(--accent); }
+        .action-content { flex:1; min-width:0; }
+        .action-val { font-size:1.4rem; font-weight:800; color:var(--g900); line-height:1.2; }
+        .action-label { font-size:.82rem; color:var(--g600); margin-top:2px; }
+        .action-cta {
+            display:inline-block; margin-top:8px; padding:5px 14px; font-size:.75rem; font-weight:700;
+            border-radius:6px; border:none; cursor:pointer; font-family:var(--font); transition:var(--ease);
+        }
+        .action-cta.hot { background:var(--hot); color:#fff; }
+        .action-cta.hot:hover { background:#B91C1C; }
+        .action-cta.warm { background:var(--warm); color:#fff; }
+        .action-cta.warm:hover { background:#D97706; }
+        .action-cta.success { background:var(--success); color:#fff; }
+        .action-cta.info { background:var(--accent); color:#fff; }
 
-        /* ===== AFFILIATE LINK BAR ===== */
+        /* ===== HOT LEADS ALERT ===== */
+        .hot-alerts { margin-bottom:16px; display:flex; flex-direction:column; gap:8px; }
+        .hot-alert {
+            display:flex; align-items:center; gap:12px; padding:12px 16px;
+            background:#fff; border:1px solid var(--hot-light); border-left:3px solid var(--hot);
+            border-radius:var(--r-sm); cursor:pointer; transition:var(--ease);
+        }
+        .hot-alert:hover { background:var(--hot-light); }
+        .hot-alert-pulse {
+            width:10px; height:10px; border-radius:50%; background:var(--hot); flex-shrink:0;
+            animation:pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+        .hot-alert-text { flex:1; font-size:.85rem; color:var(--g800); }
+        .hot-alert-text strong { color:var(--hot); }
+        .hot-alert-action {
+            padding:6px 16px; font-size:.78rem; font-weight:700; font-family:var(--font);
+            background:var(--hot); color:#fff; border:none; border-radius:6px; cursor:pointer;
+            white-space:nowrap; transition:var(--ease);
+        }
+        .hot-alert-action:hover { background:#B91C1C; }
+
+        /* ===== LINK BAR ===== */
         .link-bar {
             display:flex; align-items:center; gap:10px; margin-bottom:16px;
             background:#fff; border:1px solid var(--g100); border-radius:var(--r-sm); padding:8px 12px;
         }
         .link-bar-label { font-size:.78rem; font-weight:600; color:var(--g500); white-space:nowrap; }
         .link-bar-label svg { vertical-align:middle; margin-right:4px; }
-        .link-bar input {
-            flex:1; padding:0; font-size:.82rem; font-family:monospace;
-            border:none; background:transparent; color:var(--g700); outline:none;
-        }
+        .link-bar input { flex:1; padding:0; font-size:.82rem; font-family:monospace; border:none; background:transparent; color:var(--g700); outline:none; }
         .btn-copy { padding:6px 14px; font-size:.75rem; font-weight:700; font-family:var(--font); color:var(--primary); background:var(--primary-light); border:none; border-radius:6px; cursor:pointer; transition:var(--ease); white-space:nowrap; }
         .btn-copy:hover { background:var(--accent-light); color:var(--primary-dark); }
 
         /* ===== TOOLBAR ===== */
-        .toolbar {
-            display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;
-        }
+        .toolbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
         .btn-action {
-            display:inline-flex; align-items:center; gap:6px;
-            padding:8px 16px; font-size:.82rem; font-weight:600; font-family:var(--font);
-            color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm);
+            display:inline-flex; align-items:center; gap:6px; padding:8px 16px;
+            font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff;
+            background:var(--primary); border:none; border-radius:var(--r-sm);
             cursor:pointer; transition:var(--ease); white-space:nowrap;
         }
         .btn-action:hover { background:var(--primary-dark); }
@@ -129,38 +164,43 @@
         .btn-action.success:hover { background:#009966; }
         .btn-action svg { width:15px; height:15px; }
         .toolbar-spacer { flex:1; }
-        .search-box {
-            position:relative; width:220px;
-        }
-        .search-box input {
-            width:100%; padding:8px 12px 8px 34px; font-size:.82rem; font-family:var(--font);
-            border:1.5px solid var(--g200); border-radius:var(--r-sm); transition:var(--ease);
-        }
+        .search-box { position:relative; width:220px; }
+        .search-box input { width:100%; padding:8px 12px 8px 34px; font-size:.82rem; font-family:var(--font); border:1.5px solid var(--g200); border-radius:var(--r-sm); transition:var(--ease); }
         .search-box input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.08); }
         .search-box svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--g400); width:16px; height:16px; }
 
-        /* ===== FILTERS ===== */
-        .filters { display:flex; gap:4px; margin-bottom:12px; flex-wrap:wrap; }
-        .filter-btn {
+        /* ===== SORT TABS ===== */
+        .sort-tabs { display:flex; gap:4px; margin-bottom:12px; flex-wrap:wrap; }
+        .sort-tab {
             padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font);
             color:var(--g500); background:#fff; border:1px solid var(--g200);
             border-radius:20px; cursor:pointer; transition:var(--ease);
             display:inline-flex; align-items:center; gap:6px;
         }
-        .filter-btn:hover { border-color:var(--g300); color:var(--g700); }
-        .filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-        .filter-count {
+        .sort-tab:hover { border-color:var(--g300); color:var(--g700); }
+        .sort-tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .sort-count {
             display:inline-flex; align-items:center; justify-content:center;
             min-width:18px; height:18px; font-size:.68rem; font-weight:700;
             background:rgba(0,0,0,.08); border-radius:9px; padding:0 5px;
         }
-        .filter-btn.active .filter-count { background:rgba(255,255,255,.25); }
+        .sort-tab.active .sort-count { background:rgba(255,255,255,.25); }
+
+        /* ===== TEMPERATURE BADGES ===== */
+        .temp-badge {
+            display:inline-flex; align-items:center; gap:4px; padding:2px 8px;
+            border-radius:10px; font-size:.68rem; font-weight:700; letter-spacing:.02em;
+        }
+        .temp-badge.hot { background:var(--hot-light); color:var(--hot); }
+        .temp-badge.warm { background:var(--warm-light); color:#B45309; }
+        .temp-badge.cold { background:var(--cold-light); color:var(--cold); }
+        .temp-dot { width:6px; height:6px; border-radius:50%; }
+        .temp-dot.hot { background:var(--hot); }
+        .temp-dot.warm { background:var(--warm); }
+        .temp-dot.cold { background:var(--cold); }
 
         /* ===== TABLE ===== */
-        .table-wrap {
-            background:#fff; border-radius:var(--r-md); border:1px solid var(--g100);
-            overflow:hidden;
-        }
+        .table-wrap { background:#fff; border-radius:var(--r-md); border:1px solid var(--g100); overflow:hidden; }
         table { width:100%; border-collapse:collapse; font-size:.85rem; }
         thead th {
             text-align:left; padding:10px 14px; font-size:.72rem; font-weight:700;
@@ -168,29 +208,23 @@
             background:var(--g50); border-bottom:1px solid var(--g100);
         }
         thead th:first-child { width:40px; text-align:center; }
-        tbody td { padding:12px 14px; border-bottom:1px solid var(--g50); vertical-align:top; }
+        tbody td { padding:12px 14px; border-bottom:1px solid var(--g50); vertical-align:middle; }
         tbody tr.contact-row { cursor:pointer; transition:background var(--ease); }
         tbody tr.contact-row:hover { background:var(--g50); }
-        tbody tr.contact-row.open { background:var(--primary-light); }
+        tbody tr.contact-row.hot-row { background:#FFFBFB; }
+        tbody tr.contact-row.hot-row:hover { background:var(--hot-light); }
 
         .contact-name { font-weight:600; color:var(--g900); font-size:.88rem; }
         .contact-sub { font-size:.72rem; color:var(--g400); margin-top:1px; }
         .contact-email { font-size:.82rem; color:var(--primary); text-decoration:none; }
         .contact-email:hover { text-decoration:underline; }
-        .contact-expand { display:inline-block; font-size:.65rem; color:var(--g300); margin-right:6px; transition:transform var(--ease); }
-        .contact-row.open .contact-expand { transform:rotate(90deg); color:var(--primary); }
 
-        /* Status badge */
-        .status-badge {
-            display:inline-block; padding:3px 10px; border-radius:12px;
-            font-size:.72rem; font-weight:700; letter-spacing:.02em;
-        }
-        .status-badge.neu { background:#EEF2FF; color:#4338CA; }
-        .status-badge.kontaktiert { background:var(--warning-light); color:#B45309; }
-        .status-badge.berechnet { background:var(--accent-light); color:#0E7490; }
-        .status-badge.termin { background:#F0F9FF; color:#0369A1; }
-        .status-badge.abgeschlossen { background:var(--success-light); color:#15803D; }
-        .status-badge.storniert { background:var(--danger-light); color:#B91C1C; }
+        .source-badge { display:inline-block; padding:1px 7px; border-radius:4px; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; vertical-align:middle; margin-left:6px; }
+        .source-kunde { background:var(--primary-light); color:var(--primary); }
+        .source-lead { background:#FEF3C7; color:#92400E; }
+
+        .savings-cell { font-weight:700; color:var(--success); font-size:.88rem; }
+        .savings-cell.neutral { color:var(--g400); font-weight:400; font-size:.82rem; }
 
         .status-select {
             padding:4px 8px; font-size:.78rem; font-family:var(--font); font-weight:600;
@@ -199,216 +233,120 @@
         }
         .status-select:focus { outline:none; border-color:var(--primary); }
 
-        /* Source badge */
-        .source-badge {
-            display:inline-block; padding:1px 7px; border-radius:4px;
-            font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
-            vertical-align:middle; margin-left:6px;
+        /* ===== QUICK ACTIONS ===== */
+        .quick-actions { display:flex; gap:6px; align-items:center; }
+        .qa-btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:4px;
+            padding:6px 12px; font-size:.75rem; font-weight:700; font-family:var(--font);
+            border-radius:6px; border:none; cursor:pointer; transition:var(--ease); white-space:nowrap;
         }
-        .source-kunde { background:var(--primary-light); color:var(--primary); }
-        .source-lead { background:#FEF3C7; color:#92400E; }
+        .qa-btn svg { width:13px; height:13px; }
+        .qa-call { background:var(--success); color:#fff; }
+        .qa-call:hover { background:#009966; }
+        .qa-call:disabled { opacity:.3; cursor:default; }
+        .qa-link { background:var(--g50); color:var(--g600); border:1px solid var(--g200); }
+        .qa-link:hover { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
+        .qa-email-btn { background:var(--primary-light); color:var(--primary); }
+        .qa-email-btn:hover { background:var(--accent-light); }
 
-        /* Savings highlight */
-        .savings-cell { font-weight:700; color:var(--success); font-size:.85rem; }
-        .savings-cell.neutral { color:var(--g400); font-weight:400; }
+        /* Notizen inline */
+        .notizen-input {
+            width:100%; min-width:100px; padding:6px 8px; font-size:.78rem; font-family:var(--font);
+            border:1px solid transparent; border-radius:6px; background:transparent;
+            resize:vertical; min-height:32px; max-height:60px; transition:var(--ease); color:var(--g700);
+        }
+        .notizen-input:hover { background:var(--g50); border-color:var(--g200); }
+        .notizen-input:focus { outline:none; background:#fff; border-color:var(--primary); box-shadow:0 0 0 2px rgba(0,66,131,.08); }
 
-        /* Link icon */
-        .link-icon {
-            display:inline-flex; align-items:center; justify-content:center;
-            width:28px; height:28px; border-radius:6px; background:var(--g50);
-            color:var(--g400); cursor:pointer; transition:var(--ease); border:1px solid var(--g100);
-        }
-        .link-icon:hover { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
-        .link-icon svg { width:14px; height:14px; }
-
-        /* Email status dots */
-        .email-dot-inline {
-            display:inline-flex; align-items:center; gap:4px;
-            font-size:.72rem; font-weight:600;
-        }
-        .email-dot-inline .dot {
-            width:7px; height:7px; border-radius:50%;
-        }
+        /* Email status */
+        .email-dot-inline { display:inline-flex; align-items:center; gap:4px; font-size:.72rem; font-weight:600; }
+        .email-dot-inline .dot { width:7px; height:7px; border-radius:50%; }
         .dot.sent { background:var(--g400); }
         .dot.delivered { background:var(--accent); }
         .dot.opened { background:var(--success); }
         .dot.clicked { background:var(--primary); }
         .dot.bounced { background:var(--danger); }
 
-        /* Activity cell */
-        .activity-items { display:flex; flex-direction:column; gap:3px; }
-        .activity-item { font-size:.78rem; color:var(--g600); }
-
-        /* Notizen */
-        .notizen-input {
-            width:100%; min-width:120px; padding:6px 8px; font-size:.78rem; font-family:var(--font);
-            border:1px solid transparent; border-radius:6px; background:transparent;
-            resize:vertical; min-height:32px; max-height:80px; transition:var(--ease); color:var(--g700);
-        }
-        .notizen-input:hover { background:var(--g50); border-color:var(--g200); }
-        .notizen-input:focus { outline:none; background:#fff; border-color:var(--primary); box-shadow:0 0 0 2px rgba(0,66,131,.08); }
-
-        /* Loading & empty states */
         .loading-state, .empty-state { text-align:center; padding:48px 20px; color:var(--g400); }
         .empty-state svg { width:48px; height:48px; margin-bottom:12px; opacity:.4; }
-        .empty-state p { font-size:.9rem; }
 
-        /* ===== DETAIL ROW ===== */
-        .contact-detail-row.hidden { display:none; }
-        .contact-detail-row td { padding:0 !important; }
-        .contact-detail {
-            padding:20px 24px; background:var(--g50); border-top:1px solid var(--g100);
-        }
-        .contact-detail h4 { font-size:.88rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
-        .calc-timeline { display:flex; flex-direction:column; gap:12px; }
-        .calc-item {
-            background:#fff; border-radius:var(--r-sm); padding:14px 16px;
-            border:1px solid var(--g100); position:relative;
-        }
-        .calc-item::before {
-            content:''; position:absolute; left:-16px; top:20px;
-            width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 0 0 2px var(--accent);
-        }
-        .calc-date { font-size:.72rem; color:var(--g400); font-weight:600; margin-bottom:8px; }
-        .calc-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-        .calc-field-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--g400); font-weight:600; }
-        .calc-field-val { font-size:.82rem; font-weight:600; color:var(--g800); }
-        .calc-field-val.savings { color:var(--success); }
-        .calc-no-data { font-size:.85rem; color:var(--g400); padding:12px 0; }
-        .lead-detail-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
-
-        /* ===== SIDEBAR (Detail) ===== */
-        .sidebar-overlay {
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,.3);
-            z-index:200; opacity:0; transition:opacity .25s ease;
-        }
+        /* ===== SIDEBAR ===== */
+        .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.3); z-index:200; opacity:0; transition:opacity .25s ease; }
         .sidebar-overlay.active { display:block; opacity:1; }
         .sidebar {
-            position:fixed; top:0; right:-480px; width:480px; max-width:90vw; height:100vh;
+            position:fixed; top:0; right:-500px; width:500px; max-width:92vw; height:100vh;
             background:#fff; z-index:201; transition:right .3s cubic-bezier(.4,0,.2,1);
             display:flex; flex-direction:column; box-shadow:-8px 0 32px rgba(0,0,0,.12);
         }
         .sidebar.open { right:0; }
-        .sidebar-header {
-            padding:20px 24px; border-bottom:1px solid var(--g100);
-            display:flex; align-items:center; justify-content:space-between;
-        }
+        .sidebar-header { padding:20px 24px; border-bottom:1px solid var(--g100); display:flex; align-items:center; justify-content:space-between; }
         .sidebar-header h3 { font-size:1rem; font-weight:700; color:var(--g900); }
-        .sidebar-close {
-            width:32px; height:32px; border-radius:8px; border:none; background:var(--g50);
-            cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--g500); transition:var(--ease);
-        }
+        .sidebar-close { width:32px; height:32px; border-radius:8px; border:none; background:var(--g50); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--g500); transition:var(--ease); }
         .sidebar-close:hover { background:var(--g200); color:var(--g800); }
+        .sidebar-actions { display:flex; gap:8px; padding:16px 24px; border-bottom:1px solid var(--g100); background:var(--g50); }
         .sidebar-body { flex:1; overflow-y:auto; padding:20px 24px; }
         .sidebar-section { margin-bottom:20px; }
-        .sidebar-section-title {
-            font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-            color:var(--g400); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--g100);
-        }
+        .sidebar-section-title { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--g100); }
         .sidebar-field { margin-bottom:10px; }
         .sidebar-field-label { font-size:.72rem; color:var(--g400); font-weight:600; }
         .sidebar-field-val { font-size:.88rem; color:var(--g800); font-weight:500; }
         .sidebar-timeline { position:relative; padding-left:20px; }
-        .sidebar-timeline::before {
-            content:''; position:absolute; left:3px; top:4px; bottom:4px;
-            width:2px; background:var(--g200);
-        }
+        .sidebar-timeline::before { content:''; position:absolute; left:3px; top:4px; bottom:4px; width:2px; background:var(--g200); }
         .timeline-item { position:relative; margin-bottom:16px; }
-        .timeline-item::before {
-            content:''; position:absolute; left:-20px; top:4px;
-            width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid #fff;
-            box-shadow:0 0 0 2px var(--g200);
-        }
+        .timeline-item::before { content:''; position:absolute; left:-20px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 0 0 2px var(--g200); }
         .timeline-item.email::before { background:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
         .timeline-item.calc::before { background:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
         .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
         .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
         .timeline-content strong { color:var(--g800); }
 
-        /* ===== MODALS (Add Kontakt, Excel, Email) ===== */
-        .modal-overlay {
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:300;
-            align-items:center; justify-content:center; padding:20px;
-        }
+        /* ===== MODALS ===== */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:300; align-items:center; justify-content:center; padding:20px; }
         .modal-overlay.active { display:flex; }
-        .modal-box {
-            background:#fff; border-radius:var(--r-lg); width:100%; max-width:540px;
-            max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); padding:28px;
-        }
+        .modal-box { background:#fff; border-radius:var(--r-lg); width:100%; max-width:540px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); padding:28px; }
         .modal-box h3 { font-size:1.05rem; font-weight:700; color:var(--g900); margin-bottom:4px; }
         .modal-sub { font-size:.82rem; color:var(--g500); margin-bottom:20px; }
         .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
-        .btn-cancel {
-            padding:10px 20px; font-size:.85rem; font-weight:600; font-family:var(--font);
-            color:var(--g600); background:#fff; border:1px solid var(--g200); border-radius:var(--r-sm);
-            cursor:pointer; transition:var(--ease);
-        }
+        .btn-cancel { padding:10px 20px; font-size:.85rem; font-weight:600; font-family:var(--font); color:var(--g600); background:#fff; border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
         .btn-cancel:hover { background:var(--g50); }
-        .btn-send {
-            padding:10px 24px; font-size:.85rem; font-weight:700; font-family:var(--font);
-            color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm);
-            cursor:pointer; transition:var(--ease);
-        }
+        .btn-send { padding:10px 24px; font-size:.85rem; font-weight:700; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
         .btn-send:hover { background:var(--primary-dark); }
         .btn-send:disabled { opacity:.5; cursor:not-allowed; }
-
-        /* Modal form elements */
         .modal-fg { margin-bottom:14px; }
         .modal-fg label { display:block; font-size:.78rem; font-weight:600; color:var(--g600); margin-bottom:4px; }
-        .modal-fg input, .modal-fg textarea {
-            width:100%; padding:10px 14px; font-size:.88rem; font-family:var(--font);
-            border:1.5px solid var(--g200); border-radius:var(--r-sm); transition:var(--ease);
-        }
-        .modal-fg input:focus, .modal-fg textarea:focus {
-            outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.08);
-        }
+        .modal-fg input, .modal-fg textarea { width:100%; padding:10px 14px; font-size:.88rem; font-family:var(--font); border:1.5px solid var(--g200); border-radius:var(--r-sm); transition:var(--ease); }
+        .modal-fg input:focus, .modal-fg textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.08); }
         .modal-fg textarea { resize:vertical; min-height:100px; }
-
-        /* Anrede & Vorlage */
         .anrede-toggle { display:flex; border:1.5px solid var(--g200); border-radius:var(--r-sm); overflow:hidden; margin-bottom:16px; }
-        .anrede-btn {
-            flex:1; padding:8px; font-size:.85rem; font-weight:600; font-family:var(--font);
-            text-align:center; cursor:pointer; border:none; background:#fff; color:var(--g500); transition:var(--ease);
-        }
+        .anrede-btn { flex:1; padding:8px; font-size:.85rem; font-weight:600; font-family:var(--font); text-align:center; cursor:pointer; border:none; background:#fff; color:var(--g500); transition:var(--ease); }
         .anrede-btn.active { background:var(--primary); color:#fff; }
-
         .vorlage-chips { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
-        .vorlage-chip {
-            padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font);
-            border:1.5px solid var(--g200); border-radius:20px; cursor:pointer;
-            background:#fff; color:var(--g600); transition:var(--ease);
-        }
+        .vorlage-chip { padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font); border:1.5px solid var(--g200); border-radius:20px; cursor:pointer; background:#fff; color:var(--g600); transition:var(--ease); }
         .vorlage-chip.active { border-color:var(--primary); background:var(--primary-light); color:var(--primary); }
         .vorlage-chip:hover { border-color:var(--g300); }
-
-        /* Upload/Status messages */
         .upload-status { padding:8px 12px; border-radius:var(--r-sm); font-size:.82rem; font-weight:500; display:none; }
         .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
         .upload-status.success { display:block; background:var(--success-light); color:#15803D; }
         .upload-status.error { display:block; background:var(--danger-light); color:var(--danger); }
-
-        /* Excel preview */
         .excel-preview table { font-size:.78rem; margin-top:8px; }
         .excel-preview th { background:var(--g50); font-weight:600; }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width:900px) {
-            .stats { grid-template-columns:repeat(2, 1fr); }
+            .action-cards { grid-template-columns:1fr; }
             .sidebar { width:100%; max-width:100%; }
         }
         @media (max-width:600px) {
-            .stats { grid-template-columns:1fr 1fr; gap:8px; }
             .dash-body { padding:12px; }
             .toolbar { gap:6px; }
             .search-box { width:100%; }
             .table-wrap { overflow-x:auto; }
-            table { min-width:700px; }
+            table { min-width:800px; }
         }
     </style>
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
+<!-- LOGIN -->
 <div class="login-wrap" id="loginView">
     <div class="login-card">
         <div class="login-logo">
@@ -418,24 +356,16 @@
         <h1>Berater-Dashboard</h1>
         <p class="sub">Melden Sie sich mit Ihrem Berater-Zugang an</p>
         <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="fg">
-                <label for="loginEmail">E-Mail</label>
-                <input type="email" id="loginEmail" required autocomplete="email">
-            </div>
-            <div class="fg">
-                <label for="loginPassword">Passwort</label>
-                <input type="password" id="loginPassword" required autocomplete="current-password">
-            </div>
+            <div class="fg"><label for="loginEmail">E-Mail</label><input type="email" id="loginEmail" required autocomplete="email"></div>
+            <div class="fg"><label for="loginPassword">Passwort</label><input type="password" id="loginPassword" required autocomplete="current-password"></div>
             <button type="submit" class="btn-login" id="loginBtn">Anmelden</button>
             <div class="error-msg" id="loginError"></div>
         </form>
     </div>
 </div>
 
-<!-- ===== DASHBOARD ===== -->
+<!-- DASHBOARD -->
 <div class="dashboard" id="dashboardView">
-
-    <!-- Header -->
     <div class="dash-header">
         <div class="dash-header-left">
             <div class="dash-header-logo">mit<span>NORM</span></div>
@@ -450,113 +380,55 @@
     </div>
 
     <div class="dash-body">
+        <!-- ACTION CARDS -->
+        <div class="action-cards" id="actionCards"></div>
 
-        <!-- Stat Cards -->
-        <div class="stats">
-            <div class="stat-card active" data-stat="alle" onclick="filterByStatus('alle')">
-                <div class="stat-icon total">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-val" id="statTotal">0</div>
-                    <div class="stat-label">Kontakte Gesamt</div>
-                </div>
-            </div>
-            <div class="stat-card" data-stat="neu" onclick="filterByStatus('neu')">
-                <div class="stat-icon neu">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-val" id="statNeu">0</div>
-                    <div class="stat-label">Neu</div>
-                </div>
-            </div>
-            <div class="stat-card" data-stat="berechnet" onclick="filterByStatus('berechnet')">
-                <div class="stat-icon berechnet">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-val" id="statBerechnet">0</div>
-                    <div class="stat-label">Berechnet</div>
-                </div>
-            </div>
-            <div class="stat-card" data-stat="abgeschlossen" onclick="filterByStatus('abgeschlossen')">
-                <div class="stat-icon done">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-val" id="statDone">0</div>
-                    <div class="stat-label">Abgeschlossen</div>
-                </div>
-            </div>
-        </div>
+        <!-- HOT LEADS ALERTS -->
+        <div class="hot-alerts" id="hotAlerts"></div>
 
-        <!-- Affiliate Link Bar -->
+        <!-- Link Bar -->
         <div class="link-bar">
-            <span class="link-bar-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                Dein Rechner-Link
-            </span>
+            <span class="link-bar-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Dein Rechner-Link</span>
             <input type="text" id="affiliateLink" readonly value="">
             <button class="btn-copy" onclick="copyAffiliateLink()">Kopieren</button>
         </div>
 
         <!-- Toolbar -->
         <div class="toolbar">
-            <button class="btn-action" onclick="openAddKontaktModal()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Kontakt
-            </button>
-            <button class="btn-action secondary" onclick="openExcelModal()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Excel Import
-            </button>
-            <button class="btn-action success" id="btnEmailSelected" disabled onclick="openEmailModal()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                Email senden (0)
-            </button>
-            <button class="btn-action secondary" onclick="emailAlleOhne()" title="Alle Kontakte ohne bisherige Emails auswählen">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                Alle ohne Email
-            </button>
+            <button class="btn-action" onclick="openAddKontaktModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Kontakt</button>
+            <button class="btn-action secondary" onclick="openExcelModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Excel Import</button>
+            <button class="btn-action success" id="btnEmailSelected" disabled onclick="openEmailModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email senden (0)</button>
+            <button class="btn-action secondary" onclick="emailAlleOhne()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Alle ohne Email</button>
             <div class="toolbar-spacer"></div>
-            <div class="search-box">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" placeholder="Suchen..." oninput="handleSearch(this.value)">
-            </div>
+            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Suchen..." oninput="handleSearch(this.value)"></div>
         </div>
 
-        <!-- Filters -->
-        <div class="filters">
-            <button class="filter-btn active" data-filter="alle" onclick="filterByStatus('alle')">Alle</button>
-            <button class="filter-btn" data-filter="neu" onclick="filterByStatus('neu')">Neu</button>
-            <button class="filter-btn" data-filter="kontaktiert" onclick="filterByStatus('kontaktiert')">Kontaktiert</button>
-            <button class="filter-btn" data-filter="berechnet" onclick="filterByStatus('berechnet')">Berechnet</button>
-            <button class="filter-btn" data-filter="termin" onclick="filterByStatus('termin')">Termin</button>
-            <button class="filter-btn" data-filter="abgeschlossen" onclick="filterByStatus('abgeschlossen')">Abgeschlossen</button>
-            <button class="filter-btn" data-filter="storniert" onclick="filterByStatus('storniert')">Storniert</button>
+        <!-- Sort/Filter Tabs -->
+        <div class="sort-tabs" id="sortTabs">
+            <button class="sort-tab active" data-sort="priority" onclick="setSortMode('priority')">Priorität</button>
+            <button class="sort-tab" data-sort="alle" onclick="setSortMode('alle')">Alle</button>
+            <button class="sort-tab" data-sort="hot" onclick="setSortMode('hot')">Heiß</button>
+            <button class="sort-tab" data-sort="warm" onclick="setSortMode('warm')">Warm</button>
+            <button class="sort-tab" data-sort="cold" onclick="setSortMode('cold')">Kalt</button>
+            <button class="sort-tab" data-sort="neu" onclick="setSortMode('neu')">Neu</button>
+            <button class="sort-tab" data-sort="abgeschlossen" onclick="setSortMode('abgeschlossen')">Abgeschlossen</button>
         </div>
 
         <!-- Table -->
         <div class="table-wrap">
             <table id="contactsTable" style="display:none;">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" onchange="toggleAlleKontakte(this)"></th>
-                        <th>Name</th>
-                        <th>Kontakt</th>
-                        <th>Status</th>
-                        <th>Sparpotenzial</th>
-                        <th>Aktivität</th>
-                        <th>Link</th>
-                        <th>Notizen</th>
-                    </tr>
-                </thead>
+                <thead><tr>
+                    <th><input type="checkbox" onchange="toggleAlleKontakte(this)"></th>
+                    <th>Name</th>
+                    <th>Temperatur</th>
+                    <th>Sparpotenzial</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
+                    <th>Notizen</th>
+                </tr></thead>
                 <tbody id="contactsBody"></tbody>
             </table>
-            <div class="loading-state" id="contactsLoading">
-                <p>Lade Kontakte...</p>
-            </div>
+            <div class="loading-state" id="contactsLoading"><p>Lade Kontakte...</p></div>
             <div class="empty-state" id="contactsEmpty" style="display:none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <p>Keine Kontakte gefunden</p>
@@ -565,131 +437,113 @@
     </div>
 </div>
 
-<!-- ===== SIDEBAR (Contact Detail) ===== -->
+<!-- SIDEBAR -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div class="sidebar" id="sidebarPanel">
     <div class="sidebar-header">
         <h3 id="sidebarTitle">Kontakt-Details</h3>
-        <button class="sidebar-close" onclick="closeSidebar()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <button class="sidebar-close" onclick="closeSidebar()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
+    <div class="sidebar-actions" id="sidebarActions"></div>
     <div class="sidebar-body" id="sidebarBody"></div>
 </div>
 
-<!-- ===== ADD KONTAKT MODAL ===== -->
-<div class="modal-overlay" id="addKontaktModal">
-    <div class="modal-box">
-        <h3>Neuen Kontakt anlegen</h3>
-        <p class="modal-sub">Manuell einen Kunden hinzufügen</p>
-        <form id="kundeForm" onsubmit="addKunde(event)">
-            <div class="modal-fg">
-                <label>Vorname *</label>
-                <input type="text" id="kundeVorname" required>
-            </div>
-            <div class="modal-fg">
-                <label>Nachname *</label>
-                <input type="text" id="kundeNachname" required>
-            </div>
-            <div class="modal-fg">
-                <label>E-Mail</label>
-                <input type="email" id="kundeEmail">
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closeModal('addKontaktModal')">Abbrechen</button>
-                <button type="submit" class="btn-send" id="kundeAddBtn">Anlegen</button>
-            </div>
-        </form>
+<!-- ADD KONTAKT MODAL -->
+<div class="modal-overlay" id="addKontaktModal"><div class="modal-box">
+    <h3>Neuen Kontakt anlegen</h3><p class="modal-sub">Manuell einen Kunden hinzufügen</p>
+    <form id="kundeForm" onsubmit="addKunde(event)">
+        <div class="modal-fg"><label>Vorname *</label><input type="text" id="kundeVorname" required></div>
+        <div class="modal-fg"><label>Nachname *</label><input type="text" id="kundeNachname" required></div>
+        <div class="modal-fg"><label>E-Mail</label><input type="email" id="kundeEmail"></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal('addKontaktModal')">Abbrechen</button><button type="submit" class="btn-send" id="kundeAddBtn">Anlegen</button></div>
+    </form>
+</div></div>
+
+<!-- EXCEL MODAL -->
+<div class="modal-overlay" id="excelModal"><div class="modal-box">
+    <h3>Excel Import</h3><p class="modal-sub">Kontakte aus einer Excel-Datei importieren</p>
+    <div class="modal-fg"><label>Excel-Datei (.xlsx, .xls)</label><input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)"></div>
+    <div class="upload-status" id="uploadStatus"></div>
+    <div class="excel-preview" id="uploadPreview"></div>
+    <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="downloadTemplate()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Vorlage</button>
+        <button type="button" class="btn-cancel" onclick="closeModal('excelModal')">Abbrechen</button>
+        <button type="button" class="btn-send" id="excelUploadBtn" disabled onclick="uploadExcelKunden()">Importieren</button>
     </div>
-</div>
+</div></div>
 
-<!-- ===== EXCEL IMPORT MODAL ===== -->
-<div class="modal-overlay" id="excelModal">
-    <div class="modal-box">
-        <h3>Excel Import</h3>
-        <p class="modal-sub">Kontakte aus einer Excel-Datei importieren</p>
-        <div class="modal-fg">
-            <label>Excel-Datei (.xlsx, .xls)</label>
-            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
-        </div>
-        <div class="upload-status" id="uploadStatus"></div>
-        <div class="excel-preview" id="uploadPreview"></div>
-        <div class="modal-actions">
-            <button type="button" class="btn-cancel" onclick="downloadTemplate()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Vorlage
-            </button>
-            <button type="button" class="btn-cancel" onclick="closeModal('excelModal')">Abbrechen</button>
-            <button type="button" class="btn-send" id="excelUploadBtn" disabled onclick="uploadExcelKunden()">Importieren</button>
-        </div>
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="emailModal"><div class="modal-box">
+    <h3>Email an Kontakte senden</h3><p class="modal-sub" id="emailModalSub">0 Kontakte ausgewählt</p>
+    <label style="font-size:.78rem;font-weight:600;color:var(--g600);margin-bottom:4px;display:block;">Anrede</label>
+    <div class="anrede-toggle"><button type="button" class="anrede-btn active" data-anrede="du" onclick="setAnrede('du')">Du</button><button type="button" class="anrede-btn" data-anrede="sie" onclick="setAnrede('sie')">Sie</button></div>
+    <label style="font-size:.78rem;font-weight:600;color:var(--g600);margin-bottom:6px;display:block;">Vorlage</label>
+    <div class="vorlage-chips">
+        <button type="button" class="vorlage-chip active" data-vorlage="jahresupdate" onclick="setVorlage('jahresupdate')">Jahresupdate</button>
+        <button type="button" class="vorlage-chip" data-vorlage="erstansprache" onclick="setVorlage('erstansprache')">Erstansprache</button>
+        <button type="button" class="vorlage-chip" data-vorlage="erinnerung" onclick="setVorlage('erinnerung')">Erinnerung</button>
+        <button type="button" class="vorlage-chip" data-vorlage="eigene" onclick="setVorlage('eigene')">Eigene Nachricht</button>
     </div>
-</div>
+    <div class="modal-fg"><label>Betreff</label><input type="text" id="emailSubject" placeholder="Betreff der E-Mail"></div>
+    <div class="modal-fg"><label>Vorschau / Nachricht</label><textarea id="emailText" placeholder="Nachricht eingeben..." rows="8"></textarea></div>
+    <p style="font-size:.72rem;color:var(--g400);margin-top:-8px;margin-bottom:8px;">Platzhalter: <code>{{vorname}}</code>, <code>{{nachname}}</code>, <code>{{link}}</code> werden automatisch ersetzt.</p>
+    <div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeEmailModal()">Abbrechen</button><button type="button" class="btn-send" id="btnSendEmail" onclick="sendEmails()">Senden</button></div>
+    <div class="upload-status" id="emailSendStatus" style="margin-top:12px;"></div>
+</div></div>
 
-<!-- ===== EMAIL MODAL ===== -->
-<div class="modal-overlay" id="emailModal">
-    <div class="modal-box">
-        <h3>Email an Kontakte senden</h3>
-        <p class="modal-sub" id="emailModalSub">0 Kontakte ausgewählt</p>
-
-        <label style="font-size:.78rem;font-weight:600;color:var(--g600);margin-bottom:4px;display:block;">Anrede</label>
-        <div class="anrede-toggle">
-            <button type="button" class="anrede-btn active" data-anrede="du" onclick="setAnrede('du')">Du</button>
-            <button type="button" class="anrede-btn" data-anrede="sie" onclick="setAnrede('sie')">Sie</button>
-        </div>
-
-        <label style="font-size:.78rem;font-weight:600;color:var(--g600);margin-bottom:6px;display:block;">Vorlage</label>
-        <div class="vorlage-chips">
-            <button type="button" class="vorlage-chip active" data-vorlage="jahresupdate" onclick="setVorlage('jahresupdate')">Jahresupdate</button>
-            <button type="button" class="vorlage-chip" data-vorlage="erstansprache" onclick="setVorlage('erstansprache')">Erstansprache</button>
-            <button type="button" class="vorlage-chip" data-vorlage="erinnerung" onclick="setVorlage('erinnerung')">Erinnerung</button>
-            <button type="button" class="vorlage-chip" data-vorlage="eigene" onclick="setVorlage('eigene')">Eigene Nachricht</button>
-        </div>
-
-        <div class="modal-fg">
-            <label>Betreff</label>
-            <input type="text" id="emailSubject" placeholder="Betreff der E-Mail">
-        </div>
-        <div class="modal-fg">
-            <label>Vorschau / Nachricht</label>
-            <textarea id="emailText" placeholder="Nachricht eingeben..." rows="8"></textarea>
-        </div>
-        <p style="font-size:.72rem;color:var(--g400);margin-top:-8px;margin-bottom:8px;">Platzhalter: <code>{{vorname}}</code>, <code>{{nachname}}</code>, <code>{{link}}</code> werden automatisch ersetzt.</p>
-        <div class="modal-actions">
-            <button type="button" class="btn-cancel" onclick="closeEmailModal()">Abbrechen</button>
-            <button type="button" class="btn-send" id="btnSendEmail" onclick="sendEmails()">Senden</button>
-        </div>
-        <div class="upload-status" id="emailSendStatus" style="margin-top:12px;"></div>
-    </div>
-</div>
-
-<!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<!-- SheetJS for Excel parsing -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <script>
-/* ==================================================================
-   SUPABASE CLIENT
-   ================================================================== */
 const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// State
-let allContacts = [];
-let allLeads = [];
-let allKunden = [];
-let kundenBerechnungen = {};
-let kundenEmails = {};
+let allContacts = [], allLeads = [], allKunden = [];
+let kundenBerechnungen = {}, kundenEmails = {};
 let selectedKundenIds = new Set();
-let currentFilter = 'alle';
+let currentSort = 'priority';
 let searchQuery = '';
 let beraterRecord = null;
-let openSidebarContact = null;
 
-/* ==================================================================
-   AUTH
-   ================================================================== */
+/* === TEMPERATURE === */
+function getTemperature(contact) {
+    const now = Date.now();
+    const created = new Date(contact.created_at).getTime();
+    const ageHours = (now - created) / (1000 * 60 * 60);
+    const isKunde = contact.type === 'kunde';
+
+    // HOT: gerade berechnet (< 24h) oder geklickt
+    if (isKunde) {
+        const berechnungen = contact.berechnungen || [];
+        const emails = contact.emails || [];
+        if (berechnungen.length > 0) {
+            const lastCalc = new Date(berechnungen[0].created_at).getTime();
+            if ((now - lastCalc) / (1000*60*60) < 24) return 'hot';
+        }
+        if (emails.some(e => e.status === 'clicked')) return 'hot';
+        if (emails.some(e => e.status === 'opened')) return 'warm';
+        if (emails.length > 0) return 'warm';
+    } else {
+        if (contact.sparpotenzial_jahr && ageHours < 48) return 'hot';
+        if (contact.sparpotenzial_jahr) return 'warm';
+    }
+
+    if (ageHours < 72) return 'warm';
+    return 'cold';
+}
+
+function getTempLabel(temp) {
+    return { hot: 'Heiß', warm: 'Warm', cold: 'Kalt' }[temp] || temp;
+}
+
+function getPriority(contact) {
+    const temp = getTemperature(contact);
+    const spar = contact.sparpotenzial_jahr || (contact.berechnungen?.[0]?.sparpotenzial_jahr) || 0;
+    const tempScore = { hot: 10000, warm: 5000, cold: 0 }[temp];
+    return tempScore + spar;
+}
+
+/* === AUTH === */
 async function checkSession() {
     const { data: { session } } = await sb.auth.getSession();
     if (session) await showDashboard(session.user);
@@ -699,20 +553,11 @@ async function handleLogin(event) {
     event.preventDefault();
     const btn = document.getElementById('loginBtn');
     const errorEl = document.getElementById('loginError');
-    btn.disabled = true;
-    errorEl.style.display = 'none';
-
+    btn.disabled = true; errorEl.style.display = 'none';
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
-
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-        errorEl.textContent = 'Anmeldung fehlgeschlagen: ' + error.message;
-        errorEl.style.display = 'block';
-        btn.disabled = false;
-        return;
-    }
+    if (error) { errorEl.textContent = 'Anmeldung fehlgeschlagen: ' + error.message; errorEl.style.display = 'block'; btn.disabled = false; return; }
     await showDashboard(data.user);
 }
 
@@ -722,28 +567,19 @@ async function handleLogout() {
     document.getElementById('dashboardView').style.display = 'none';
 }
 
-/* ==================================================================
-   DASHBOARD
-   ================================================================== */
+/* === DASHBOARD === */
 async function showDashboard(user) {
     document.getElementById('loginView').style.display = 'none';
     document.getElementById('dashboardView').style.display = 'block';
-
-    const { data: berater } = await sb
-        .from('berater').select('*')
-        .eq('auth_user_id', user.id).single();
-
+    const { data: berater } = await sb.from('berater').select('*').eq('auth_user_id', user.id).single();
     beraterRecord = berater;
-
     if (berater) {
         document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
         document.getElementById('userAvatar').textContent = (berater.vorname[0] + berater.nachname[0]).toUpperCase();
-        const baseUrl = window.location.origin;
-        document.getElementById('affiliateLink').value = `${baseUrl}/?berater=${berater.slug}`;
+        document.getElementById('affiliateLink').value = `${window.location.origin}/?berater=${berater.slug}`;
     } else {
         document.getElementById('userName').textContent = user.email;
     }
-
     await loadAllData();
 }
 
@@ -756,34 +592,25 @@ async function loadAllData() {
         sb.from('leads').select('*').order('created_at', { ascending: false }),
         sb.from('kunden').select('*').order('created_at', { ascending: false }),
     ]);
-
     allLeads = leadsRes.data || [];
     allKunden = kundenRes.data || [];
-
-    kundenBerechnungen = {};
-    kundenEmails = {};
+    kundenBerechnungen = {}; kundenEmails = {};
 
     if (allKunden.length > 0) {
-        const kundenIds = allKunden.map(k => k.id);
+        const ids = allKunden.map(k => k.id);
         const [berechRes, emailRes] = await Promise.all([
-            sb.from('kunden_berechnungen').select('*').in('kunde_id', kundenIds).order('created_at', { ascending: false }),
-            sb.from('kunden_emails').select('*').in('kunde_id', kundenIds).order('created_at', { ascending: false }),
+            sb.from('kunden_berechnungen').select('*').in('kunde_id', ids).order('created_at', { ascending: false }),
+            sb.from('kunden_emails').select('*').in('kunde_id', ids).order('created_at', { ascending: false }),
         ]);
-
-        ((berechRes.data) || []).forEach(b => {
-            if (!kundenBerechnungen[b.kunde_id]) kundenBerechnungen[b.kunde_id] = [];
-            kundenBerechnungen[b.kunde_id].push(b);
-        });
-
-        ((emailRes.data) || []).forEach(e => {
-            if (!kundenEmails[e.kunde_id]) kundenEmails[e.kunde_id] = [];
-            kundenEmails[e.kunde_id].push(e);
-        });
+        ((berechRes.data) || []).forEach(b => { if (!kundenBerechnungen[b.kunde_id]) kundenBerechnungen[b.kunde_id] = []; kundenBerechnungen[b.kunde_id].push(b); });
+        ((emailRes.data) || []).forEach(e => { if (!kundenEmails[e.kunde_id]) kundenEmails[e.kunde_id] = []; kundenEmails[e.kunde_id].push(e); });
     }
 
     buildUnifiedContacts();
     selectedKundenIds.clear();
-    updateStats();
+    renderActionCards();
+    renderHotAlerts();
+    updateSortCounts();
     renderContacts();
 }
 
@@ -795,85 +622,131 @@ function buildUnifiedContacts() {
         const berechnungen = kundenBerechnungen[kunde.id] || [];
         const emails = kundenEmails[kunde.id] || [];
         const link = beraterRecord ? `${baseUrl}/?berater=${beraterRecord.slug}&kunde=${kunde.code}` : '';
-
         let status = kunde.status || 'neu';
         if (status === 'neu') {
             if (berechnungen.length > 0) status = 'berechnet';
-            else if (emails.some(e => ['clicked', 'opened'].includes(e.status))) status = 'kontaktiert';
+            else if (emails.some(e => ['clicked','opened'].includes(e.status))) status = 'kontaktiert';
             else if (emails.length > 0) status = 'kontaktiert';
         }
-
-        allContacts.push({
-            type: 'kunde', id: kunde.id, vorname: kunde.vorname, nachname: kunde.nachname,
-            email: kunde.email, telefon: kunde.telefon || null, status, created_at: kunde.created_at,
-            code: kunde.code, link, berechnungen, emails, notizen: kunde.notizen || '', _raw: kunde,
-        });
+        allContacts.push({ type:'kunde', id:kunde.id, vorname:kunde.vorname, nachname:kunde.nachname, email:kunde.email, telefon:kunde.telefon||null, status, created_at:kunde.created_at, code:kunde.code, link, berechnungen, emails, notizen:kunde.notizen||'', sparpotenzial_jahr: berechnungen[0]?.sparpotenzial_jahr || null, _raw:kunde });
     }
 
     for (const lead of allLeads) {
         let status = lead.status || 'neu';
         if (status === 'kontaktiert' && lead.sparpotenzial_jahr) status = 'berechnet';
-
-        allContacts.push({
-            type: 'lead', id: lead.id, vorname: lead.vorname, nachname: lead.nachname,
-            email: lead.email, telefon: lead.telefon || null, status, created_at: lead.created_at,
-            gehalt: lead.gehalt, aktuelle_kasse: lead.aktuelle_kasse,
-            gewaehlte_kasse: lead.gewaehlte_kasse, sparpotenzial_jahr: lead.sparpotenzial_jahr,
-            notizen: lead.notizen || '', _raw: lead,
-        });
+        allContacts.push({ type:'lead', id:lead.id, vorname:lead.vorname, nachname:lead.nachname, email:lead.email, telefon:lead.telefon||null, status, created_at:lead.created_at, gehalt:lead.gehalt, aktuelle_kasse:lead.aktuelle_kasse, gewaehlte_kasse:lead.gewaehlte_kasse, sparpotenzial_jahr:lead.sparpotenzial_jahr, notizen:lead.notizen||'', _raw:lead });
     }
 
     allContacts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
-function updateStats() {
-    document.getElementById('statTotal').textContent = allContacts.length;
-    document.getElementById('statNeu').textContent = allContacts.filter(c => c.status === 'neu').length;
-    document.getElementById('statBerechnet').textContent = allContacts.filter(c => c.status === 'berechnet').length;
-    document.getElementById('statDone').textContent = allContacts.filter(c => c.status === 'abgeschlossen').length;
+/* === ACTION CARDS === */
+function renderActionCards() {
+    const hotContacts = allContacts.filter(c => getTemperature(c) === 'hot' && c.status !== 'abgeschlossen');
+    const warmContacts = allContacts.filter(c => getTemperature(c) === 'warm' && c.status !== 'abgeschlossen');
+    const withSavings = allContacts.filter(c => (c.sparpotenzial_jahr || 0) > 0 && c.status !== 'abgeschlossen');
+    const totalSavings = withSavings.reduce((sum, c) => sum + (c.sparpotenzial_jahr || 0), 0);
+    const done = allContacts.filter(c => c.status === 'abgeschlossen').length;
 
-    document.querySelectorAll('.stat-card').forEach(card => {
-        card.classList.toggle('active', card.dataset.stat === currentFilter);
+    document.getElementById('actionCards').innerHTML = `
+        <div class="action-card hot" onclick="setSortMode('hot')">
+            <div class="action-icon hot"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c0 4-4 6-4 10a4 4 0 108 0c0-4-4-6-4-10z"/></svg></div>
+            <div class="action-content">
+                <div class="action-val">${hotContacts.length}</div>
+                <div class="action-label">${hotContacts.length === 1 ? 'Lead wartet' : 'Leads warten'} auf deinen Anruf</div>
+                ${hotContacts.length > 0 ? `<button class="action-cta hot" onclick="event.stopPropagation();callFirst('hot')">Jetzt anrufen</button>` : ''}
+            </div>
+        </div>
+        <div class="action-card warm" onclick="setSortMode('warm')">
+            <div class="action-icon warm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+            <div class="action-content">
+                <div class="action-val">${warmContacts.length}</div>
+                <div class="action-label">Warme Kontakte – Email geöffnet oder kürzlich erstellt</div>
+            </div>
+        </div>
+        <div class="action-card success">
+            <div class="action-icon success"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg></div>
+            <div class="action-content">
+                <div class="action-val">${totalSavings > 0 ? totalSavings.toLocaleString('de-DE', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' €' : '–'}</div>
+                <div class="action-label">Gesamtes Sparpotenzial deiner ${withSavings.length} Kontakte / Jahr</div>
+            </div>
+        </div>
+        <div class="action-card info">
+            <div class="action-icon info"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="action-content">
+                <div class="action-val">${done}</div>
+                <div class="action-label">Abgeschlossene Kontakte</div>
+            </div>
+        </div>`;
+}
+
+function renderHotAlerts() {
+    const hotContacts = allContacts
+        .filter(c => getTemperature(c) === 'hot' && c.status !== 'abgeschlossen')
+        .sort((a, b) => (b.sparpotenzial_jahr || 0) - (a.sparpotenzial_jahr || 0))
+        .slice(0, 3);
+
+    if (hotContacts.length === 0) { document.getElementById('hotAlerts').innerHTML = ''; return; }
+
+    document.getElementById('hotAlerts').innerHTML = hotContacts.map(c => {
+        const spar = c.sparpotenzial_jahr ? `${c.sparpotenzial_jahr.toLocaleString('de-DE', {minimumFractionDigits:0})} €/Jahr Ersparnis` : 'gerade aktiv';
+        const uid = c.type + '-' + c.id;
+        const hasPhone = c.telefon;
+        return `<div class="hot-alert" onclick="openSidebar('${uid}')">
+            <div class="hot-alert-pulse"></div>
+            <div class="hot-alert-text"><strong>${esc(c.vorname)} ${esc(c.nachname)}</strong> – ${spar}</div>
+            ${hasPhone ? `<button class="hot-alert-action" onclick="event.stopPropagation();window.open('tel:${esc(c.telefon)}')">Anrufen</button>` : `<button class="hot-alert-action" onclick="event.stopPropagation();openSidebar('${uid}')">Details</button>`}
+        </div>`;
+    }).join('');
+}
+
+/* === SORT / FILTER === */
+function setSortMode(mode) {
+    currentSort = mode;
+    document.querySelectorAll('.sort-tab').forEach(t => t.classList.toggle('active', t.dataset.sort === mode));
+    renderContacts();
+}
+
+function updateSortCounts() {
+    const counts = { priority: allContacts.length, alle: allContacts.length, hot:0, warm:0, cold:0, neu:0, abgeschlossen:0 };
+    allContacts.forEach(c => {
+        const temp = getTemperature(c);
+        counts[temp] = (counts[temp]||0) + 1;
+        if (c.status === 'neu') counts.neu++;
+        if (c.status === 'abgeschlossen') counts.abgeschlossen++;
     });
-
-    const counts = {};
-    allContacts.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        const f = btn.dataset.filter;
-        const count = f === 'alle' ? allContacts.length : (counts[f] || 0);
-        const countEl = btn.querySelector('.filter-count');
-        if (countEl) countEl.textContent = count;
-        else {
-            const span = document.createElement('span');
-            span.className = 'filter-count';
-            span.textContent = count;
-            btn.appendChild(span);
-        }
+    document.querySelectorAll('.sort-tab').forEach(tab => {
+        const s = tab.dataset.sort;
+        const existing = tab.querySelector('.sort-count');
+        if (existing) existing.textContent = counts[s] || 0;
+        else { const sp = document.createElement('span'); sp.className='sort-count'; sp.textContent=counts[s]||0; tab.appendChild(sp); }
     });
 }
 
 function getFilteredContacts() {
-    let filtered = currentFilter === 'alle'
-        ? allContacts
-        : allContacts.filter(c => c.status === currentFilter);
+    let filtered = allContacts;
+    if (currentSort === 'hot') filtered = filtered.filter(c => getTemperature(c) === 'hot');
+    else if (currentSort === 'warm') filtered = filtered.filter(c => getTemperature(c) === 'warm');
+    else if (currentSort === 'cold') filtered = filtered.filter(c => getTemperature(c) === 'cold');
+    else if (currentSort === 'neu') filtered = filtered.filter(c => c.status === 'neu');
+    else if (currentSort === 'abgeschlossen') filtered = filtered.filter(c => c.status === 'abgeschlossen');
 
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        filtered = filtered.filter(c =>
-            (c.vorname + ' ' + c.nachname).toLowerCase().includes(q) ||
-            (c.email || '').toLowerCase().includes(q)
-        );
+        filtered = filtered.filter(c => (c.vorname+' '+c.nachname).toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q));
+    }
+
+    // Sort by priority (hottest + highest savings first)
+    if (currentSort === 'priority' || currentSort === 'alle') {
+        filtered.sort((a, b) => getPriority(b) - getPriority(a));
     }
 
     return filtered;
 }
 
-/* ==================================================================
-   RENDER CONTACTS TABLE
-   ================================================================== */
+/* === RENDER TABLE === */
 function renderContacts() {
     const filtered = getFilteredContacts();
-
     document.getElementById('contactsLoading').style.display = 'none';
 
     if (filtered.length === 0) {
@@ -881,102 +754,59 @@ function renderContacts() {
         document.getElementById('contactsEmpty').style.display = 'block';
         return;
     }
-
     document.getElementById('contactsTable').style.display = 'table';
     document.getElementById('contactsEmpty').style.display = 'none';
 
     const tbody = document.getElementById('contactsBody');
     tbody.innerHTML = filtered.map(contact => {
         const date = new Date(contact.created_at);
-        const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const dateStr = date.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
         const isKunde = contact.type === 'kunde';
+        const temp = getTemperature(contact);
+        const uid = contact.type + '-' + contact.id;
 
-        const sourceBadge = isKunde
-            ? '<span class="source-badge source-kunde">Kunde</span>'
-            : '<span class="source-badge source-lead">Lead</span>';
+        const sourceBadge = isKunde ? '<span class="source-badge source-kunde">Kunde</span>' : '<span class="source-badge source-lead">Lead</span>';
 
         // Checkbox
         const canEmail = contact.email;
         const checked = selectedKundenIds.has(contact.id) ? 'checked' : '';
-        const checkboxHtml = canEmail
-            ? `<input type="checkbox" class="kunde-checkbox" value="${contact.id}" ${checked} onchange="toggleKontaktSelection(this)" onclick="event.stopPropagation()">`
-            : '';
+        const checkboxHtml = canEmail ? `<input type="checkbox" class="kunde-checkbox" value="${contact.id}" ${checked} onchange="toggleKontaktSelection(this)" onclick="event.stopPropagation()">` : '';
 
-        // Contact info
-        const emailHtml = contact.email
-            ? `<a href="mailto:${esc(contact.email)}" class="contact-email" onclick="event.stopPropagation()">${esc(contact.email)}</a>`
-            : '<span style="font-size:.78rem;color:var(--g400);">–</span>';
-        const telHtml = contact.telefon
-            ? `<div><a href="tel:${esc(contact.telefon)}" style="font-size:.75rem;color:var(--g500);text-decoration:none;" onclick="event.stopPropagation()">${esc(contact.telefon)}</a></div>`
-            : '';
+        // Temp badge
+        const tempBadge = `<span class="temp-badge ${temp}"><span class="temp-dot ${temp}"></span>${getTempLabel(temp)}</span>`;
 
-        // Status select
+        // Savings
+        const spar = contact.sparpotenzial_jahr;
+        const sparHtml = spar ? `<span class="savings-cell">${spar.toLocaleString('de-DE',{minimumFractionDigits:0})} €/J</span>` : '<span class="savings-cell neutral">–</span>';
+
+        // Status
         const statusOptions = ['neu','kontaktiert','berechnet','termin','abgeschlossen','storniert'];
-        const statusLabels = { neu:'Neu', kontaktiert:'Kontaktiert', berechnet:'Berechnet', termin:'Termin', abgeschlossen:'Abgeschlossen', storniert:'Storniert' };
-        const statusSelect = `<select class="status-select" onchange="updateContactStatus('${contact.type}','${contact.id}',this.value)" onclick="event.stopPropagation()">
-            ${statusOptions.map(s => `<option value="${s}" ${contact.status === s ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
-        </select>`;
+        const statusLabels = {neu:'Neu',kontaktiert:'Kontaktiert',berechnet:'Berechnet',termin:'Termin',abgeschlossen:'Abgeschlossen',storniert:'Storniert'};
+        const statusSelect = `<select class="status-select" onchange="updateContactStatus('${contact.type}','${contact.id}',this.value)" onclick="event.stopPropagation()">${statusOptions.map(s=>`<option value="${s}" ${contact.status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}</select>`;
 
-        // Sparpotenzial
-        let sparHtml = '<span class="savings-cell neutral">–</span>';
-        if (isKunde && contact.berechnungen && contact.berechnungen.length > 0) {
-            const letzte = contact.berechnungen[0];
-            if (letzte.sparpotenzial_jahr) {
-                sparHtml = `<span class="savings-cell">${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
-            }
-        } else if (!isKunde && contact.sparpotenzial_jahr) {
-            sparHtml = `<span class="savings-cell">${contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
-        }
+        // Quick Actions
+        const callBtn = contact.telefon
+            ? `<a href="tel:${esc(contact.telefon)}" class="qa-btn qa-call" onclick="event.stopPropagation()" title="Anrufen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></a>`
+            : `<span class="qa-btn qa-call" style="opacity:.3;cursor:default;" title="Keine Nummer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></span>`;
 
-        // Activity
-        let activityHtml = '';
-        if (isKunde) {
-            const emails = contact.emails || [];
-            const berechnungen = contact.berechnungen || [];
-            const parts = [];
-            if (berechnungen.length > 0) parts.push(`<span class="activity-item">${berechnungen.length}x berechnet</span>`);
-            if (emails.length > 0) {
-                const last = emails[0];
-                const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
-                parts.push(`<span class="email-dot-inline"><span class="dot ${last.status}"></span> ${emailLabels[last.status] || last.status}</span>`);
-            }
-            activityHtml = parts.length > 0
-                ? `<div class="activity-items">${parts.join('')}</div>`
-                : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
-        } else {
-            const parts = [];
-            if (contact.gewaehlte_kasse) parts.push(`<span class="activity-item">${esc(contact.gewaehlte_kasse)}</span>`);
-            if (contact.gehalt) parts.push(`<span class="activity-item" style="color:var(--g400);">${contact.gehalt.toLocaleString('de-DE')} € brutto</span>`);
-            activityHtml = parts.length > 0
-                ? `<div class="activity-items">${parts.join('')}</div>`
-                : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
-        }
+        const linkBtn = (isKunde && contact.link) ? `<span class="qa-btn qa-link" onclick="event.stopPropagation();copyLink(this,'${esc(contact.link)}')" title="Link kopieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>` : '';
 
-        // Link icon
-        let linkHtml = '';
-        if (isKunde && contact.link) {
-            linkHtml = `<span class="link-icon" onclick="event.stopPropagation();copyLink(this,'${esc(contact.link)}')" title="Link kopieren">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            </span>`;
-        }
+        const emailInfo = isKunde && contact.emails?.length > 0 ? (() => {
+            const last = contact.emails[0];
+            const labels = {sent:'Gesendet',delivered:'Zugestellt',opened:'Geöffnet',clicked:'Geklickt',bounced:'Fehler'};
+            return `<span class="email-dot-inline" style="font-size:.68rem;"><span class="dot ${last.status}"></span>${labels[last.status]||last.status}</span>`;
+        })() : '';
 
         // Notizen
-        const notizenHtml = `<textarea class="notizen-input" placeholder="Notizen..." onclick="event.stopPropagation()" onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea>`;
+        const notizenHtml = `<textarea class="notizen-input" placeholder="Notiz..." onclick="event.stopPropagation()" onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea>`;
 
-        const uid = contact.type + '-' + contact.id;
-
-        return `<tr class="contact-row" onclick="openSidebar('${uid}')">
+        return `<tr class="contact-row ${temp === 'hot' ? 'hot-row' : ''}" onclick="openSidebar('${uid}')">
             <td onclick="event.stopPropagation()" style="text-align:center;">${checkboxHtml}</td>
-            <td>
-                <span class="contact-name">${esc(contact.vorname)} ${esc(contact.nachname)}</span>
-                ${sourceBadge}
-                <div class="contact-sub">${dateStr}</div>
-            </td>
-            <td>${emailHtml}${telHtml}</td>
-            <td>${statusSelect}</td>
+            <td><span class="contact-name">${esc(contact.vorname)} ${esc(contact.nachname)}</span>${sourceBadge}<div class="contact-sub">${contact.email ? esc(contact.email) + ' · ' : ''}${dateStr}</div></td>
+            <td>${tempBadge}</td>
             <td>${sparHtml}</td>
-            <td>${activityHtml}</td>
-            <td>${linkHtml}</td>
+            <td>${statusSelect}${emailInfo ? '<div style="margin-top:4px;">'+emailInfo+'</div>' : ''}</td>
+            <td><div class="quick-actions">${callBtn}${linkBtn}</div></td>
             <td>${notizenHtml}</td>
         </tr>`;
     }).join('');
@@ -984,110 +814,76 @@ function renderContacts() {
     updateEmailButton();
 }
 
-/* ==================================================================
-   SIDEBAR
-   ================================================================== */
+/* === SIDEBAR === */
 function openSidebar(uid) {
     const [type, ...idParts] = uid.split('-');
     const id = idParts.join('-');
     const contact = allContacts.find(c => c.type === type && c.id === id);
     if (!contact) return;
 
-    openSidebarContact = contact;
     const isKunde = contact.type === 'kunde';
+    const temp = getTemperature(contact);
 
     document.getElementById('sidebarTitle').textContent = `${contact.vorname} ${contact.nachname}`;
 
+    // Sidebar action buttons
+    const callDisabled = !contact.telefon;
+    document.getElementById('sidebarActions').innerHTML = `
+        <a href="${contact.telefon ? 'tel:'+esc(contact.telefon) : '#'}" class="qa-btn qa-call" style="padding:8px 18px;font-size:.82rem;${callDisabled?'opacity:.3;pointer-events:none;':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> Anrufen</a>
+        ${contact.email ? `<a href="mailto:${esc(contact.email)}" class="qa-btn qa-email-btn" style="padding:8px 18px;font-size:.82rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</a>` : ''}
+        ${isKunde && contact.link ? `<span class="qa-btn qa-link" style="padding:8px 18px;font-size:.82rem;cursor:pointer;" onclick="copyLink(this,'${esc(contact.link)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Link kopieren</span>` : ''}`;
+
     let html = '';
 
-    // Info section
+    // Temperature + Contact info
     html += `<div class="sidebar-section">
         <div class="sidebar-section-title">Kontaktdaten</div>
-        <div class="sidebar-field"><div class="sidebar-field-label">Typ</div><div class="sidebar-field-val">${isKunde ? 'Kunde' : 'Lead'}</div></div>
+        <div style="margin-bottom:10px;"><span class="temp-badge ${temp}" style="font-size:.78rem;padding:4px 12px;"><span class="temp-dot ${temp}"></span>${getTempLabel(temp)}</span> <span class="source-badge ${isKunde?'source-kunde':'source-lead'}" style="font-size:.7rem;">${isKunde?'Kunde':'Lead'}</span></div>
         <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${contact.email ? `<a href="mailto:${esc(contact.email)}" style="color:var(--primary);text-decoration:none;">${esc(contact.email)}</a>` : '–'}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${contact.telefon ? `<a href="tel:${esc(contact.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(contact.telefon)}</a>` : '–'}</div></div>
-        <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+        ${contact.sparpotenzial_jahr ? `<div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:800;font-size:1.1rem;">${contact.sparpotenzial_jahr.toLocaleString('de-DE',{minimumFractionDigits:2})} €/Jahr</div></div>` : ''}
     </div>`;
 
-    // Lead-specific data
+    // Lead data
     if (!isKunde) {
-        html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Lead-Daten</div>
+        html += `<div class="sidebar-section"><div class="sidebar-section-title">Lead-Daten</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
-                <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
-                <div class="sidebar-field"><div class="sidebar-field-label">Aktuelle Kasse</div><div class="sidebar-field-val">${esc(contact.aktuelle_kasse || '–')}</div></div>
-                <div class="sidebar-field"><div class="sidebar-field-label">Gewählte Kasse</div><div class="sidebar-field-val">${esc(contact.gewaehlte_kasse || '–')}</div></div>
-            </div>
-        </div>`;
+                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${contact.gehalt?contact.gehalt.toLocaleString('de-DE')+' €':'–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Aktuelle Kasse</div><div class="sidebar-field-val">${esc(contact.aktuelle_kasse||'–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Gewählte Kasse</div><div class="sidebar-field-val">${esc(contact.gewaehlte_kasse||'–')}</div></div>
+            </div></div>`;
     }
 
     // Kunde link
     if (isKunde && contact.link) {
-        html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Persönlicher Rechner-Link</div>
+        html += `<div class="sidebar-section"><div class="sidebar-section-title">Persönlicher Rechner-Link</div>
             <div style="display:flex;gap:8px;align-items:center;">
                 <input type="text" value="${esc(contact.link)}" readonly style="flex:1;padding:8px 10px;font-size:.78rem;font-family:monospace;border:1px solid var(--g200);border-radius:6px;background:var(--g50);color:var(--g600);">
                 <button class="btn-copy" onclick="copyLink(this,'${esc(contact.link)}')">Kopieren</button>
-            </div>
-        </div>`;
+            </div></div>`;
     }
 
-    // Timeline (Berechnungen + Emails)
+    // Timeline
     if (isKunde) {
-        const berechnungen = contact.berechnungen || [];
-        const emails = contact.emails || [];
-
-        // Build timeline items
-        const timelineItems = [];
-
-        for (const b of berechnungen) {
+        const items = [];
+        for (const b of (contact.berechnungen||[])) {
             const d = new Date(b.created_at);
-            const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/Jahr` : '–';
-            timelineItems.push({
-                date: d,
-                type: 'calc',
-                html: `<div class="timeline-item calc">
-                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                    <div class="timeline-content"><strong>Berechnung durchgeführt</strong><br>
-                        Aktuelle: ${esc(b.aktuelle_kasse || '–')} → Günstigste: ${esc(b.guenstigste_kasse || '–')}<br>
-                        <span style="color:var(--success);font-weight:700;">Ersparnis: ${spar}</span>
-                    </div>
-                </div>`
-            });
+            const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE',{minimumFractionDigits:2})} €/Jahr` : '–';
+            items.push({ date:d, html:`<div class="timeline-item calc"><div class="timeline-date">${d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div class="timeline-content"><strong>Berechnung</strong> – ${esc(b.aktuelle_kasse||'?')} → ${esc(b.guenstigste_kasse||'?')}<br><span style="color:var(--success);font-weight:700;">Ersparnis: ${spar}</span></div></div>` });
         }
-
-        for (const e of emails) {
+        for (const e of (contact.emails||[])) {
             const d = new Date(e.created_at);
-            const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
-            timelineItems.push({
-                date: d,
-                type: 'email',
-                html: `<div class="timeline-item email">
-                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                    <div class="timeline-content"><strong>Email: ${esc(e.subject || 'Kein Betreff')}</strong><br>
-                        Status: <span class="email-dot-inline"><span class="dot ${e.status}"></span> ${emailLabels[e.status] || e.status}</span>
-                    </div>
-                </div>`
-            });
+            const labels = {sent:'Gesendet',delivered:'Zugestellt',opened:'Geöffnet',clicked:'Geklickt',bounced:'Fehlgeschlagen'};
+            items.push({ date:d, html:`<div class="timeline-item email"><div class="timeline-date">${d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div class="timeline-content"><strong>Email</strong>: ${esc(e.subject||'–')}<br><span class="email-dot-inline"><span class="dot ${e.status}"></span> ${labels[e.status]||e.status}</span></div></div>` });
         }
-
-        timelineItems.sort((a, b) => b.date - a.date);
-
-        html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
-            ${timelineItems.length > 0
-                ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
-                : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
-        </div>`;
+        items.sort((a,b) => b.date - a.date);
+        html += `<div class="sidebar-section"><div class="sidebar-section-title">Timeline (${items.length})</div>${items.length > 0 ? `<div class="sidebar-timeline">${items.map(t=>t.html).join('')}</div>` : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}</div>`;
     }
 
     // Notizen
-    html += `<div class="sidebar-section">
-        <div class="sidebar-section-title">Notizen</div>
-        <textarea class="notizen-input" style="min-height:80px;background:var(--g50);border-color:var(--g200);" placeholder="Notizen hinzufügen..."
-            onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea>
-    </div>`;
+    html += `<div class="sidebar-section"><div class="sidebar-section-title">Notizen</div>
+        <textarea class="notizen-input" style="min-height:80px;background:var(--g50);border-color:var(--g200);" placeholder="Notizen..." onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea></div>`;
 
     document.getElementById('sidebarBody').innerHTML = html;
     document.getElementById('sidebarOverlay').classList.add('active');
@@ -1097,559 +893,77 @@ function openSidebar(uid) {
 function closeSidebar() {
     document.getElementById('sidebarOverlay').classList.remove('active');
     document.getElementById('sidebarPanel').classList.remove('open');
-    openSidebarContact = null;
 }
 
-/* ==================================================================
-   FILTERS & SEARCH
-   ================================================================== */
-function filterByStatus(status) {
-    currentFilter = status;
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === status);
-    });
-    document.querySelectorAll('.stat-card').forEach(card => {
-        card.classList.toggle('active', card.dataset.stat === status);
-    });
-    renderContacts();
+function callFirst(temp) {
+    const contact = allContacts.find(c => getTemperature(c) === temp && c.telefon && c.status !== 'abgeschlossen');
+    if (contact) window.open('tel:' + contact.telefon);
 }
 
-function handleSearch(query) {
-    searchQuery = query.trim();
-    renderContacts();
-}
+/* === STATUS & NOTES === */
+function handleSearch(q) { searchQuery = q.trim(); renderContacts(); }
 
-/* ==================================================================
-   STATUS & NOTIZEN UPDATES
-   ================================================================== */
 async function updateContactStatus(type, id, newStatus) {
-    if (type === 'lead') {
-        await sb.from('leads').update({ status: newStatus }).eq('id', id);
-        const lead = allLeads.find(l => l.id === id);
-        if (lead) lead.status = newStatus;
-    } else {
-        await sb.from('kunden').update({ status: newStatus }).eq('id', id);
-        const kunde = allKunden.find(k => k.id === id);
-        if (kunde) kunde.status = newStatus;
-    }
-
-    const contact = allContacts.find(c => c.type === type && c.id === id);
-    if (contact) contact.status = newStatus;
-    updateStats();
+    if (type === 'lead') { await sb.from('leads').update({status:newStatus}).eq('id',id); const l=allLeads.find(x=>x.id===id); if(l)l.status=newStatus; }
+    else { await sb.from('kunden').update({status:newStatus}).eq('id',id); const k=allKunden.find(x=>x.id===id); if(k)k.status=newStatus; }
+    const c = allContacts.find(x => x.type===type && x.id===id); if(c) c.status=newStatus;
+    updateSortCounts(); renderActionCards(); renderHotAlerts();
 }
 
 async function updateContactNotizen(type, id, notizen) {
-    if (type === 'lead') {
-        await sb.from('leads').update({ notizen }).eq('id', id);
-    } else {
-        await sb.from('kunden').update({ notizen }).eq('id', id);
-    }
-    // Update local state
-    const contact = allContacts.find(c => c.type === type && c.id === id);
-    if (contact) contact.notizen = notizen;
+    if (type==='lead') await sb.from('leads').update({notizen}).eq('id',id);
+    else await sb.from('kunden').update({notizen}).eq('id',id);
+    const c=allContacts.find(x=>x.type===type&&x.id===id); if(c)c.notizen=notizen;
 }
 
-/* ==================================================================
-   MODALS
-   ================================================================== */
-function openAddKontaktModal() {
-    document.getElementById('addKontaktModal').classList.add('active');
-}
+/* === MODALS === */
+function openAddKontaktModal() { document.getElementById('addKontaktModal').classList.add('active'); }
+function openExcelModal() { document.getElementById('excelModal').classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-function openExcelModal() {
-    document.getElementById('excelModal').classList.add('active');
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-}
-
-/* ==================================================================
-   ADD KONTAKT
-   ================================================================== */
 async function addKunde(event) {
-    event.preventDefault();
-    if (!beraterRecord) return;
-
-    const btn = document.getElementById('kundeAddBtn');
-    btn.disabled = true;
-
-    const vorname = document.getElementById('kundeVorname').value.trim();
-    const nachname = document.getElementById('kundeNachname').value.trim();
-    const email = document.getElementById('kundeEmail').value.trim() || null;
-
-    const slug = (vorname + '-' + nachname)
-        .toLowerCase()
-        .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
-        .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-    const code = slug + '-' + Math.random().toString(36).substr(2, 4);
-
-    const { error } = await sb.from('kunden').insert({
-        berater_id: beraterRecord.id,
-        code, vorname, nachname, email,
-    });
-
-    btn.disabled = false;
-
-    if (error) {
-        alert('Fehler beim Anlegen: ' + error.message);
-        return;
-    }
-
-    document.getElementById('kundeForm').reset();
-    closeModal('addKontaktModal');
-    await loadAllData();
+    event.preventDefault(); if(!beraterRecord) return;
+    const btn=document.getElementById('kundeAddBtn'); btn.disabled=true;
+    const vorname=document.getElementById('kundeVorname').value.trim();
+    const nachname=document.getElementById('kundeNachname').value.trim();
+    const email=document.getElementById('kundeEmail').value.trim()||null;
+    const slug=(vorname+'-'+nachname).toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-');
+    const code=slug+'-'+Math.random().toString(36).substr(2,4);
+    const{error}=await sb.from('kunden').insert({berater_id:beraterRecord.id,code,vorname,nachname,email});
+    btn.disabled=false;
+    if(error){alert('Fehler: '+error.message);return;}
+    document.getElementById('kundeForm').reset(); closeModal('addKontaktModal'); await loadAllData();
 }
 
-/* ==================================================================
-   EXCEL UPLOAD
-   ================================================================== */
-let excelKunden = [];
+/* === EXCEL === */
+let excelKunden=[];
+function previewExcel(input){const file=input.files[0];const statusEl=document.getElementById('uploadStatus');const previewEl=document.getElementById('uploadPreview');const uploadBtn=document.getElementById('excelUploadBtn');statusEl.className='upload-status';previewEl.innerHTML='';excelKunden=[];uploadBtn.disabled=true;if(!file)return;const reader=new FileReader();reader.onload=function(e){try{const wb=XLSX.read(e.target.result,{type:'array'});const sheet=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(sheet,{defval:''});if(!rows.length){statusEl.className='upload-status error';statusEl.textContent='Keine Daten.';return;}const colMap=detectColumns(Object.keys(rows[0]));if(!colMap.vorname||!colMap.nachname){statusEl.className='upload-status error';statusEl.textContent='Spalten "Vorname" und "Nachname" nicht gefunden.';return;}excelKunden=rows.map(r=>({vorname:String(r[colMap.vorname]||'').trim(),nachname:String(r[colMap.nachname]||'').trim(),email:colMap.email?String(r[colMap.email]||'').trim()||null:null})).filter(k=>k.vorname&&k.nachname);if(!excelKunden.length){statusEl.className='upload-status error';statusEl.textContent='Keine gültigen Kontakte.';return;}statusEl.className='upload-status info';statusEl.textContent=excelKunden.length+' Kontakte erkannt:';uploadBtn.disabled=false;const max=Math.min(excelKunden.length,10);let html='<table><thead><tr><th>Vorname</th><th>Nachname</th><th>E-Mail</th></tr></thead><tbody>';for(let i=0;i<max;i++){const k=excelKunden[i];html+=`<tr><td>${esc(k.vorname)}</td><td>${esc(k.nachname)}</td><td>${esc(k.email||'–')}</td></tr>`;}if(excelKunden.length>10)html+=`<tr><td colspan="3" style="text-align:center;color:var(--g400);">... und ${excelKunden.length-10} weitere</td></tr>`;html+='</tbody></table>';previewEl.innerHTML=html;}catch(err){statusEl.className='upload-status error';statusEl.textContent='Fehler: '+err.message;}};reader.readAsArrayBuffer(file);}
+function detectColumns(h){const m={vorname:null,nachname:null,email:null};const l=h.map(x=>x.toLowerCase().trim());for(let i=0;i<h.length;i++){const v=l[i];if(!m.vorname&&['vorname','first name','firstname','first_name','vname'].includes(v))m.vorname=h[i];if(!m.nachname&&['nachname','last name','lastname','last_name','nname','name'].includes(v))m.nachname=h[i];if(!m.email&&['email','e-mail','mail','emailadresse','e-mail-adresse'].includes(v))m.email=h[i];}return m;}
+async function uploadExcelKunden(){if(!beraterRecord||!excelKunden.length)return;const btn=document.getElementById('excelUploadBtn');const statusEl=document.getElementById('uploadStatus');btn.disabled=true;statusEl.className='upload-status info';statusEl.textContent='Prüfe auf Duplikate...';const existingSet=new Set(allKunden.map(k=>(k.vorname+'|'+k.nachname+'|'+(k.email||'')).toLowerCase()));const neueKunden=[],duplikate=[];for(const k of excelKunden){const key=(k.vorname+'|'+k.nachname+'|'+(k.email||'')).toLowerCase();if(existingSet.has(key))duplikate.push(k);else{neueKunden.push(k);existingSet.add(key);}}if(!neueKunden.length){statusEl.className='upload-status error';statusEl.textContent=`Alle ${duplikate.length} existieren bereits.`;return;}statusEl.textContent=`Lade ${neueKunden.length} hoch...`;let success=0,errors=0;for(const k of neueKunden){const slug=(k.vorname+'-'+k.nachname).toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-');const code=slug+'-'+Math.random().toString(36).substr(2,4);const{error}=await sb.from('kunden').insert({berater_id:beraterRecord.id,code,vorname:k.vorname,nachname:k.nachname,email:k.email});if(error){errors++;console.error(k,error);}else success++;}let msg=success+' importiert!';if(duplikate.length)msg+=` ${duplikate.length} Duplikate.`;if(errors)msg+=` ${errors} Fehler.`;statusEl.className=errors?'upload-status error':'upload-status success';statusEl.textContent=msg;excelKunden=[];document.getElementById('excelFileInput').value='';document.getElementById('uploadPreview').innerHTML='';await loadAllData();}
+function downloadTemplate(){const ws=XLSX.utils.aoa_to_sheet([['Vorname','Nachname','Email'],['Max','Mustermann','max@beispiel.de'],['Erika','Musterfrau','erika@beispiel.de']]);ws['!cols']=[{wch:20},{wch:20},{wch:30}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Kontakte');XLSX.writeFile(wb,'Kontakte-Vorlage.xlsx');}
+
+/* === EMAIL === */
+function toggleKontaktSelection(cb){if(cb.checked)selectedKundenIds.add(cb.value);else selectedKundenIds.delete(cb.value);updateEmailButton();}
+function toggleAlleKontakte(master){document.querySelectorAll('#contactsBody .kunde-checkbox:not(:disabled)').forEach(cb=>{cb.checked=master.checked;if(master.checked)selectedKundenIds.add(cb.value);else selectedKundenIds.delete(cb.value);});updateEmailButton();}
+function updateEmailButton(){const btn=document.getElementById('btnEmailSelected');const c=selectedKundenIds.size;btn.textContent=`Email senden (${c})`;btn.disabled=c===0;}
+function emailAlleOhne(){selectedKundenIds.clear();allKunden.forEach(k=>{if(k.email&&!(kundenEmails[k.id]&&kundenEmails[k.id].length>0))selectedKundenIds.add(k.id);});if(!selectedKundenIds.size){alert('Alle wurden bereits angeschrieben.');return;}document.querySelectorAll('#contactsBody .kunde-checkbox').forEach(cb=>{cb.checked=selectedKundenIds.has(cb.value);});updateEmailButton();openEmailModal();}
+
+let currentAnrede='du',currentVorlage='jahresupdate';
+const VORLAGEN={jahresupdate:{sie:{subject:'Ihr persönlicher GKV-Vergleich {{vorname}}',text:'Hallo {{vorname}},\n\nes ist wieder Zeit für Ihr jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüfen Sie jetzt, ob Sie sparen können.\n\nIch habe Ihnen einen persönlichen Vergleichsrechner erstellt:\n{{link}}\n\nDer Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.\n\nMit freundlichen Grüßen,\n{{berater_vorname}} {{berater_nachname}}'},du:{subject:'Dein persönlicher GKV-Vergleich {{vorname}}',text:'Hallo {{vorname}},\n\nes ist wieder Zeit für dein jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüf jetzt, ob du sparen kannst.\n\nIch habe dir einen persönlichen Vergleichsrechner erstellt:\n{{link}}\n\nDer Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.\n\nViele Grüße,\n{{berater_vorname}}'}},erstansprache:{sie:{subject:'Sparen Sie bei Ihrer Krankenkasse? Persönlicher Vergleich für Sie',text:'Hallo {{vorname}},\n\nwussten Sie, dass der Unterschied zwischen der günstigsten und teuersten Krankenkasse mehrere hundert Euro im Jahr betragen kann?\n\nIch habe Ihnen einen persönlichen Vergleichsrechner vorbereitet. In nur 30 Sekunden sehen Sie, wie viel Sie sparen können:\n{{link}}\n\nFalls Sie Fragen haben oder eine persönliche Beratung wünschen, stehe ich Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen,\n{{berater_vorname}} {{berater_nachname}}'},du:{subject:'Sparst du bei deiner Krankenkasse? Persönlicher Vergleich für dich',text:'Hallo {{vorname}},\n\nwusstest du, dass der Unterschied zwischen der günstigsten und teuersten Krankenkasse mehrere hundert Euro im Jahr betragen kann?\n\nIch habe dir einen persönlichen Vergleichsrechner vorbereitet. In nur 30 Sekunden siehst du, wie viel du sparen kannst:\n{{link}}\n\nFalls du Fragen hast oder eine persönliche Beratung möchtest, melde dich gerne bei mir.\n\nViele Grüße,\n{{berater_vorname}}'}},erinnerung:{sie:{subject:'Erinnerung: Haben Sie schon Ihren Kassenbeitrag verglichen?',text:'Hallo {{vorname}},\n\nvor kurzem hatte ich Ihnen Ihren persönlichen GKV-Vergleichsrechner zugeschickt. Haben Sie schon reingeschaut?\n\nFalls nicht – hier nochmal Ihr persönlicher Link:\n{{link}}\n\nDer Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.\n\nBei Fragen stehe ich Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen,\n{{berater_vorname}} {{berater_nachname}}'},du:{subject:'Erinnerung: Hast du schon deinen Kassenbeitrag verglichen?',text:'Hallo {{vorname}},\n\nvor kurzem hatte ich dir deinen persönlichen GKV-Vergleichsrechner geschickt. Hast du schon reingeschaut?\n\nFalls nicht – hier nochmal dein persönlicher Link:\n{{link}}\n\nDer Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.\n\nBei Fragen melde dich gerne bei mir.\n\nViele Grüße,\n{{berater_vorname}}'}},eigene:{sie:{subject:'',text:''},du:{subject:'',text:''}}};
+
+function setAnrede(a){currentAnrede=a;document.querySelectorAll('.anrede-btn').forEach(b=>b.classList.toggle('active',b.dataset.anrede===a));applyVorlage();}
+function setVorlage(v){currentVorlage=v;document.querySelectorAll('.vorlage-chip').forEach(c=>c.classList.toggle('active',c.dataset.vorlage===v));applyVorlage();}
+function applyVorlage(){const v=VORLAGEN[currentVorlage]?.[currentAnrede];if(!v||currentVorlage==='eigene')return;document.getElementById('emailSubject').value=v.subject;document.getElementById('emailText').value=v.text;}
+function openEmailModal(){if(!selectedKundenIds.size)return;document.getElementById('emailModalSub').textContent=selectedKundenIds.size+' Kontakte ausgewählt';document.getElementById('emailSendStatus').className='upload-status';applyVorlage();document.getElementById('emailModal').classList.add('active');}
+function closeEmailModal(){document.getElementById('emailModal').classList.remove('active');}
+
+async function sendEmails(){if(!selectedKundenIds.size)return;const btn=document.getElementById('btnSendEmail');const statusEl=document.getElementById('emailSendStatus');btn.disabled=true;statusEl.className='upload-status info';statusEl.textContent=`Sende ${selectedKundenIds.size} Emails...`;const subject=document.getElementById('emailSubject').value.trim()||'Ihr persönlicher GKV-Vergleich';const textContent=document.getElementById('emailText').value.trim()||undefined;const{data:{session}}=await sb.auth.getSession();if(!session){statusEl.className='upload-status error';statusEl.textContent='Nicht eingeloggt.';btn.disabled=false;return;}try{const response=await fetch('/api/send-email',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`},body:JSON.stringify({kundeIds:allContacts.filter(c=>c.type==='kunde'&&selectedKundenIds.has(c.id)).map(c=>c.id),leadIds:allContacts.filter(c=>c.type==='lead'&&selectedKundenIds.has(c.id)).map(c=>c.id),subject,textContent})});const result=await response.json();if(response.ok){const fail=(result.results||[]).filter(r=>r.status==='error').map(r=>r.error).join(', ');if(result.sent>0){statusEl.className='upload-status success';statusEl.textContent=`${result.sent} Email(s) gesendet!`+(result.errors>0?` ${result.errors} fehlgeschlagen: ${fail}`:'');selectedKundenIds.clear();setTimeout(()=>{closeEmailModal();loadAllData();},2000);}else{statusEl.className='upload-status error';statusEl.textContent=`Alle fehlgeschlagen: ${fail||'Unbekannt'}`;}}else{statusEl.className='upload-status error';statusEl.textContent=result.error||JSON.stringify(result);}}catch(err){statusEl.className='upload-status error';statusEl.textContent='Netzwerkfehler: '+err.message;}btn.disabled=false;}
+
+/* === HELPERS === */
+function copyAffiliateLink(){const input=document.getElementById('affiliateLink');navigator.clipboard.writeText(input.value).then(()=>{const btn=input.nextElementSibling;btn.textContent='Kopiert!';setTimeout(()=>btn.textContent='Kopieren',2000);});}
+function copyLink(el,link){navigator.clipboard.writeText(link).then(()=>{const orig=el.innerHTML||el.textContent;if(el.classList.contains('qa-link')||el.classList.contains('link-icon')){const origH=el.innerHTML;el.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';setTimeout(()=>{el.innerHTML=origH;},1500);}else{el.textContent='Kopiert!';el.style.color='var(--success)';setTimeout(()=>{el.textContent='Kopieren';el.style.color='';},2000);}});}
+function esc(str){if(!str)return'';const d=document.createElement('div');d.textContent=str;return d.innerHTML;}
 
-function previewExcel(input) {
-    const file = input.files[0];
-    const statusEl = document.getElementById('uploadStatus');
-    const previewEl = document.getElementById('uploadPreview');
-    const uploadBtn = document.getElementById('excelUploadBtn');
-
-    statusEl.className = 'upload-status';
-    previewEl.innerHTML = '';
-    excelKunden = [];
-    uploadBtn.disabled = true;
-
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const workbook = XLSX.read(e.target.result, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-            if (rows.length === 0) {
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = 'Die Datei enthält keine Daten.';
-                return;
-            }
-
-            const colMap = detectColumns(Object.keys(rows[0]));
-            if (!colMap.vorname || !colMap.nachname) {
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = 'Spalten "Vorname" und "Nachname" nicht gefunden. Gefunden: ' + Object.keys(rows[0]).join(', ');
-                return;
-            }
-
-            excelKunden = rows.map(row => ({
-                vorname: String(row[colMap.vorname] || '').trim(),
-                nachname: String(row[colMap.nachname] || '').trim(),
-                email: colMap.email ? String(row[colMap.email] || '').trim() || null : null,
-            })).filter(k => k.vorname && k.nachname);
-
-            if (excelKunden.length === 0) {
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = 'Keine gültigen Kontakte gefunden.';
-                return;
-            }
-
-            statusEl.className = 'upload-status info';
-            statusEl.textContent = `${excelKunden.length} Kontakte erkannt:`;
-            uploadBtn.disabled = false;
-
-            const maxPreview = Math.min(excelKunden.length, 10);
-            let html = '<table><thead><tr><th>Vorname</th><th>Nachname</th><th>E-Mail</th></tr></thead><tbody>';
-            for (let i = 0; i < maxPreview; i++) {
-                const k = excelKunden[i];
-                html += `<tr><td>${esc(k.vorname)}</td><td>${esc(k.nachname)}</td><td>${esc(k.email || '–')}</td></tr>`;
-            }
-            if (excelKunden.length > 10) {
-                html += `<tr><td colspan="3" style="text-align:center;color:var(--g400);">... und ${excelKunden.length - 10} weitere</td></tr>`;
-            }
-            html += '</tbody></table>';
-            previewEl.innerHTML = html;
-        } catch (err) {
-            statusEl.className = 'upload-status error';
-            statusEl.textContent = 'Fehler: ' + err.message;
-        }
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-function detectColumns(headers) {
-    const map = { vorname: null, nachname: null, email: null };
-    const lower = headers.map(h => h.toLowerCase().trim());
-    for (let i = 0; i < headers.length; i++) {
-        const l = lower[i];
-        if (!map.vorname && ['vorname','first name','firstname','first_name','vname'].includes(l)) map.vorname = headers[i];
-        if (!map.nachname && ['nachname','last name','lastname','last_name','nname','name'].includes(l)) map.nachname = headers[i];
-        if (!map.email && ['email','e-mail','mail','emailadresse','e-mail-adresse'].includes(l)) map.email = headers[i];
-    }
-    return map;
-}
-
-async function uploadExcelKunden() {
-    if (!beraterRecord || excelKunden.length === 0) return;
-
-    const btn = document.getElementById('excelUploadBtn');
-    const statusEl = document.getElementById('uploadStatus');
-    btn.disabled = true;
-    statusEl.className = 'upload-status info';
-    statusEl.textContent = 'Prüfe auf Duplikate...';
-
-    const existingSet = new Set(
-        allKunden.map(k => (k.vorname + '|' + k.nachname + '|' + (k.email || '')).toLowerCase())
-    );
-
-    const neueKunden = [];
-    const duplikate = [];
-
-    for (const kunde of excelKunden) {
-        const key = (kunde.vorname + '|' + kunde.nachname + '|' + (kunde.email || '')).toLowerCase();
-        if (existingSet.has(key)) {
-            duplikate.push(kunde);
-        } else {
-            neueKunden.push(kunde);
-            existingSet.add(key);
-        }
-    }
-
-    if (neueKunden.length === 0) {
-        statusEl.className = 'upload-status error';
-        statusEl.textContent = `Alle ${duplikate.length} Kontakte existieren bereits.`;
-        return;
-    }
-
-    statusEl.textContent = `Lade ${neueKunden.length} neue Kontakte hoch...` +
-        (duplikate.length > 0 ? ` (${duplikate.length} Duplikate übersprungen)` : '');
-
-    let success = 0, errors = 0;
-
-    for (const kunde of neueKunden) {
-        const slug = (kunde.vorname + '-' + kunde.nachname)
-            .toLowerCase()
-            .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
-            .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-        const code = slug + '-' + Math.random().toString(36).substr(2, 4);
-
-        const { error } = await sb.from('kunden').insert({
-            berater_id: beraterRecord.id,
-            code, vorname: kunde.vorname, nachname: kunde.nachname, email: kunde.email,
-        });
-
-        if (error) { errors++; console.error('Fehler:', kunde, error); }
-        else success++;
-    }
-
-    let msg = `${success} Kontakte importiert!`;
-    if (duplikate.length > 0) msg += ` ${duplikate.length} Duplikate übersprungen.`;
-    if (errors > 0) msg += ` ${errors} fehlgeschlagen.`;
-
-    statusEl.className = errors > 0 ? 'upload-status error' : 'upload-status success';
-    statusEl.textContent = msg;
-
-    excelKunden = [];
-    document.getElementById('excelFileInput').value = '';
-    document.getElementById('uploadPreview').innerHTML = '';
-    await loadAllData();
-}
-
-function downloadTemplate() {
-    const ws = XLSX.utils.aoa_to_sheet([
-        ['Vorname', 'Nachname', 'Email'],
-        ['Max', 'Mustermann', 'max@beispiel.de'],
-        ['Erika', 'Musterfrau', 'erika@beispiel.de'],
-    ]);
-    ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 30 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Kontakte');
-    XLSX.writeFile(wb, 'Kontakte-Vorlage.xlsx');
-}
-
-/* ==================================================================
-   EMAIL
-   ================================================================== */
-function toggleKontaktSelection(checkbox) {
-    if (checkbox.checked) selectedKundenIds.add(checkbox.value);
-    else selectedKundenIds.delete(checkbox.value);
-    updateEmailButton();
-}
-
-function toggleAlleKontakte(masterCheckbox) {
-    document.querySelectorAll('#contactsBody .kunde-checkbox:not(:disabled)').forEach(cb => {
-        cb.checked = masterCheckbox.checked;
-        if (masterCheckbox.checked) selectedKundenIds.add(cb.value);
-        else selectedKundenIds.delete(cb.value);
-    });
-    updateEmailButton();
-}
-
-function updateEmailButton() {
-    const btn = document.getElementById('btnEmailSelected');
-    const count = selectedKundenIds.size;
-    btn.textContent = `Email senden (${count})`;
-    btn.disabled = count === 0;
-}
-
-function emailAlleOhne() {
-    selectedKundenIds.clear();
-    allKunden.forEach(k => {
-        if (k.email && !(kundenEmails[k.id] && kundenEmails[k.id].length > 0)) {
-            selectedKundenIds.add(k.id);
-        }
-    });
-
-    if (selectedKundenIds.size === 0) {
-        alert('Alle Kontakte mit E-Mail wurden bereits angeschrieben.');
-        return;
-    }
-
-    document.querySelectorAll('#contactsBody .kunde-checkbox').forEach(cb => {
-        cb.checked = selectedKundenIds.has(cb.value);
-    });
-    updateEmailButton();
-    openEmailModal();
-}
-
-/* ==================================================================
-   EMAIL VORLAGEN
-   ================================================================== */
-let currentAnrede = 'du';
-let currentVorlage = 'jahresupdate';
-
-const VORLAGEN = {
-    jahresupdate: {
-        sie: {
-            subject: 'Ihr persönlicher GKV-Vergleich {{vorname}}',
-            text: `Hallo {{vorname}},
-
-es ist wieder Zeit für Ihr jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüfen Sie jetzt, ob Sie sparen können.
-
-Ich habe Ihnen einen persönlichen Vergleichsrechner erstellt:
-{{link}}
-
-Der Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.
-
-Mit freundlichen Grüßen,
-{{berater_vorname}} {{berater_nachname}}`
-        },
-        du: {
-            subject: 'Dein persönlicher GKV-Vergleich {{vorname}}',
-            text: `Hallo {{vorname}},
-
-es ist wieder Zeit für dein jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüf jetzt, ob du sparen kannst.
-
-Ich habe dir einen persönlichen Vergleichsrechner erstellt:
-{{link}}
-
-Der Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.
-
-Viele Grüße,
-{{berater_vorname}}`
-        }
-    },
-    erstansprache: {
-        sie: {
-            subject: 'Sparen Sie bei Ihrer Krankenkasse? Persönlicher Vergleich für Sie',
-            text: `Hallo {{vorname}},
-
-wussten Sie, dass der Unterschied zwischen der günstigsten und teuersten Krankenkasse mehrere hundert Euro im Jahr betragen kann?
-
-Ich habe Ihnen einen persönlichen Vergleichsrechner vorbereitet. In nur 30 Sekunden sehen Sie, wie viel Sie sparen können:
-{{link}}
-
-Falls Sie Fragen haben oder eine persönliche Beratung wünschen, stehe ich Ihnen gerne zur Verfügung.
-
-Mit freundlichen Grüßen,
-{{berater_vorname}} {{berater_nachname}}`
-        },
-        du: {
-            subject: 'Sparst du bei deiner Krankenkasse? Persönlicher Vergleich für dich',
-            text: `Hallo {{vorname}},
-
-wusstest du, dass der Unterschied zwischen der günstigsten und teuersten Krankenkasse mehrere hundert Euro im Jahr betragen kann?
-
-Ich habe dir einen persönlichen Vergleichsrechner vorbereitet. In nur 30 Sekunden siehst du, wie viel du sparen kannst:
-{{link}}
-
-Falls du Fragen hast oder eine persönliche Beratung möchtest, melde dich gerne bei mir.
-
-Viele Grüße,
-{{berater_vorname}}`
-        }
-    },
-    erinnerung: {
-        sie: {
-            subject: 'Erinnerung: Haben Sie schon Ihren Kassenbeitrag verglichen?',
-            text: `Hallo {{vorname}},
-
-vor kurzem hatte ich Ihnen Ihren persönlichen GKV-Vergleichsrechner zugeschickt. Haben Sie schon reingeschaut?
-
-Falls nicht – hier nochmal Ihr persönlicher Link:
-{{link}}
-
-Der Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.
-
-Bei Fragen stehe ich Ihnen gerne zur Verfügung.
-
-Mit freundlichen Grüßen,
-{{berater_vorname}} {{berater_nachname}}`
-        },
-        du: {
-            subject: 'Erinnerung: Hast du schon deinen Kassenbeitrag verglichen?',
-            text: `Hallo {{vorname}},
-
-vor kurzem hatte ich dir deinen persönlichen GKV-Vergleichsrechner geschickt. Hast du schon reingeschaut?
-
-Falls nicht – hier nochmal dein persönlicher Link:
-{{link}}
-
-Der Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.
-
-Bei Fragen melde dich gerne bei mir.
-
-Viele Grüße,
-{{berater_vorname}}`
-        }
-    },
-    eigene: {
-        sie: { subject: '', text: '' },
-        du: { subject: '', text: '' }
-    }
-};
-
-function setAnrede(anrede) {
-    currentAnrede = anrede;
-    document.querySelectorAll('.anrede-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.anrede === anrede);
-    });
-    applyVorlage();
-}
-
-function setVorlage(vorlage) {
-    currentVorlage = vorlage;
-    document.querySelectorAll('.vorlage-chip').forEach(chip => {
-        chip.classList.toggle('active', chip.dataset.vorlage === vorlage);
-    });
-    applyVorlage();
-}
-
-function applyVorlage() {
-    const v = VORLAGEN[currentVorlage]?.[currentAnrede];
-    if (!v || currentVorlage === 'eigene') return;
-    document.getElementById('emailSubject').value = v.subject;
-    document.getElementById('emailText').value = v.text;
-}
-
-function openEmailModal() {
-    if (selectedKundenIds.size === 0) return;
-    document.getElementById('emailModalSub').textContent = `${selectedKundenIds.size} Kontakte ausgewählt`;
-    document.getElementById('emailSendStatus').className = 'upload-status';
-    applyVorlage();
-    document.getElementById('emailModal').classList.add('active');
-}
-
-function closeEmailModal() {
-    document.getElementById('emailModal').classList.remove('active');
-}
-
-async function sendEmails() {
-    if (selectedKundenIds.size === 0) return;
-
-    const btn = document.getElementById('btnSendEmail');
-    const statusEl = document.getElementById('emailSendStatus');
-    btn.disabled = true;
-    statusEl.className = 'upload-status info';
-    statusEl.textContent = `Sende ${selectedKundenIds.size} Emails...`;
-
-    const subject = document.getElementById('emailSubject').value.trim() || 'Ihr persönlicher GKV-Vergleich';
-    const textContent = document.getElementById('emailText').value.trim() || undefined;
-
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-        statusEl.className = 'upload-status error';
-        statusEl.textContent = 'Nicht eingeloggt. Bitte neu anmelden.';
-        btn.disabled = false;
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/send-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-                kundeIds: allContacts.filter(c => c.type === 'kunde' && selectedKundenIds.has(c.id)).map(c => c.id),
-                leadIds: allContacts.filter(c => c.type === 'lead' && selectedKundenIds.has(c.id)).map(c => c.id),
-                subject, textContent,
-            }),
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            const failedDetails = (result.results || []).filter(r => r.status === 'error').map(r => r.error).join(', ');
-            if (result.sent > 0) {
-                statusEl.className = 'upload-status success';
-                statusEl.textContent = `${result.sent} Email(s) gesendet!` +
-                    (result.errors > 0 ? ` ${result.errors} fehlgeschlagen: ${failedDetails}` : '');
-                selectedKundenIds.clear();
-                setTimeout(() => {
-                    closeEmailModal();
-                    loadAllData();
-                }, 2000);
-            } else {
-                statusEl.className = 'upload-status error';
-                statusEl.textContent = `Alle fehlgeschlagen: ${failedDetails || 'Unbekannter Fehler'}`;
-            }
-        } else {
-            statusEl.className = 'upload-status error';
-            statusEl.textContent = result.error || JSON.stringify(result);
-        }
-    } catch (err) {
-        statusEl.className = 'upload-status error';
-        statusEl.textContent = 'Netzwerkfehler: ' + err.message;
-    }
-
-    btn.disabled = false;
-}
-
-/* ==================================================================
-   HELPERS
-   ================================================================== */
-function copyAffiliateLink() {
-    const input = document.getElementById('affiliateLink');
-    navigator.clipboard.writeText(input.value).then(() => {
-        const btn = input.nextElementSibling;
-        btn.textContent = 'Kopiert!';
-        setTimeout(() => btn.textContent = 'Kopieren', 2000);
-    });
-}
-
-function copyLink(el, link) {
-    navigator.clipboard.writeText(link).then(() => {
-        const orig = el.innerHTML || el.textContent;
-        if (el.classList.contains('link-icon')) {
-            el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
-            setTimeout(() => { el.innerHTML = orig; }, 1500);
-        } else {
-            el.textContent = 'Kopiert!';
-            el.style.color = 'var(--success)';
-            setTimeout(() => { el.textContent = 'Kopieren'; el.style.color = ''; }, 2000);
-        }
-    });
-}
-
-function esc(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-/* ==================================================================
-   INIT
-   ================================================================== */
 checkSession();
 </script>
 </body>
