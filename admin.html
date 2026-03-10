@@ -649,12 +649,17 @@ function renderBeraterGrid() {
         const neueLeads = beraterLeads.filter(l => l.status === 'neu').length;
         const barWidth = (beraterLeads.length / maxLeads * 100).toFixed(0);
 
-        // Letzte Aktivität
-        let letzteAktivitaet = '–';
-        if (beraterLeads.length > 0) {
-            const letzterLead = beraterLeads[0]; // already sorted desc
-            const d = new Date(letzterLead.created_at);
-            letzteAktivitaet = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        // Online-Status
+        const now = Date.now();
+        const lastActive = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
+        const isOnline = (now - lastActive) < 6 * 60 * 1000; // 6 Minuten Toleranz
+        let statusText = '–';
+        if (isOnline) {
+            statusText = 'Online';
+        } else if (b.last_login_at) {
+            const d = new Date(b.last_login_at);
+            statusText = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' }) + ' ' +
+                d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
         }
 
         return `
@@ -662,7 +667,7 @@ function renderBeraterGrid() {
             <div class="berater-card-header">
                 <div>
                     <div class="berater-name">
-                        <span class="berater-aktiv ${b.aktiv ? 'ja' : 'nein'}"></span>
+                        <span class="berater-aktiv ${isOnline ? 'ja' : 'nein'}"></span>
                         ${esc(b.vorname)} ${esc(b.nachname)}
                     </div>
                     <div class="berater-email">${esc(b.email)}</div>
@@ -691,7 +696,7 @@ function renderBeraterGrid() {
             </div>
             <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--g400);">
                 <span>${neueLeads} neue Leads</span>
-                <span>Letzter Lead: ${letzteAktivitaet}</span>
+                <span style="${isOnline ? 'color:var(--success);font-weight:600;' : ''}">${isOnline ? '● Online' : 'Letzter Login: ' + statusText}</span>
             </div>
         </div>`;
     }).join('');
