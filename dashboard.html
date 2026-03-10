@@ -55,6 +55,18 @@
         .btn-login:disabled { opacity:.5; cursor:not-allowed; }
         .error-msg { color:var(--danger); font-size:.82rem; margin-top:8px; display:none; }
 
+        /* Impersonation Banner */
+        .impersonate-bar {
+            display:none; background:var(--warning); color:#fff; padding:8px 24px;
+            font-size:.82rem; font-weight:600; text-align:center;
+        }
+        .impersonate-bar.active { display:flex; align-items:center; justify-content:center; gap:12px; }
+        .impersonate-bar a {
+            color:#fff; background:rgba(255,255,255,.2); padding:4px 12px;
+            border-radius:var(--r-sm); text-decoration:none; font-size:.78rem;
+        }
+        .impersonate-bar a:hover { background:rgba(255,255,255,.35); }
+
         /* ===== DASHBOARD LAYOUT ===== */
         .dashboard { display:none; }
         .dash-header {
@@ -432,6 +444,13 @@
 <!-- ===== DASHBOARD ===== -->
 <div class="dashboard" id="dashboardView">
 
+    <!-- Impersonation Banner -->
+    <div class="impersonate-bar" id="impersonateBar">
+        <span id="impersonateText"></span>
+        <a href="dashboard.html">Zurück zu meinem Dashboard</a>
+        <a href="admin.html">Zum Admin</a>
+    </div>
+
     <!-- Header -->
     <div class="dash-header">
         <div class="dash-header-left">
@@ -726,9 +745,27 @@ async function showDashboard(user) {
     document.getElementById('loginView').style.display = 'none';
     document.getElementById('dashboardView').style.display = 'block';
 
-    const { data: berater } = await sb
+    const { data: ownBerater } = await sb
         .from('berater').select('*')
         .eq('auth_user_id', user.id).single();
+
+    // Admin "Als Berater ansehen" - ?as=BERATER_ID
+    const params = new URLSearchParams(window.location.search);
+    const impersonateId = params.get('as');
+    let berater = ownBerater;
+
+    if (impersonateId && ownBerater && ownBerater.is_admin) {
+        const { data: targetBerater } = await sb
+            .from('berater').select('*')
+            .eq('id', impersonateId).single();
+
+        if (targetBerater) {
+            berater = targetBerater;
+            document.getElementById('impersonateBar').classList.add('active');
+            document.getElementById('impersonateText').textContent =
+                `Du siehst das Dashboard von ${berater.vorname} ${berater.nachname}`;
+        }
+    }
 
     beraterRecord = berater;
 
@@ -738,18 +775,19 @@ async function showDashboard(user) {
         const baseUrl = window.location.origin;
         document.getElementById('affiliateLink').value = `${baseUrl}/?berater=${berater.slug}`;
 
-        // Login-Zeitpunkt und Aktivität tracken
-        sb.from('berater').update({
-            last_login_at: new Date().toISOString(),
-            last_active_at: new Date().toISOString()
-        }).eq('id', berater.id).then(() => {});
-
-        // Heartbeat alle 5 Minuten
-        setInterval(() => {
+        // Login/Aktivität nur für eigenes Dashboard tracken
+        if (!impersonateId) {
             sb.from('berater').update({
+                last_login_at: new Date().toISOString(),
                 last_active_at: new Date().toISOString()
             }).eq('id', berater.id).then(() => {});
-        }, 5 * 60 * 1000);
+
+            setInterval(() => {
+                sb.from('berater').update({
+                    last_active_at: new Date().toISOString()
+                }).eq('id', berater.id).then(() => {});
+            }, 5 * 60 * 1000);
+        }
     } else {
         document.getElementById('userName').textContent = user.email;
     }

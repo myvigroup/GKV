@@ -386,7 +386,10 @@
                     <h2 id="detailName"></h2>
                     <div class="meta" id="detailMeta"></div>
                 </div>
-                <div class="detail-stats" id="detailStats"></div>
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div class="detail-stats" id="detailStats"></div>
+                    <a id="detailViewAsBtn" href="#" class="btn-add-berater" style="margin:0;white-space:nowrap;text-decoration:none;">Dashboard ansehen</a>
+                </div>
             </div>
 
             <div class="detail-tabs">
@@ -674,6 +677,7 @@ function renderBeraterGrid() {
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     ${b.team ? `<span class="berater-team">${esc(b.team)}</span>` : ''}
+                    <a href="dashboard.html?as=${b.id}" onclick="event.stopPropagation()" style="font-size:.75rem;color:var(--primary);text-decoration:none;padding:4px;" title="Als Berater ansehen">&#9654;</a>
                     <button onclick="event.stopPropagation();openBeraterModal('${b.id}')" style="background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--g400);padding:4px;" title="Bearbeiten">&#9998;</button>
                 </div>
             </div>
@@ -803,6 +807,7 @@ async function openBeraterDetail(beraterId) {
 
     // Header
     document.getElementById('detailName').textContent = `${berater.vorname} ${berater.nachname}`;
+    document.getElementById('detailViewAsBtn').href = `dashboard.html?as=${beraterId}`;
     document.getElementById('detailMeta').innerHTML =
         `<a href="mailto:${esc(berater.email)}">${esc(berater.email)}</a>` +
         (berater.telefon ? ` &middot; ${esc(berater.telefon)}` : '') +
