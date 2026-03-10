@@ -10,11 +10,13 @@
             --primary-dark: #003068;
             --primary-light: #E6F5FB;
             --accent: #06BADD;
+            --accent-light: #E0F7FC;
             --success: #00B67A;
             --success-light: #E6F9F1;
             --warning: #FF8C00;
             --warning-light: #FFF4E5;
             --danger: #E5243B;
+            --danger-light: #FEF2F2;
             --g50: #F8FAFC; --g100: #F1F5F9; --g200: #E2E8F0;
             --g300: #CBD5E1; --g400: #94A3B8; --g500: #64748B;
             --g600: #475569; --g700: #334155; --g800: #1E293B;
@@ -30,319 +32,386 @@
         html { font-size:16px; -webkit-font-smoothing:antialiased; }
         body { font-family:var(--font); color:var(--g800); background:var(--g50); line-height:1.6; min-height:100vh; }
 
-        /* Login */
+        /* ===== LOGIN ===== */
         .login-wrap {
             display:flex; align-items:center; justify-content:center;
-            min-height:100vh; padding:20px;
+            min-height:100vh; padding:20px; background:linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         }
         .login-card {
             background:#fff; border-radius:var(--r-lg); padding:40px;
             max-width:400px; width:100%; box-shadow:var(--shadow-lg);
         }
-        .login-card h1 { font-size:1.3rem; color:var(--g900); margin-bottom:4px; }
-        .login-card .sub { font-size:.85rem; color:var(--g500); margin-bottom:24px; }
+        .login-logo { text-align:center; margin-bottom:24px; }
+        .login-logo svg { width:48px; height:48px; }
+        .login-card h1 { font-size:1.3rem; color:var(--g900); margin-bottom:4px; text-align:center; }
+        .login-card .sub { font-size:.85rem; color:var(--g500); margin-bottom:24px; text-align:center; }
         .fg { margin-bottom:16px; }
         .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--g600); margin-bottom:4px; }
         .fg input { width:100%; padding:10px 14px; font-size:.92rem; border:1.5px solid var(--g200); border-radius:var(--r-sm); font-family:var(--font); transition:var(--ease); }
         .fg input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.12); }
-        .btn { width:100%; padding:12px; font-size:.95rem; font-weight:700; font-family:var(--font); color:#fff; border:none; background:var(--primary); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
-        .btn:hover { background:var(--primary-dark); }
-        .btn:disabled { opacity:.5; cursor:not-allowed; }
+        .btn-login { width:100%; padding:12px; font-size:.95rem; font-weight:700; font-family:var(--font); color:#fff; border:none; background:var(--primary); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-login:hover { background:var(--primary-dark); }
+        .btn-login:disabled { opacity:.5; cursor:not-allowed; }
         .error-msg { color:var(--danger); font-size:.82rem; margin-top:8px; display:none; }
 
-        /* Dashboard */
+        /* ===== DASHBOARD LAYOUT ===== */
         .dashboard { display:none; }
         .dash-header {
-            background:#fff; border-bottom:1px solid var(--g200); padding:16px 24px;
+            background:#fff; border-bottom:1px solid var(--g200); padding:0 24px; height:56px;
             display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:100;
         }
-        .dash-header h1 { font-size:1.1rem; color:var(--g900); }
+        .dash-header-left { display:flex; align-items:center; gap:12px; }
+        .dash-header-left h1 { font-size:1rem; font-weight:800; color:var(--primary); letter-spacing:-.02em; }
+        .dash-header-left h1 span { color:var(--accent); }
         .dash-header .user-info { display:flex; align-items:center; gap:12px; }
-        .dash-header .user-name { font-size:.85rem; color:var(--g600); }
-        .btn-sm { padding:6px 14px; font-size:.8rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
-        .btn-sm:hover { background:var(--g200); }
+        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; }
+        .user-name { font-size:.85rem; color:var(--g600); font-weight:500; }
+        .btn-logout { padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font); color:var(--g500); background:transparent; border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-logout:hover { background:var(--g100); color:var(--g700); }
 
-        .dash-body { max-width:1200px; margin:0 auto; padding:24px; }
+        .dash-body { max-width:1400px; margin:0 auto; padding:20px 24px; }
 
-        /* Stats */
-        .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px; }
-        .stat-card { background:#fff; border-radius:var(--r-md); padding:20px; box-shadow:var(--shadow-sm); border:1px solid var(--g100); cursor:pointer; transition:var(--ease); }
-        .stat-card:hover { border-color:var(--primary); }
+        /* ===== STAT CARDS ===== */
+        .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:16px; }
+        .stat-card {
+            background:#fff; border-radius:var(--r-md); padding:16px 20px;
+            border:1.5px solid var(--g100); cursor:pointer; transition:var(--ease);
+            display:flex; align-items:center; gap:14px;
+        }
+        .stat-card:hover { border-color:var(--g300); transform:translateY(-1px); box-shadow:var(--shadow-sm); }
         .stat-card.active { border-color:var(--primary); background:var(--primary-light); }
-        .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); margin-bottom:4px; }
-        .stat-val { font-size:1.6rem; font-weight:800; color:var(--g900); }
-        .stat-sub { font-size:.78rem; color:var(--g500); margin-top:2px; }
-
-        /* Affiliate Link */
-        .affiliate-box {
-            background:#fff; border-radius:var(--r-md); padding:20px;
-            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
-            margin-bottom:24px;
+        .stat-icon {
+            width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+            font-size:1.1rem; flex-shrink:0;
         }
-        .affiliate-box h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:8px; }
-        .affiliate-link-row { display:flex; gap:8px; }
-        .affiliate-input {
-            flex:1; padding:10px 14px; font-size:.85rem; font-family:monospace;
-            border:1.5px solid var(--g200); border-radius:var(--r-sm);
-            background:var(--g50); color:var(--g700);
-        }
-        .btn-copy { padding:10px 18px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
-        .btn-copy:hover { background:var(--primary-dark); }
+        .stat-icon.total { background:var(--primary-light); color:var(--primary); }
+        .stat-icon.neu { background:#EEF2FF; color:#4F46E5; }
+        .stat-icon.berechnet { background:var(--accent-light); color:var(--accent); }
+        .stat-icon.done { background:var(--success-light); color:var(--success); }
+        .stat-content { min-width:0; }
+        .stat-val { font-size:1.5rem; font-weight:800; color:var(--g900); line-height:1.2; }
+        .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); }
 
-        /* Toolbar */
+        /* ===== AFFILIATE LINK BAR ===== */
+        .link-bar {
+            display:flex; align-items:center; gap:10px; margin-bottom:16px;
+            background:#fff; border:1px solid var(--g100); border-radius:var(--r-sm); padding:8px 12px;
+        }
+        .link-bar-label { font-size:.78rem; font-weight:600; color:var(--g500); white-space:nowrap; }
+        .link-bar-label svg { vertical-align:middle; margin-right:4px; }
+        .link-bar input {
+            flex:1; padding:0; font-size:.82rem; font-family:monospace;
+            border:none; background:transparent; color:var(--g700); outline:none;
+        }
+        .btn-copy { padding:6px 14px; font-size:.75rem; font-weight:700; font-family:var(--font); color:var(--primary); background:var(--primary-light); border:none; border-radius:6px; cursor:pointer; transition:var(--ease); white-space:nowrap; }
+        .btn-copy:hover { background:var(--accent-light); color:var(--primary-dark); }
+
+        /* ===== TOOLBAR ===== */
         .toolbar {
-            display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+            display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;
         }
-        .btn-action { padding:8px 16px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
+        .btn-action {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:8px 16px; font-size:.82rem; font-weight:600; font-family:var(--font);
+            color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm);
+            cursor:pointer; transition:var(--ease); white-space:nowrap;
+        }
         .btn-action:hover { background:var(--primary-dark); }
-        .btn-action.secondary { color:var(--g600); background:var(--g100); border:1px solid var(--g200); }
-        .btn-action.secondary:hover { background:var(--g200); }
+        .btn-action:disabled { opacity:.4; cursor:not-allowed; }
+        .btn-action.secondary { color:var(--g600); background:#fff; border:1px solid var(--g200); }
+        .btn-action.secondary:hover { background:var(--g50); border-color:var(--g300); }
         .btn-action.success { background:var(--success); }
         .btn-action.success:hover { background:#009966; }
-        .btn-action:disabled { opacity:.4; cursor:not-allowed; }
-
+        .btn-action svg { width:15px; height:15px; }
         .toolbar-spacer { flex:1; }
-        .toolbar .search-input {
-            padding:8px 14px; font-size:.85rem; font-family:var(--font);
-            border:1.5px solid var(--g200); border-radius:var(--r-sm);
-            min-width:200px; transition:var(--ease);
+        .search-box {
+            position:relative; width:220px;
         }
-        .toolbar .search-input:focus { outline:none; border-color:var(--primary); }
+        .search-box input {
+            width:100%; padding:8px 12px 8px 34px; font-size:.82rem; font-family:var(--font);
+            border:1.5px solid var(--g200); border-radius:var(--r-sm); transition:var(--ease);
+        }
+        .search-box input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.08); }
+        .search-box svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--g400); width:16px; height:16px; }
 
-        /* Pipeline Filters */
-        .filters { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+        /* ===== FILTERS ===== */
+        .filters { display:flex; gap:4px; margin-bottom:12px; flex-wrap:wrap; }
         .filter-btn {
-            padding:6px 14px; font-size:.78rem; font-weight:600;
-            font-family:var(--font); color:var(--g600);
-            background:#fff; border:1px solid var(--g200);
+            padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font);
+            color:var(--g500); background:#fff; border:1px solid var(--g200);
             border-radius:20px; cursor:pointer; transition:var(--ease);
+            display:inline-flex; align-items:center; gap:6px;
         }
+        .filter-btn:hover { border-color:var(--g300); color:var(--g700); }
         .filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-        .filter-btn:hover:not(.active) { background:var(--g100); }
-        .filter-count { font-size:.7rem; opacity:.8; margin-left:4px; }
+        .filter-count {
+            display:inline-flex; align-items:center; justify-content:center;
+            min-width:18px; height:18px; font-size:.68rem; font-weight:700;
+            background:rgba(0,0,0,.08); border-radius:9px; padding:0 5px;
+        }
+        .filter-btn.active .filter-count { background:rgba(255,255,255,.25); }
 
-        /* Table */
-        .table-wrap { background:#fff; border-radius:var(--r-md); box-shadow:var(--shadow-sm); border:1px solid var(--g100); overflow-x:auto; }
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background:#fff; border-radius:var(--r-md); border:1px solid var(--g100);
+            overflow:hidden;
+        }
         table { width:100%; border-collapse:collapse; font-size:.85rem; }
-        thead th { padding:12px 16px; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); border-bottom:2px solid var(--g100); background:var(--g50); white-space:nowrap; }
-        tbody td { padding:12px 16px; border-bottom:1px solid var(--g100); vertical-align:top; }
-        tbody tr:hover { background:var(--g50); }
+        thead th {
+            text-align:left; padding:10px 14px; font-size:.72rem; font-weight:700;
+            text-transform:uppercase; letter-spacing:.05em; color:var(--g400);
+            background:var(--g50); border-bottom:1px solid var(--g100);
+        }
+        thead th:first-child { width:40px; text-align:center; }
+        tbody td { padding:12px 14px; border-bottom:1px solid var(--g50); vertical-align:top; }
+        tbody tr.contact-row { cursor:pointer; transition:background var(--ease); }
+        tbody tr.contact-row:hover { background:var(--g50); }
+        tbody tr.contact-row.open { background:var(--primary-light); }
 
-        /* Status Badge */
+        .contact-name { font-weight:600; color:var(--g900); font-size:.88rem; }
+        .contact-sub { font-size:.72rem; color:var(--g400); margin-top:1px; }
+        .contact-email { font-size:.82rem; color:var(--primary); text-decoration:none; }
+        .contact-email:hover { text-decoration:underline; }
+        .contact-expand { display:inline-block; font-size:.65rem; color:var(--g300); margin-right:6px; transition:transform var(--ease); }
+        .contact-row.open .contact-expand { transform:rotate(90deg); color:var(--primary); }
+
+        /* Status badge */
         .status-badge {
-            display:inline-block; padding:3px 10px; border-radius:20px;
-            font-size:.72rem; font-weight:700; text-transform:uppercase;
-            letter-spacing:.04em;
+            display:inline-block; padding:3px 10px; border-radius:12px;
+            font-size:.72rem; font-weight:700; letter-spacing:.02em;
         }
-        .status-neu { background:#EEF2FF; color:#4F46E5; }
-        .status-kontaktiert { background:var(--warning-light); color:#B45309; }
-        .status-berechnet { background:var(--primary-light); color:var(--primary); }
-        .status-termin { background:#F0F9FF; color:#0369A1; }
-        .status-abgeschlossen { background:var(--success-light); color:#047857; }
-        .status-storniert { background:#FEF2F2; color:#991B1B; }
+        .status-badge.neu { background:#EEF2FF; color:#4338CA; }
+        .status-badge.kontaktiert { background:var(--warning-light); color:#B45309; }
+        .status-badge.berechnet { background:var(--accent-light); color:#0E7490; }
+        .status-badge.termin { background:#F0F9FF; color:#0369A1; }
+        .status-badge.abgeschlossen { background:var(--success-light); color:#15803D; }
+        .status-badge.storniert { background:var(--danger-light); color:#B91C1C; }
 
-        /* Source Badge */
-        .source-badge {
-            display:inline-block; padding:2px 6px; border-radius:4px;
-            font-size:.65rem; font-weight:700; text-transform:uppercase;
-            letter-spacing:.04em; margin-left:6px; vertical-align:middle;
-        }
-        .source-lead { background:#FEF3C7; color:#92400E; }
-        .source-kunde { background:#DBEAFE; color:#1E40AF; }
-
-        /* Status Select */
         .status-select {
-            padding:4px 8px; font-size:.78rem; font-family:var(--font);
-            border:1px solid var(--g200); border-radius:var(--r-sm);
-            background:#fff; cursor:pointer;
+            padding:4px 8px; font-size:.78rem; font-family:var(--font); font-weight:600;
+            border:1px solid var(--g200); border-radius:6px; background:#fff;
+            cursor:pointer; color:var(--g700); transition:var(--ease);
         }
+        .status-select:focus { outline:none; border-color:var(--primary); }
+
+        /* Source badge */
+        .source-badge {
+            display:inline-block; padding:1px 7px; border-radius:4px;
+            font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+            vertical-align:middle; margin-left:6px;
+        }
+        .source-kunde { background:var(--primary-light); color:var(--primary); }
+        .source-lead { background:#FEF3C7; color:#92400E; }
+
+        /* Savings highlight */
+        .savings-cell { font-weight:700; color:var(--success); font-size:.85rem; }
+        .savings-cell.neutral { color:var(--g400); font-weight:400; }
+
+        /* Link icon */
+        .link-icon {
+            display:inline-flex; align-items:center; justify-content:center;
+            width:28px; height:28px; border-radius:6px; background:var(--g50);
+            color:var(--g400); cursor:pointer; transition:var(--ease); border:1px solid var(--g100);
+        }
+        .link-icon:hover { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
+        .link-icon svg { width:14px; height:14px; }
+
+        /* Email status dots */
+        .email-dot-inline {
+            display:inline-flex; align-items:center; gap:4px;
+            font-size:.72rem; font-weight:600;
+        }
+        .email-dot-inline .dot {
+            width:7px; height:7px; border-radius:50%;
+        }
+        .dot.sent { background:var(--g400); }
+        .dot.delivered { background:var(--accent); }
+        .dot.opened { background:var(--success); }
+        .dot.clicked { background:var(--primary); }
+        .dot.bounced { background:var(--danger); }
+
+        /* Activity cell */
+        .activity-items { display:flex; flex-direction:column; gap:3px; }
+        .activity-item { font-size:.78rem; color:var(--g600); }
 
         /* Notizen */
         .notizen-input {
-            width:100%; min-width:120px; padding:6px 10px; font-size:.8rem;
-            font-family:var(--font); border:1px solid var(--g200);
-            border-radius:var(--r-sm); resize:none; height:32px;
+            width:100%; min-width:120px; padding:6px 8px; font-size:.78rem; font-family:var(--font);
+            border:1px solid transparent; border-radius:6px; background:transparent;
+            resize:vertical; min-height:32px; max-height:80px; transition:var(--ease); color:var(--g700);
         }
-        .notizen-input:focus { outline:none; border-color:var(--primary); }
+        .notizen-input:hover { background:var(--g50); border-color:var(--g200); }
+        .notizen-input:focus { outline:none; background:#fff; border-color:var(--primary); box-shadow:0 0 0 2px rgba(0,66,131,.08); }
 
-        .empty-state { text-align:center; padding:60px 20px; color:var(--g400); }
-        .empty-state h3 { font-size:1.1rem; margin-bottom:8px; color:var(--g500); }
-        .loading { text-align:center; padding:40px; color:var(--g400); }
+        /* Loading & empty states */
+        .loading-state, .empty-state { text-align:center; padding:48px 20px; color:var(--g400); }
+        .empty-state svg { width:48px; height:48px; margin-bottom:12px; opacity:.4; }
+        .empty-state p { font-size:.9rem; }
 
-        .contact-name { font-weight:600; color:var(--g900); }
-        .contact-sub { font-size:.75rem; color:var(--g400); }
-        .contact-email { font-size:.82rem; color:var(--primary); }
-        .lead-savings { color:var(--success); font-weight:700; }
-
-        /* Kunde Link */
-        .kunde-link {
-            display:flex; align-items:center; gap:8px;
-            font-size:.75rem; font-family:monospace; color:var(--g500);
-            background:var(--g50); padding:4px 8px; border-radius:4px;
-            cursor:pointer; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-        }
-        .kunde-link:hover { background:var(--g100); }
-
-        /* Detail Row */
-        .contact-row { cursor:pointer; transition:background .15s ease; user-select:none; }
-        .contact-row:hover { background:var(--primary-light) !important; }
-        .contact-expand { display:inline-block; width:20px; font-size:.75rem; color:var(--g400); transition:transform .2s ease; margin-right:4px; }
-        .contact-row.open .contact-expand { transform:rotate(90deg); color:var(--primary); }
-        .contact-detail-row td { padding:0 !important; border-bottom:1px solid var(--g100); }
-        .contact-detail-row.hidden td > div { display:none; }
+        /* ===== DETAIL ROW ===== */
+        .contact-detail-row.hidden { display:none; }
+        .contact-detail-row td { padding:0 !important; }
         .contact-detail {
-            padding:16px 20px 20px; background:var(--g50);
+            padding:20px 24px; background:var(--g50); border-top:1px solid var(--g100);
         }
-        .contact-detail h4 { font-size:.85rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
-
-        /* Calc Timeline */
-        .calc-timeline { position:relative; padding-left:20px; }
+        .contact-detail h4 { font-size:.88rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+        .calc-timeline { display:flex; flex-direction:column; gap:12px; }
         .calc-item {
-            position:relative; padding:12px 16px; margin-bottom:12px;
-            background:#fff; border-radius:var(--r-sm); border:1px solid var(--g100);
-            box-shadow:var(--shadow-sm);
+            background:#fff; border-radius:var(--r-sm); padding:14px 16px;
+            border:1px solid var(--g100); position:relative;
         }
         .calc-item::before {
-            content:''; position:absolute; left:-16px; top:18px;
-            width:10px; height:10px; border-radius:50%;
-            background:var(--primary); border:2px solid #fff;
-            box-shadow:0 0 0 2px var(--primary-light);
+            content:''; position:absolute; left:-16px; top:20px;
+            width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid #fff; box-shadow:0 0 0 2px var(--accent);
         }
-        .calc-item:not(:last-child)::after {
-            content:''; position:absolute; left:-12px; top:28px;
-            width:2px; height:calc(100% + 4px); background:var(--g200);
-        }
-        .calc-date { font-size:.72rem; font-weight:600; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
-        .calc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; }
-        .calc-field-label { font-size:.68rem; font-weight:600; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; }
-        .calc-field-val { font-size:.88rem; font-weight:600; color:var(--g800); }
-        .calc-field-val.savings { color:var(--success); font-weight:800; }
-        .calc-no-data { font-size:.82rem; color:var(--g400); padding:12px 0; }
+        .calc-date { font-size:.72rem; color:var(--g400); font-weight:600; margin-bottom:8px; }
+        .calc-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+        .calc-field-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--g400); font-weight:600; }
+        .calc-field-val { font-size:.82rem; font-weight:600; color:var(--g800); }
+        .calc-field-val.savings { color:var(--success); }
+        .calc-no-data { font-size:.85rem; color:var(--g400); padding:12px 0; }
+        .lead-detail-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
 
-        /* Lead Detail */
-        .lead-detail-grid {
-            display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
-            gap:12px; padding:12px 16px; background:#fff; border-radius:var(--r-sm);
-            border:1px solid var(--g100);
+        /* ===== SIDEBAR (Detail) ===== */
+        .sidebar-overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,.3);
+            z-index:200; opacity:0; transition:opacity .25s ease;
         }
-
-        /* Email Status */
-        .email-status {
-            display:inline-flex; align-items:center; gap:4px;
-            padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:700;
-            text-transform:uppercase; letter-spacing:.03em;
+        .sidebar-overlay.active { display:block; opacity:1; }
+        .sidebar {
+            position:fixed; top:0; right:-480px; width:480px; max-width:90vw; height:100vh;
+            background:#fff; z-index:201; transition:right .3s cubic-bezier(.4,0,.2,1);
+            display:flex; flex-direction:column; box-shadow:-8px 0 32px rgba(0,0,0,.12);
         }
-        .email-status.sent { background:#EEF2FF; color:#4F46E5; }
-        .email-status.delivered { background:var(--primary-light); color:var(--primary); }
-        .email-status.opened { background:var(--warning-light); color:#B45309; }
-        .email-status.clicked { background:var(--success-light); color:#047857; }
-        .email-status.bounced { background:#FEF2F2; color:#991B1B; }
-        .email-status.none { background:var(--g100); color:var(--g400); }
-        .email-dot { width:6px; height:6px; border-radius:50%; }
-        .email-dot.sent { background:#4F46E5; }
-        .email-dot.delivered { background:var(--primary); }
-        .email-dot.opened { background:#B45309; }
-        .email-dot.clicked { background:#047857; }
-        .email-dot.bounced { background:#991B1B; }
-
-        .kunde-checkbox { width:16px; height:16px; cursor:pointer; }
-
-        /* Add Kontakt Panel (collapsible) */
-        .add-panel {
-            background:#fff; border-radius:var(--r-md); padding:20px;
-            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
-            margin-bottom:16px; display:none;
+        .sidebar.open { right:0; }
+        .sidebar-header {
+            padding:20px 24px; border-bottom:1px solid var(--g100);
+            display:flex; align-items:center; justify-content:space-between;
         }
-        .add-panel.active { display:block; }
-        .add-panel h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
-        .add-form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
-        .add-form .fg { margin-bottom:0; }
-
-        /* Excel Panel */
-        .excel-panel {
-            background:#fff; border-radius:var(--r-md); padding:20px;
-            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
-            margin-bottom:16px; display:none;
+        .sidebar-header h3 { font-size:1rem; font-weight:700; color:var(--g900); }
+        .sidebar-close {
+            width:32px; height:32px; border-radius:8px; border:none; background:var(--g50);
+            cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--g500); transition:var(--ease);
         }
-        .excel-panel.active { display:block; }
-        .excel-panel h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:4px; }
-        .excel-panel .sub { font-size:.78rem; color:var(--g500); margin-bottom:12px; }
-        .excel-upload-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-        .excel-file-input {
-            flex:1; min-width:200px; padding:8px 12px; font-size:.85rem;
-            font-family:var(--font); border:1.5px dashed var(--g300);
-            border-radius:var(--r-sm); background:var(--g50); cursor:pointer;
+        .sidebar-close:hover { background:var(--g200); color:var(--g800); }
+        .sidebar-body { flex:1; overflow-y:auto; padding:20px 24px; }
+        .sidebar-section { margin-bottom:20px; }
+        .sidebar-section-title {
+            font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+            color:var(--g400); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--g100);
         }
-        .excel-file-input:hover { border-color:var(--primary); background:var(--primary-light); }
-        .upload-status { font-size:.82rem; margin-top:10px; padding:8px 12px; border-radius:var(--r-sm); display:none; }
-        .upload-status.success { display:block; background:var(--success-light); color:#047857; }
-        .upload-status.error { display:block; background:#FEF2F2; color:#991B1B; }
-        .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
-        .upload-preview { margin-top:12px; max-height:200px; overflow-y:auto; }
-        .upload-preview table { font-size:.8rem; }
-        .upload-preview th { font-size:.7rem; }
+        .sidebar-field { margin-bottom:10px; }
+        .sidebar-field-label { font-size:.72rem; color:var(--g400); font-weight:600; }
+        .sidebar-field-val { font-size:.88rem; color:var(--g800); font-weight:500; }
+        .sidebar-timeline { position:relative; padding-left:20px; }
+        .sidebar-timeline::before {
+            content:''; position:absolute; left:3px; top:4px; bottom:4px;
+            width:2px; background:var(--g200);
+        }
+        .timeline-item { position:relative; margin-bottom:16px; }
+        .timeline-item::before {
+            content:''; position:absolute; left:-20px; top:4px;
+            width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid #fff;
+            box-shadow:0 0 0 2px var(--g200);
+        }
+        .timeline-item.email::before { background:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
+        .timeline-item.calc::before { background:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
+        .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
+        .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
+        .timeline-content strong { color:var(--g800); }
 
-        /* Email Modal */
+        /* ===== MODALS (Add Kontakt, Excel, Email) ===== */
         .modal-overlay {
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
-            z-index:1000; align-items:center; justify-content:center; padding:20px;
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:300;
+            align-items:center; justify-content:center; padding:20px;
         }
         .modal-overlay.active { display:flex; }
         .modal-box {
-            background:#fff; border-radius:var(--r-lg); padding:28px;
-            max-width:600px; width:100%; box-shadow:var(--shadow-lg);
-            max-height:90vh; overflow-y:auto;
+            background:#fff; border-radius:var(--r-lg); width:100%; max-width:540px;
+            max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); padding:28px;
         }
-        .modal-box h2 { font-size:1.1rem; margin-bottom:4px; }
-        .modal-box .sub { font-size:.82rem; color:var(--g500); margin-bottom:20px; }
-        .modal-box textarea {
-            width:100%; min-height:120px; padding:10px 14px; font-size:.88rem;
-            font-family:var(--font); border:1.5px solid var(--g200);
-            border-radius:var(--r-sm); resize:vertical;
+        .modal-box h3 { font-size:1.05rem; font-weight:700; color:var(--g900); margin-bottom:4px; }
+        .modal-sub { font-size:.82rem; color:var(--g500); margin-bottom:20px; }
+        .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+        .btn-cancel {
+            padding:10px 20px; font-size:.85rem; font-weight:600; font-family:var(--font);
+            color:var(--g600); background:#fff; border:1px solid var(--g200); border-radius:var(--r-sm);
+            cursor:pointer; transition:var(--ease);
         }
-        .modal-box textarea:focus { outline:none; border-color:var(--primary); }
-        .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
-
-        /* Anrede Toggle + Vorlagen */
-        .anrede-toggle { display:flex; gap:0; margin-bottom:16px; }
-        .anrede-btn {
-            flex:1; padding:8px; font-size:.82rem; font-weight:600;
-            font-family:var(--font); border:1.5px solid var(--g200);
-            background:#fff; color:var(--g600); cursor:pointer; transition:var(--ease);
+        .btn-cancel:hover { background:var(--g50); }
+        .btn-send {
+            padding:10px 24px; font-size:.85rem; font-weight:700; font-family:var(--font);
+            color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm);
+            cursor:pointer; transition:var(--ease);
         }
-        .anrede-btn:first-child { border-radius:var(--r-sm) 0 0 var(--r-sm); border-right:none; }
-        .anrede-btn:last-child { border-radius:0 var(--r-sm) var(--r-sm) 0; }
-        .anrede-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-        .vorlage-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-        .vorlage-chip {
-            padding:6px 14px; font-size:.78rem; font-weight:600;
-            font-family:var(--font); color:var(--g600);
-            background:#fff; border:1px solid var(--g200);
-            border-radius:20px; cursor:pointer; transition:var(--ease);
-        }
-        .vorlage-chip.active { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
-        .vorlage-chip:hover:not(.active) { background:var(--g100); }
-        .btn-cancel { padding:10px 20px; font-size:.85rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; }
-        .btn-send { padding:10px 20px; font-size:.85rem; font-weight:700; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
         .btn-send:hover { background:var(--primary-dark); }
         .btn-send:disabled { opacity:.5; cursor:not-allowed; }
 
-        @media (max-width:768px) {
-            .dash-body { padding:16px; }
-            .stats { grid-template-columns:1fr 1fr; }
-            .affiliate-link-row { flex-direction:column; }
-            .add-form { grid-template-columns:1fr; }
+        /* Modal form elements */
+        .modal-fg { margin-bottom:14px; }
+        .modal-fg label { display:block; font-size:.78rem; font-weight:600; color:var(--g600); margin-bottom:4px; }
+        .modal-fg input, .modal-fg textarea {
+            width:100%; padding:10px 14px; font-size:.88rem; font-family:var(--font);
+            border:1.5px solid var(--g200); border-radius:var(--r-sm); transition:var(--ease);
+        }
+        .modal-fg input:focus, .modal-fg textarea:focus {
+            outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.08);
+        }
+        .modal-fg textarea { resize:vertical; min-height:100px; }
+
+        /* Anrede & Vorlage */
+        .anrede-toggle { display:flex; border:1.5px solid var(--g200); border-radius:var(--r-sm); overflow:hidden; margin-bottom:16px; }
+        .anrede-btn {
+            flex:1; padding:8px; font-size:.85rem; font-weight:600; font-family:var(--font);
+            text-align:center; cursor:pointer; border:none; background:#fff; color:var(--g500); transition:var(--ease);
+        }
+        .anrede-btn.active { background:var(--primary); color:#fff; }
+
+        .vorlage-chips { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+        .vorlage-chip {
+            padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font);
+            border:1.5px solid var(--g200); border-radius:20px; cursor:pointer;
+            background:#fff; color:var(--g600); transition:var(--ease);
+        }
+        .vorlage-chip.active { border-color:var(--primary); background:var(--primary-light); color:var(--primary); }
+        .vorlage-chip:hover { border-color:var(--g300); }
+
+        /* Upload/Status messages */
+        .upload-status { padding:8px 12px; border-radius:var(--r-sm); font-size:.82rem; font-weight:500; display:none; }
+        .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
+        .upload-status.success { display:block; background:var(--success-light); color:#15803D; }
+        .upload-status.error { display:block; background:var(--danger-light); color:var(--danger); }
+
+        /* Excel preview */
+        .excel-preview table { font-size:.78rem; margin-top:8px; }
+        .excel-preview th { background:var(--g50); font-weight:600; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width:900px) {
+            .stats { grid-template-columns:repeat(2, 1fr); }
+            .sidebar { width:100%; max-width:100%; }
+        }
+        @media (max-width:600px) {
+            .stats { grid-template-columns:1fr 1fr; gap:8px; }
+            .dash-body { padding:12px; }
             .toolbar { gap:6px; }
+            .search-box { width:100%; }
+            .table-wrap { overflow-x:auto; }
+            table { min-width:700px; }
         }
     </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ===== LOGIN ===== -->
 <div class="login-wrap" id="loginView">
     <div class="login-card">
+        <div class="login-logo">
+            <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#004283"/><path d="M14 24l7 7 13-14" stroke="#06BADD" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
         <h1>Berater-Dashboard</h1>
-        <p class="sub">Melde dich an, um deine Kontakte zu sehen.</p>
+        <p class="sub">GKV-Rechner Login</p>
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="fg">
                 <label for="loginEmail">E-Mail</label>
@@ -352,99 +421,106 @@
                 <label for="loginPassword">Passwort</label>
                 <input type="password" id="loginPassword" required autocomplete="current-password">
             </div>
-            <button type="submit" class="btn" id="loginBtn">Anmelden</button>
+            <button type="submit" class="btn-login" id="loginBtn">Anmelden</button>
             <div class="error-msg" id="loginError"></div>
         </form>
     </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- ===== DASHBOARD ===== -->
 <div class="dashboard" id="dashboardView">
+
+    <!-- Header -->
     <div class="dash-header">
-        <h1>GKV-Rechner Dashboard</h1>
+        <div class="dash-header-left">
+            <h1>GKV<span>-Rechner</span></h1>
+        </div>
         <div class="user-info">
-            <span class="user-name" id="userName"></span>
-            <button class="btn-sm" onclick="handleLogout()">Abmelden</button>
+            <div class="user-avatar" id="userAvatar">LJ</div>
+            <span class="user-name" id="userName">Berater</span>
+            <button class="btn-logout" onclick="handleLogout()">Abmelden</button>
         </div>
     </div>
 
     <div class="dash-body">
-        <!-- Stats -->
+
+        <!-- Stat Cards -->
         <div class="stats">
-            <div class="stat-card" onclick="filterByStatus('alle')" data-stat="alle">
-                <div class="stat-label">Kontakte gesamt</div>
-                <div class="stat-val" id="statTotal">–</div>
+            <div class="stat-card active" data-stat="alle" onclick="filterByStatus('alle')">
+                <div class="stat-icon total">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-val" id="statTotal">0</div>
+                    <div class="stat-label">Kontakte Gesamt</div>
+                </div>
             </div>
-            <div class="stat-card" onclick="filterByStatus('neu')" data-stat="neu">
-                <div class="stat-label">Neu</div>
-                <div class="stat-val" id="statNeu">–</div>
-                <div class="stat-sub">Noch nicht kontaktiert</div>
+            <div class="stat-card" data-stat="neu" onclick="filterByStatus('neu')">
+                <div class="stat-icon neu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-val" id="statNeu">0</div>
+                    <div class="stat-label">Neu</div>
+                </div>
             </div>
-            <div class="stat-card" onclick="filterByStatus('berechnet')" data-stat="berechnet">
-                <div class="stat-label">Berechnet</div>
-                <div class="stat-val" id="statBerechnet">–</div>
-                <div class="stat-sub">Rechner genutzt</div>
+            <div class="stat-card" data-stat="berechnet" onclick="filterByStatus('berechnet')">
+                <div class="stat-icon berechnet">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-val" id="statBerechnet">0</div>
+                    <div class="stat-label">Berechnet</div>
+                </div>
             </div>
-            <div class="stat-card" onclick="filterByStatus('abgeschlossen')" data-stat="abgeschlossen">
-                <div class="stat-label">Abgeschlossen</div>
-                <div class="stat-val" id="statDone">–</div>
+            <div class="stat-card" data-stat="abgeschlossen" onclick="filterByStatus('abgeschlossen')">
+                <div class="stat-icon done">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-val" id="statDone">0</div>
+                    <div class="stat-label">Abgeschlossen</div>
+                </div>
             </div>
         </div>
 
-        <!-- Affiliate Link -->
-        <div class="affiliate-box">
-            <h3>Dein persönlicher Rechner-Link</h3>
-            <div class="affiliate-link-row">
-                <input type="text" class="affiliate-input" id="affiliateLink" readonly>
-                <button class="btn-copy" onclick="copyAffiliateLink()">Kopieren</button>
-            </div>
+        <!-- Affiliate Link Bar -->
+        <div class="link-bar">
+            <span class="link-bar-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Dein Rechner-Link
+            </span>
+            <input type="text" id="affiliateLink" readonly value="">
+            <button class="btn-copy" onclick="copyAffiliateLink()">Kopieren</button>
         </div>
 
         <!-- Toolbar -->
         <div class="toolbar">
-            <button class="btn-action" onclick="togglePanel('addPanel')">+ Kontakt</button>
-            <button class="btn-action secondary" onclick="togglePanel('excelPanel')">Excel Import</button>
-            <button class="btn-action secondary" id="btnEmailSelected" onclick="openEmailModal()" disabled>Email senden (0)</button>
-            <button class="btn-action secondary" onclick="emailAlleOhne()">Alle ohne Email anschreiben</button>
+            <button class="btn-action" onclick="openAddKontaktModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Kontakt
+            </button>
+            <button class="btn-action secondary" onclick="openExcelModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Excel Import
+            </button>
+            <button class="btn-action success" id="btnEmailSelected" disabled onclick="openEmailModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Email senden (0)
+            </button>
+            <button class="btn-action secondary" onclick="emailAlleOhne()" title="Alle Kontakte ohne bisherige Emails auswählen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Alle ohne Email
+            </button>
             <div class="toolbar-spacer"></div>
-            <input type="text" class="search-input" id="searchInput" placeholder="Suchen..." oninput="handleSearch(this.value)">
-        </div>
-
-        <!-- Add Kontakt Panel -->
-        <div class="add-panel" id="addPanel">
-            <h3>Neuen Kontakt hinzufügen</h3>
-            <form class="add-form" id="kundeForm" onsubmit="addKunde(event)">
-                <div class="fg">
-                    <label for="kundeVorname">Vorname *</label>
-                    <input type="text" id="kundeVorname" required>
-                </div>
-                <div class="fg">
-                    <label for="kundeNachname">Nachname *</label>
-                    <input type="text" id="kundeNachname" required>
-                </div>
-                <div class="fg">
-                    <label for="kundeEmail">E-Mail</label>
-                    <input type="email" id="kundeEmail">
-                </div>
-                <button type="submit" class="btn-action" id="kundeAddBtn">Hinzufügen</button>
-            </form>
-        </div>
-
-        <!-- Excel Panel -->
-        <div class="excel-panel" id="excelPanel">
-            <h3>Kontakte per Excel importieren</h3>
-            <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional)</p>
-            <div class="excel-upload-row">
-                <input type="file" class="excel-file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
-                <button class="btn-action success" id="excelUploadBtn" onclick="uploadExcelKunden()" disabled>Hochladen</button>
-                <button class="btn-action secondary" onclick="downloadTemplate()">Vorlage</button>
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" placeholder="Suchen..." oninput="handleSearch(this.value)">
             </div>
-            <div class="upload-status" id="uploadStatus"></div>
-            <div class="upload-preview" id="uploadPreview"></div>
         </div>
 
-        <!-- Pipeline Filters -->
-        <div class="filters" id="pipelineFilters">
+        <!-- Filters -->
+        <div class="filters">
             <button class="filter-btn active" data-filter="alle" onclick="filterByStatus('alle')">Alle</button>
             <button class="filter-btn" data-filter="neu" onclick="filterByStatus('neu')">Neu</button>
             <button class="filter-btn" data-filter="kontaktiert" onclick="filterByStatus('kontaktiert')">Kontaktiert</button>
@@ -454,66 +530,126 @@
             <button class="filter-btn" data-filter="storniert" onclick="filterByStatus('storniert')">Storniert</button>
         </div>
 
-        <!-- Unified Table -->
+        <!-- Table -->
         <div class="table-wrap">
-            <div class="loading" id="contactsLoading">Kontakte werden geladen...</div>
             <table id="contactsTable" style="display:none;">
                 <thead>
                     <tr>
-                        <th style="width:30px;"><input type="checkbox" class="kunde-checkbox" onchange="toggleAlleKontakte(this)"></th>
+                        <th><input type="checkbox" onchange="toggleAlleKontakte(this)"></th>
                         <th>Name</th>
                         <th>Kontakt</th>
                         <th>Status</th>
+                        <th>Sparpotenzial</th>
                         <th>Aktivität</th>
+                        <th>Link</th>
                         <th>Notizen</th>
                     </tr>
                 </thead>
                 <tbody id="contactsBody"></tbody>
             </table>
+            <div class="loading-state" id="contactsLoading">
+                <p>Lade Kontakte...</p>
+            </div>
             <div class="empty-state" id="contactsEmpty" style="display:none;">
-                <h3>Noch keine Kontakte</h3>
-                <p>Lege Kontakte an oder teile deinen Rechner-Link, um Leads zu generieren.</p>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <p>Keine Kontakte gefunden</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Email Modal -->
+<!-- ===== SIDEBAR (Contact Detail) ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebarPanel">
+    <div class="sidebar-header">
+        <h3 id="sidebarTitle">Kontakt-Details</h3>
+        <button class="sidebar-close" onclick="closeSidebar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="sidebar-body" id="sidebarBody"></div>
+</div>
+
+<!-- ===== ADD KONTAKT MODAL ===== -->
+<div class="modal-overlay" id="addKontaktModal">
+    <div class="modal-box">
+        <h3>Neuen Kontakt anlegen</h3>
+        <p class="modal-sub">Manuell einen Kunden hinzufügen</p>
+        <form id="kundeForm" onsubmit="addKunde(event)">
+            <div class="modal-fg">
+                <label>Vorname *</label>
+                <input type="text" id="kundeVorname" required>
+            </div>
+            <div class="modal-fg">
+                <label>Nachname *</label>
+                <input type="text" id="kundeNachname" required>
+            </div>
+            <div class="modal-fg">
+                <label>E-Mail</label>
+                <input type="email" id="kundeEmail">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('addKontaktModal')">Abbrechen</button>
+                <button type="submit" class="btn-send" id="kundeAddBtn">Anlegen</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== EXCEL IMPORT MODAL ===== -->
+<div class="modal-overlay" id="excelModal">
+    <div class="modal-box">
+        <h3>Excel Import</h3>
+        <p class="modal-sub">Kontakte aus einer Excel-Datei importieren</p>
+        <div class="modal-fg">
+            <label>Excel-Datei (.xlsx, .xls)</label>
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
+        </div>
+        <div class="upload-status" id="uploadStatus"></div>
+        <div class="excel-preview" id="uploadPreview"></div>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="downloadTemplate()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Vorlage
+            </button>
+            <button type="button" class="btn-cancel" onclick="closeModal('excelModal')">Abbrechen</button>
+            <button type="button" class="btn-send" id="excelUploadBtn" disabled onclick="uploadExcelKunden()">Importieren</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== EMAIL MODAL ===== -->
 <div class="modal-overlay" id="emailModal">
     <div class="modal-box">
-        <h2>Email an Kontakte senden</h2>
-        <p class="sub" id="emailModalSub">0 Kontakte ausgewählt</p>
+        <h3>Email an Kontakte senden</h3>
+        <p class="modal-sub" id="emailModalSub">0 Kontakte ausgewählt</p>
 
-        <div class="fg">
-            <label>Anrede</label>
-            <div class="anrede-toggle">
-                <button type="button" class="anrede-btn" data-anrede="du" onclick="setAnrede('du')">Du</button>
-                <button type="button" class="anrede-btn active" data-anrede="sie" onclick="setAnrede('sie')">Sie</button>
-            </div>
+        <label style="font-size:.78rem;font-weight:600;color:var(--g600);margin-bottom:4px;display:block;">Anrede</label>
+        <div class="anrede-toggle">
+            <button type="button" class="anrede-btn active" data-anrede="du" onclick="setAnrede('du')">Du</button>
+            <button type="button" class="anrede-btn" data-anrede="sie" onclick="setAnrede('sie')">Sie</button>
         </div>
 
-        <div class="fg">
-            <label>Vorlage</label>
-            <div class="vorlage-chips">
-                <span class="vorlage-chip active" data-vorlage="jahresupdate" onclick="setVorlage('jahresupdate')">Jahresupdate</span>
-                <span class="vorlage-chip" data-vorlage="erstansprache" onclick="setVorlage('erstansprache')">Erstansprache</span>
-                <span class="vorlage-chip" data-vorlage="erinnerung" onclick="setVorlage('erinnerung')">Erinnerung</span>
-                <span class="vorlage-chip" data-vorlage="eigene" onclick="setVorlage('eigene')">Eigene Nachricht</span>
-            </div>
+        <label style="font-size:.78rem;font-weight:600;color:var(--g600);margin-bottom:6px;display:block;">Vorlage</label>
+        <div class="vorlage-chips">
+            <button type="button" class="vorlage-chip active" data-vorlage="jahresupdate" onclick="setVorlage('jahresupdate')">Jahresupdate</button>
+            <button type="button" class="vorlage-chip" data-vorlage="erstansprache" onclick="setVorlage('erstansprache')">Erstansprache</button>
+            <button type="button" class="vorlage-chip" data-vorlage="erinnerung" onclick="setVorlage('erinnerung')">Erinnerung</button>
+            <button type="button" class="vorlage-chip" data-vorlage="eigene" onclick="setVorlage('eigene')">Eigene Nachricht</button>
         </div>
 
-        <div class="fg">
-            <label for="emailSubject">Betreff</label>
-            <input type="text" id="emailSubject" value="Ihr persönlicher GKV-Vergleich" style="width:100%;padding:10px 14px;font-size:.92rem;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-family:var(--font);">
+        <div class="modal-fg">
+            <label>Betreff</label>
+            <input type="text" id="emailSubject" placeholder="Betreff der E-Mail">
         </div>
-        <div class="fg">
-            <label for="emailText">Vorschau / Nachricht</label>
-            <textarea id="emailText" placeholder="Platzhalter: {{vorname}}, {{nachname}}, {{link}}" rows="8"></textarea>
+        <div class="modal-fg">
+            <label>Vorschau / Nachricht</label>
+            <textarea id="emailText" placeholder="Nachricht eingeben..." rows="8"></textarea>
         </div>
-        <p style="font-size:.75rem;color:var(--g400);margin-top:8px;">Platzhalter: <code>{{vorname}}</code>, <code>{{nachname}}</code>, <code>{{link}}</code> werden automatisch ersetzt.</p>
+        <p style="font-size:.72rem;color:var(--g400);margin-top:-8px;margin-bottom:8px;">Platzhalter: <code>{{vorname}}</code>, <code>{{nachname}}</code>, <code>{{link}}</code> werden automatisch ersetzt.</p>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeEmailModal()">Abbrechen</button>
-            <button class="btn-send" id="btnSendEmail" onclick="sendEmails()">Senden</button>
+            <button type="button" class="btn-cancel" onclick="closeEmailModal()">Abbrechen</button>
+            <button type="button" class="btn-send" id="btnSendEmail" onclick="sendEmails()">Senden</button>
         </div>
         <div class="upload-status" id="emailSendStatus" style="margin-top:12px;"></div>
     </div>
@@ -533,7 +669,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // State
-let allContacts = [];     // Unified list
+let allContacts = [];
 let allLeads = [];
 let allKunden = [];
 let kundenBerechnungen = {};
@@ -542,6 +678,7 @@ let selectedKundenIds = new Set();
 let currentFilter = 'alle';
 let searchQuery = '';
 let beraterRecord = null;
+let openSidebarContact = null;
 
 /* ==================================================================
    AUTH
@@ -593,6 +730,7 @@ async function showDashboard(user) {
 
     if (berater) {
         document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
+        document.getElementById('userAvatar').textContent = (berater.vorname[0] + berater.nachname[0]).toUpperCase();
         const baseUrl = window.location.origin;
         document.getElementById('affiliateLink').value = `${baseUrl}/?berater=${berater.slug}`;
     } else {
@@ -607,7 +745,6 @@ async function loadAllData() {
     document.getElementById('contactsTable').style.display = 'none';
     document.getElementById('contactsEmpty').style.display = 'none';
 
-    // Load leads, kunden, berechnungen, emails in parallel
     const [leadsRes, kundenRes] = await Promise.all([
         sb.from('leads').select('*').order('created_at', { ascending: false }),
         sb.from('kunden').select('*').order('created_at', { ascending: false }),
@@ -616,7 +753,6 @@ async function loadAllData() {
     allLeads = leadsRes.data || [];
     allKunden = kundenRes.data || [];
 
-    // Load berechnungen and emails for kunden
     kundenBerechnungen = {};
     kundenEmails = {};
 
@@ -638,7 +774,6 @@ async function loadAllData() {
         });
     }
 
-    // Build unified contacts list
     buildUnifiedContacts();
     selectedKundenIds.clear();
     updateStats();
@@ -649,13 +784,11 @@ function buildUnifiedContacts() {
     const baseUrl = window.location.origin;
     allContacts = [];
 
-    // Add Kunden
     for (const kunde of allKunden) {
         const berechnungen = kundenBerechnungen[kunde.id] || [];
         const emails = kundenEmails[kunde.id] || [];
         const link = beraterRecord ? `${baseUrl}/?berater=${beraterRecord.slug}&kunde=${kunde.code}` : '';
 
-        // Derive status if not manually set or still 'neu'
         let status = kunde.status || 'neu';
         if (status === 'neu') {
             if (berechnungen.length > 0) status = 'berechnet';
@@ -664,48 +797,25 @@ function buildUnifiedContacts() {
         }
 
         allContacts.push({
-            type: 'kunde',
-            id: kunde.id,
-            vorname: kunde.vorname,
-            nachname: kunde.nachname,
-            email: kunde.email,
-            telefon: kunde.telefon || null,
-            status,
-            created_at: kunde.created_at,
-            code: kunde.code,
-            link,
-            berechnungen,
-            emails,
-            notizen: kunde.notizen || '',
-            _raw: kunde,
+            type: 'kunde', id: kunde.id, vorname: kunde.vorname, nachname: kunde.nachname,
+            email: kunde.email, telefon: kunde.telefon || null, status, created_at: kunde.created_at,
+            code: kunde.code, link, berechnungen, emails, notizen: kunde.notizen || '', _raw: kunde,
         });
     }
 
-    // Add Leads
     for (const lead of allLeads) {
-        // Map lead status to pipeline
         let status = lead.status || 'neu';
         if (status === 'kontaktiert' && lead.sparpotenzial_jahr) status = 'berechnet';
 
         allContacts.push({
-            type: 'lead',
-            id: lead.id,
-            vorname: lead.vorname,
-            nachname: lead.nachname,
-            email: lead.email,
-            telefon: lead.telefon || null,
-            status,
-            created_at: lead.created_at,
-            gehalt: lead.gehalt,
-            aktuelle_kasse: lead.aktuelle_kasse,
-            gewaehlte_kasse: lead.gewaehlte_kasse,
-            sparpotenzial_jahr: lead.sparpotenzial_jahr,
-            notizen: lead.notizen || '',
-            _raw: lead,
+            type: 'lead', id: lead.id, vorname: lead.vorname, nachname: lead.nachname,
+            email: lead.email, telefon: lead.telefon || null, status, created_at: lead.created_at,
+            gehalt: lead.gehalt, aktuelle_kasse: lead.aktuelle_kasse,
+            gewaehlte_kasse: lead.gewaehlte_kasse, sparpotenzial_jahr: lead.sparpotenzial_jahr,
+            notizen: lead.notizen || '', _raw: lead,
         });
     }
 
-    // Sort by created_at descending
     allContacts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
@@ -715,12 +825,10 @@ function updateStats() {
     document.getElementById('statBerechnet').textContent = allContacts.filter(c => c.status === 'berechnet').length;
     document.getElementById('statDone').textContent = allContacts.filter(c => c.status === 'abgeschlossen').length;
 
-    // Highlight active stat card
     document.querySelectorAll('.stat-card').forEach(card => {
         card.classList.toggle('active', card.dataset.stat === currentFilter);
     });
 
-    // Update filter counts
     const counts = {};
     allContacts.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -753,6 +861,9 @@ function getFilteredContacts() {
     return filtered;
 }
 
+/* ==================================================================
+   RENDER CONTACTS TABLE
+   ================================================================== */
 function renderContacts() {
     const filtered = getFilteredContacts();
 
@@ -771,14 +882,14 @@ function renderContacts() {
     tbody.innerHTML = filtered.map(contact => {
         const date = new Date(contact.created_at);
         const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-
         const isKunde = contact.type === 'kunde';
+
         const sourceBadge = isKunde
             ? '<span class="source-badge source-kunde">Kunde</span>'
             : '<span class="source-badge source-lead">Lead</span>';
 
-        // Checkbox (only for kunden with email for email sending)
-        const canEmail = isKunde && contact.email;
+        // Checkbox
+        const canEmail = contact.email;
         const checked = selectedKundenIds.has(contact.id) ? 'checked' : '';
         const checkboxHtml = canEmail
             ? `<input type="checkbox" class="kunde-checkbox" value="${contact.id}" ${checked} onchange="toggleKontaktSelection(this)" onclick="event.stopPropagation()">`
@@ -787,130 +898,199 @@ function renderContacts() {
         // Contact info
         const emailHtml = contact.email
             ? `<a href="mailto:${esc(contact.email)}" class="contact-email" onclick="event.stopPropagation()">${esc(contact.email)}</a>`
-            : '<span style="font-size:.78rem;color:var(--g400);">Keine Email</span>';
+            : '<span style="font-size:.78rem;color:var(--g400);">–</span>';
         const telHtml = contact.telefon
-            ? `<div><a href="tel:${esc(contact.telefon)}" style="font-size:.78rem;color:var(--g500);" onclick="event.stopPropagation()">${esc(contact.telefon)}</a></div>`
+            ? `<div><a href="tel:${esc(contact.telefon)}" style="font-size:.75rem;color:var(--g500);text-decoration:none;" onclick="event.stopPropagation()">${esc(contact.telefon)}</a></div>`
             : '';
 
-        // Status
+        // Status select
         const statusOptions = ['neu','kontaktiert','berechnet','termin','abgeschlossen','storniert'];
         const statusLabels = { neu:'Neu', kontaktiert:'Kontaktiert', berechnet:'Berechnet', termin:'Termin', abgeschlossen:'Abgeschlossen', storniert:'Storniert' };
         const statusSelect = `<select class="status-select" onchange="updateContactStatus('${contact.type}','${contact.id}',this.value)" onclick="event.stopPropagation()">
             ${statusOptions.map(s => `<option value="${s}" ${contact.status === s ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
         </select>`;
 
-        // Activity column
+        // Sparpotenzial
+        let sparHtml = '<span class="savings-cell neutral">–</span>';
+        if (isKunde && contact.berechnungen && contact.berechnungen.length > 0) {
+            const letzte = contact.berechnungen[0];
+            if (letzte.sparpotenzial_jahr) {
+                sparHtml = `<span class="savings-cell">${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
+            }
+        } else if (!isKunde && contact.sparpotenzial_jahr) {
+            sparHtml = `<span class="savings-cell">${contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
+        }
+
+        // Activity
         let activityHtml = '';
         if (isKunde) {
-            const berechnungen = contact.berechnungen || [];
             const emails = contact.emails || [];
-            const letzteEmail = emails[0];
-
-            if (berechnungen.length > 0) {
-                const letzte = berechnungen[0];
-                const sparStr = letzte.sparpotenzial_jahr
-                    ? `${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/J`
-                    : '';
-                activityHtml = `<div style="font-size:.78rem;"><strong>${berechnungen.length}x</strong> berechnet</div>`;
-                if (sparStr) activityHtml += `<div class="lead-savings" style="font-size:.78rem;">${sparStr}</div>`;
-            }
-
-            if (letzteEmail) {
+            const berechnungen = contact.berechnungen || [];
+            const parts = [];
+            if (berechnungen.length > 0) parts.push(`<span class="activity-item">${berechnungen.length}x berechnet</span>`);
+            if (emails.length > 0) {
+                const last = emails[0];
                 const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
-                activityHtml += `<div><span class="email-status ${letzteEmail.status}"><span class="email-dot ${letzteEmail.status}"></span> ${emailLabels[letzteEmail.status] || letzteEmail.status}</span></div>`;
+                parts.push(`<span class="email-dot-inline"><span class="dot ${last.status}"></span> ${emailLabels[last.status] || last.status}</span>`);
             }
-
-            if (!activityHtml) {
-                activityHtml = '<span style="font-size:.78rem;color:var(--g400);">Keine Aktivität</span>';
-            }
-
-            // Show link if available
-            if (contact.link) {
-                activityHtml += `<div class="kunde-link" onclick="event.stopPropagation();copyLink(this,'${esc(contact.link)}')" title="Link kopieren" style="margin-top:4px;">${esc(contact.link.replace(window.location.origin, '...'))}</div>`;
-            }
+            activityHtml = parts.length > 0
+                ? `<div class="activity-items">${parts.join('')}</div>`
+                : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
         } else {
-            // Lead activity
-            if (contact.sparpotenzial_jahr) {
-                const savings = `${contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/Jahr`;
-                activityHtml = `<div class="lead-savings" style="font-size:.82rem;">${savings}</div>`;
-            }
-            if (contact.gewaehlte_kasse) {
-                activityHtml += `<div style="font-size:.78rem;">${esc(contact.gewaehlte_kasse)}</div>`;
-            }
-            if (contact.gehalt) {
-                activityHtml += `<div style="font-size:.75rem;color:var(--g400);">${contact.gehalt.toLocaleString('de-DE')} \u20AC brutto</div>`;
-            }
-            if (!activityHtml) {
-                activityHtml = `<div style="font-size:.78rem;color:var(--g400);">${dateStr}</div>`;
-            }
+            const parts = [];
+            if (contact.gewaehlte_kasse) parts.push(`<span class="activity-item">${esc(contact.gewaehlte_kasse)}</span>`);
+            if (contact.gehalt) parts.push(`<span class="activity-item" style="color:var(--g400);">${contact.gehalt.toLocaleString('de-DE')} € brutto</span>`);
+            activityHtml = parts.length > 0
+                ? `<div class="activity-items">${parts.join('')}</div>`
+                : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
+        }
+
+        // Link icon
+        let linkHtml = '';
+        if (isKunde && contact.link) {
+            linkHtml = `<span class="link-icon" onclick="event.stopPropagation();copyLink(this,'${esc(contact.link)}')" title="Link kopieren">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </span>`;
         }
 
         // Notizen
         const notizenHtml = `<textarea class="notizen-input" placeholder="Notizen..." onclick="event.stopPropagation()" onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea>`;
 
-        // Detail row
-        let detailContent = '';
-        if (isKunde) {
-            const berechnungen = contact.berechnungen || [];
-            if (berechnungen.length > 0) {
-                const calcItems = berechnungen.map(b => {
-                    const d = new Date(b.created_at);
-                    const dStr = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-                    const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/Jahr` : '–';
-                    const gehaltStr = b.gehalt ? `${b.gehalt.toLocaleString('de-DE')} \u20AC` : '–';
-                    return `<div class="calc-item">
-                        <div class="calc-date">${dStr}</div>
-                        <div class="calc-grid">
-                            <div><div class="calc-field-label">Gehalt</div><div class="calc-field-val">${gehaltStr}</div></div>
-                            <div><div class="calc-field-label">Beschäftigung</div><div class="calc-field-val">${esc(b.beschaeftigung || '–')}</div></div>
-                            <div><div class="calc-field-label">Aktuelle Kasse</div><div class="calc-field-val">${esc(b.aktuelle_kasse || '–')}</div></div>
-                            <div><div class="calc-field-label">Günstigste</div><div class="calc-field-val">${esc(b.guenstigste_kasse || '–')}</div></div>
-                            <div><div class="calc-field-label">Sparpotenzial</div><div class="calc-field-val savings">${spar}</div></div>
-                            <div><div class="calc-field-label">Beitrag günstigste</div><div class="calc-field-val">${b.guenstigster_beitrag ? b.guenstigster_beitrag.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' \u20AC/Mon.' : '–'}</div></div>
-                        </div>
-                    </div>`;
-                }).join('');
-                detailContent = `<h4>Berechnungen von ${esc(contact.vorname)} ${esc(contact.nachname)}</h4><div class="calc-timeline">${calcItems}</div>`;
-            } else {
-                detailContent = `<h4>Details zu ${esc(contact.vorname)} ${esc(contact.nachname)}</h4><div class="calc-no-data">Noch keine Berechnungen durchgeführt.</div>`;
-            }
-        } else {
-            // Lead detail
-            detailContent = `<h4>Lead-Details: ${esc(contact.vorname)} ${esc(contact.nachname)}</h4>
-            <div class="lead-detail-grid">
-                <div><div class="calc-field-label">Datum</div><div class="calc-field-val">${dateStr}</div></div>
-                <div><div class="calc-field-label">Email</div><div class="calc-field-val">${esc(contact.email || '–')}</div></div>
-                <div><div class="calc-field-label">Telefon</div><div class="calc-field-val">${esc(contact.telefon || '–')}</div></div>
-                <div><div class="calc-field-label">Gehalt</div><div class="calc-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' \u20AC' : '–'}</div></div>
-                <div><div class="calc-field-label">Aktuelle Kasse</div><div class="calc-field-val">${esc(contact.aktuelle_kasse || '–')}</div></div>
-                <div><div class="calc-field-label">Gewählte Kasse</div><div class="calc-field-val">${esc(contact.gewaehlte_kasse || '–')}</div></div>
-                <div><div class="calc-field-label">Sparpotenzial</div><div class="calc-field-val savings">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' \u20AC/Jahr' : '–'}</div></div>
-            </div>`;
-        }
-
         const uid = contact.type + '-' + contact.id;
 
-        return `<tr class="contact-row" onclick="toggleDetail('${uid}')">
-            <td onclick="event.stopPropagation()">${checkboxHtml}</td>
+        return `<tr class="contact-row" onclick="openSidebar('${uid}')">
+            <td onclick="event.stopPropagation()" style="text-align:center;">${checkboxHtml}</td>
             <td>
-                <span class="contact-expand">&#9654;</span>
                 <span class="contact-name">${esc(contact.vorname)} ${esc(contact.nachname)}</span>
                 ${sourceBadge}
                 <div class="contact-sub">${dateStr}</div>
             </td>
             <td>${emailHtml}${telHtml}</td>
             <td>${statusSelect}</td>
+            <td>${sparHtml}</td>
             <td>${activityHtml}</td>
+            <td>${linkHtml}</td>
             <td>${notizenHtml}</td>
-        </tr>
-        <tr class="contact-detail-row hidden" id="detail-${uid}">
-            <td colspan="6">
-                <div class="contact-detail">${detailContent}</div>
-            </td>
         </tr>`;
     }).join('');
 
     updateEmailButton();
+}
+
+/* ==================================================================
+   SIDEBAR
+   ================================================================== */
+function openSidebar(uid) {
+    const [type, ...idParts] = uid.split('-');
+    const id = idParts.join('-');
+    const contact = allContacts.find(c => c.type === type && c.id === id);
+    if (!contact) return;
+
+    openSidebarContact = contact;
+    const isKunde = contact.type === 'kunde';
+
+    document.getElementById('sidebarTitle').textContent = `${contact.vorname} ${contact.nachname}`;
+
+    let html = '';
+
+    // Info section
+    html += `<div class="sidebar-section">
+        <div class="sidebar-section-title">Kontaktdaten</div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Typ</div><div class="sidebar-field-val">${isKunde ? 'Kunde' : 'Lead'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${contact.email ? `<a href="mailto:${esc(contact.email)}" style="color:var(--primary);text-decoration:none;">${esc(contact.email)}</a>` : '–'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${contact.telefon ? `<a href="tel:${esc(contact.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(contact.telefon)}</a>` : '–'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
+    </div>`;
+
+    // Lead-specific data
+    if (!isKunde) {
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Lead-Daten</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Aktuelle Kasse</div><div class="sidebar-field-val">${esc(contact.aktuelle_kasse || '–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Gewählte Kasse</div><div class="sidebar-field-val">${esc(contact.gewaehlte_kasse || '–')}</div></div>
+            </div>
+        </div>`;
+    }
+
+    // Kunde link
+    if (isKunde && contact.link) {
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Persönlicher Rechner-Link</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" value="${esc(contact.link)}" readonly style="flex:1;padding:8px 10px;font-size:.78rem;font-family:monospace;border:1px solid var(--g200);border-radius:6px;background:var(--g50);color:var(--g600);">
+                <button class="btn-copy" onclick="copyLink(this,'${esc(contact.link)}')">Kopieren</button>
+            </div>
+        </div>`;
+    }
+
+    // Timeline (Berechnungen + Emails)
+    if (isKunde) {
+        const berechnungen = contact.berechnungen || [];
+        const emails = contact.emails || [];
+
+        // Build timeline items
+        const timelineItems = [];
+
+        for (const b of berechnungen) {
+            const d = new Date(b.created_at);
+            const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/Jahr` : '–';
+            timelineItems.push({
+                date: d,
+                type: 'calc',
+                html: `<div class="timeline-item calc">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong>Berechnung durchgeführt</strong><br>
+                        Aktuelle: ${esc(b.aktuelle_kasse || '–')} → Günstigste: ${esc(b.guenstigste_kasse || '–')}<br>
+                        <span style="color:var(--success);font-weight:700;">Ersparnis: ${spar}</span>
+                    </div>
+                </div>`
+            });
+        }
+
+        for (const e of emails) {
+            const d = new Date(e.created_at);
+            const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
+            timelineItems.push({
+                date: d,
+                type: 'email',
+                html: `<div class="timeline-item email">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong>Email: ${esc(e.subject || 'Kein Betreff')}</strong><br>
+                        Status: <span class="email-dot-inline"><span class="dot ${e.status}"></span> ${emailLabels[e.status] || e.status}</span>
+                    </div>
+                </div>`
+            });
+        }
+
+        timelineItems.sort((a, b) => b.date - a.date);
+
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
+            ${timelineItems.length > 0
+                ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
+                : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
+        </div>`;
+    }
+
+    // Notizen
+    html += `<div class="sidebar-section">
+        <div class="sidebar-section-title">Notizen</div>
+        <textarea class="notizen-input" style="min-height:80px;background:var(--g50);border-color:var(--g200);" placeholder="Notizen hinzufügen..."
+            onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea>
+    </div>`;
+
+    document.getElementById('sidebarBody').innerHTML = html;
+    document.getElementById('sidebarOverlay').classList.add('active');
+    document.getElementById('sidebarPanel').classList.add('open');
+}
+
+function closeSidebar() {
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.getElementById('sidebarPanel').classList.remove('open');
+    openSidebarContact = null;
 }
 
 /* ==================================================================
@@ -946,7 +1126,6 @@ async function updateContactStatus(type, id, newStatus) {
         if (kunde) kunde.status = newStatus;
     }
 
-    // Update unified contact
     const contact = allContacts.find(c => c.type === type && c.id === id);
     if (contact) contact.status = newStatus;
     updateStats();
@@ -958,31 +1137,29 @@ async function updateContactNotizen(type, id, notizen) {
     } else {
         await sb.from('kunden').update({ notizen }).eq('id', id);
     }
+    // Update local state
+    const contact = allContacts.find(c => c.type === type && c.id === id);
+    if (contact) contact.notizen = notizen;
 }
 
 /* ==================================================================
-   DETAIL TOGGLE
+   MODALS
    ================================================================== */
-function toggleDetail(uid) {
-    const detailRow = document.getElementById('detail-' + uid);
-    const mainRow = detailRow?.previousElementSibling;
-    if (detailRow) {
-        detailRow.classList.toggle('hidden');
-        mainRow?.classList.toggle('open');
-    }
+function openAddKontaktModal() {
+    document.getElementById('addKontaktModal').classList.add('active');
+}
+
+function openExcelModal() {
+    document.getElementById('excelModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
 }
 
 /* ==================================================================
    ADD KONTAKT
    ================================================================== */
-function togglePanel(panelId) {
-    const panel = document.getElementById(panelId);
-    const isActive = panel.classList.contains('active');
-    // Close all panels
-    document.querySelectorAll('.add-panel, .excel-panel').forEach(p => p.classList.remove('active'));
-    if (!isActive) panel.classList.add('active');
-}
-
 async function addKunde(event) {
     event.preventDefault();
     if (!beraterRecord) return;
@@ -1013,6 +1190,7 @@ async function addKunde(event) {
     }
 
     document.getElementById('kundeForm').reset();
+    closeModal('addKontaktModal');
     await loadAllData();
 }
 
@@ -1227,7 +1405,7 @@ function emailAlleOhne() {
 /* ==================================================================
    EMAIL VORLAGEN
    ================================================================== */
-let currentAnrede = 'sie';
+let currentAnrede = 'du';
 let currentVorlage = 'jahresupdate';
 
 const VORLAGEN = {
@@ -1443,10 +1621,15 @@ function copyAffiliateLink() {
 
 function copyLink(el, link) {
     navigator.clipboard.writeText(link).then(() => {
-        const orig = el.textContent;
-        el.textContent = 'Kopiert!';
-        el.style.color = 'var(--success)';
-        setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 2000);
+        const orig = el.innerHTML || el.textContent;
+        if (el.classList.contains('link-icon')) {
+            el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+            setTimeout(() => { el.innerHTML = orig; }, 1500);
+        } else {
+            el.textContent = 'Kopiert!';
+            el.style.color = 'var(--success)';
+            setTimeout(() => { el.textContent = 'Kopieren'; el.style.color = ''; }, 2000);
+        }
     });
 }
 
@@ -1462,6 +1645,5 @@ function esc(str) {
    ================================================================== */
 checkSession();
 </script>
-
 </body>
 </html>
