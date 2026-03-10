@@ -802,8 +802,8 @@ async function loadAllData() {
     document.getElementById('contactsEmpty').style.display = 'none';
 
     const [leadsRes, kundenRes] = await Promise.all([
-        sb.from('leads').select('*').order('created_at', { ascending: false }),
-        sb.from('kunden').select('*').order('created_at', { ascending: false }),
+        sb.from('leads').select('*').eq('berater_id', beraterRecord.id).order('created_at', { ascending: false }),
+        sb.from('kunden').select('*').eq('berater_id', beraterRecord.id).order('created_at', { ascending: false }),
     ]);
 
     allLeads = leadsRes.data || [];
