@@ -65,8 +65,10 @@
         .dash-body { max-width:1200px; margin:0 auto; padding:24px; }
 
         /* Stats */
-        .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
-        .stat-card { background:#fff; border-radius:var(--r-md); padding:20px; box-shadow:var(--shadow-sm); border:1px solid var(--g100); }
+        .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card { background:#fff; border-radius:var(--r-md); padding:20px; box-shadow:var(--shadow-sm); border:1px solid var(--g100); cursor:pointer; transition:var(--ease); }
+        .stat-card:hover { border-color:var(--primary); }
+        .stat-card.active { border-color:var(--primary); background:var(--primary-light); }
         .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); margin-bottom:4px; }
         .stat-val { font-size:1.6rem; font-weight:800; color:var(--g900); }
         .stat-sub { font-size:.78rem; color:var(--g500); margin-top:2px; }
@@ -87,9 +89,28 @@
         .btn-copy { padding:10px 18px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
         .btn-copy:hover { background:var(--primary-dark); }
 
-        /* Filters */
-        .filters { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
-        .filter-label { font-size:.78rem; font-weight:600; color:var(--g500); }
+        /* Toolbar */
+        .toolbar {
+            display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+        }
+        .btn-action { padding:8px 16px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
+        .btn-action:hover { background:var(--primary-dark); }
+        .btn-action.secondary { color:var(--g600); background:var(--g100); border:1px solid var(--g200); }
+        .btn-action.secondary:hover { background:var(--g200); }
+        .btn-action.success { background:var(--success); }
+        .btn-action.success:hover { background:#009966; }
+        .btn-action:disabled { opacity:.4; cursor:not-allowed; }
+
+        .toolbar-spacer { flex:1; }
+        .toolbar .search-input {
+            padding:8px 14px; font-size:.85rem; font-family:var(--font);
+            border:1.5px solid var(--g200); border-radius:var(--r-sm);
+            min-width:200px; transition:var(--ease);
+        }
+        .toolbar .search-input:focus { outline:none; border-color:var(--primary); }
+
+        /* Pipeline Filters */
+        .filters { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
         .filter-btn {
             padding:6px 14px; font-size:.78rem; font-weight:600;
             font-family:var(--font); color:var(--g600);
@@ -98,6 +119,7 @@
         }
         .filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
         .filter-btn:hover:not(.active) { background:var(--g100); }
+        .filter-count { font-size:.7rem; opacity:.8; margin-left:4px; }
 
         /* Table */
         .table-wrap { background:#fff; border-radius:var(--r-md); box-shadow:var(--shadow-sm); border:1px solid var(--g100); overflow-x:auto; }
@@ -105,10 +127,6 @@
         thead th { padding:12px 16px; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); border-bottom:2px solid var(--g100); background:var(--g50); white-space:nowrap; }
         tbody td { padding:12px 16px; border-bottom:1px solid var(--g100); vertical-align:top; }
         tbody tr:hover { background:var(--g50); }
-        .lead-name { font-weight:600; color:var(--g900); }
-        .lead-contact { font-size:.78rem; color:var(--g500); }
-        .lead-kasse { font-weight:600; }
-        .lead-savings { color:var(--success); font-weight:700; }
 
         /* Status Badge */
         .status-badge {
@@ -118,9 +136,19 @@
         }
         .status-neu { background:#EEF2FF; color:#4F46E5; }
         .status-kontaktiert { background:var(--warning-light); color:#B45309; }
-        .status-termin { background:var(--primary-light); color:var(--primary); }
+        .status-berechnet { background:var(--primary-light); color:var(--primary); }
+        .status-termin { background:#F0F9FF; color:#0369A1; }
         .status-abgeschlossen { background:var(--success-light); color:#047857; }
         .status-storniert { background:#FEF2F2; color:#991B1B; }
+
+        /* Source Badge */
+        .source-badge {
+            display:inline-block; padding:2px 6px; border-radius:4px;
+            font-size:.65rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.04em; margin-left:6px; vertical-align:middle;
+        }
+        .source-lead { background:#FEF3C7; color:#92400E; }
+        .source-kunde { background:#DBEAFE; color:#1E40AF; }
 
         /* Status Select */
         .status-select {
@@ -131,7 +159,7 @@
 
         /* Notizen */
         .notizen-input {
-            width:100%; min-width:150px; padding:6px 10px; font-size:.8rem;
+            width:100%; min-width:120px; padding:6px 10px; font-size:.8rem;
             font-family:var(--font); border:1px solid var(--g200);
             border-radius:var(--r-sm); resize:none; height:32px;
         }
@@ -139,88 +167,35 @@
 
         .empty-state { text-align:center; padding:60px 20px; color:var(--g400); }
         .empty-state h3 { font-size:1.1rem; margin-bottom:8px; color:var(--g500); }
-
         .loading { text-align:center; padding:40px; color:var(--g400); }
 
-        /* Tabs */
-        .tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--g200); }
-        .tab-btn {
-            padding:10px 20px; font-size:.85rem; font-weight:600;
-            font-family:var(--font); color:var(--g500); background:none;
-            border:none; border-bottom:2px solid transparent;
-            margin-bottom:-2px; cursor:pointer; transition:var(--ease);
-        }
-        .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
-        .tab-btn:hover:not(.active) { color:var(--g700); }
-        .tab-content { display:none; }
-        .tab-content.active { display:block; }
+        .contact-name { font-weight:600; color:var(--g900); }
+        .contact-sub { font-size:.75rem; color:var(--g400); }
+        .contact-email { font-size:.82rem; color:var(--primary); }
+        .lead-savings { color:var(--success); font-weight:700; }
 
-        /* Kunden Box */
-        .kunden-add {
-            background:#fff; border-radius:var(--r-md); padding:20px;
-            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
-            margin-bottom:24px;
-        }
-        .kunden-add h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
-        .kunden-form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
-        .kunden-form .fg { margin-bottom:0; }
-        .btn-add { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; }
-        .btn-add:hover { background:var(--primary-dark); }
-
+        /* Kunde Link */
         .kunde-link {
             display:flex; align-items:center; gap:8px;
-            font-size:.78rem; font-family:monospace; color:var(--g500);
+            font-size:.75rem; font-family:monospace; color:var(--g500);
             background:var(--g50); padding:4px 8px; border-radius:4px;
-            cursor:pointer;
+            cursor:pointer; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
         }
         .kunde-link:hover { background:var(--g100); }
 
-        .kunde-calc-count {
-            display:inline-block; padding:2px 8px; border-radius:10px;
-            font-size:.72rem; font-weight:700;
-        }
-        .kunde-calc-count.has { background:var(--success-light); color:#047857; }
-        .kunde-calc-count.none { background:var(--g100); color:var(--g400); }
-
-        /* Excel Upload */
-        .excel-upload-box {
-            background:#fff; border-radius:var(--r-md); padding:20px;
-            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
-            margin-bottom:24px;
-        }
-        .excel-upload-box h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:4px; }
-        .excel-upload-box .sub { font-size:.78rem; color:var(--g500); margin-bottom:12px; }
-        .excel-upload-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-        .excel-file-input {
-            flex:1; min-width:200px; padding:8px 12px; font-size:.85rem;
-            font-family:var(--font); border:1.5px dashed var(--g300);
-            border-radius:var(--r-sm); background:var(--g50); cursor:pointer;
-        }
-        .excel-file-input:hover { border-color:var(--primary); background:var(--primary-light); }
-        .btn-upload { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--success); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; }
-        .btn-upload:hover { background:#009966; }
-        .btn-upload:disabled { opacity:.5; cursor:not-allowed; }
-        .btn-template { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; text-decoration:none; display:inline-flex; align-items:center; }
-        .btn-template:hover { background:var(--g200); }
-        .upload-status { font-size:.82rem; margin-top:10px; padding:8px 12px; border-radius:var(--r-sm); display:none; }
-        .upload-status.success { display:block; background:var(--success-light); color:#047857; }
-        .upload-status.error { display:block; background:#FEF2F2; color:#991B1B; }
-        .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
-        .upload-preview { margin-top:12px; max-height:200px; overflow-y:auto; }
-        .upload-preview table { font-size:.8rem; }
-        .upload-preview th { font-size:.7rem; }
-
-        /* Kunden-Detail-Zeile */
-        .kunde-row { cursor:pointer; transition:background .15s ease; user-select:none; }
-        .kunde-row:hover { background:var(--primary-light) !important; }
-        .kunde-expand { display:inline-block; width:20px; font-size:.75rem; color:var(--g400); transition:transform .2s ease; margin-right:4px; }
-        .kunde-row.open .kunde-expand { transform:rotate(90deg); color:var(--primary); }
-        .kunde-detail-row td { padding:0 !important; border-bottom:1px solid var(--g100); }
-        .kunde-detail-row.hidden td { display:none; }
-        .kunde-detail {
+        /* Detail Row */
+        .contact-row { cursor:pointer; transition:background .15s ease; user-select:none; }
+        .contact-row:hover { background:var(--primary-light) !important; }
+        .contact-expand { display:inline-block; width:20px; font-size:.75rem; color:var(--g400); transition:transform .2s ease; margin-right:4px; }
+        .contact-row.open .contact-expand { transform:rotate(90deg); color:var(--primary); }
+        .contact-detail-row td { padding:0 !important; border-bottom:1px solid var(--g100); }
+        .contact-detail-row.hidden td > div { display:none; }
+        .contact-detail {
             padding:16px 20px 20px; background:var(--g50);
         }
-        .kunde-detail h4 { font-size:.85rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+        .contact-detail h4 { font-size:.85rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+
+        /* Calc Timeline */
         .calc-timeline { position:relative; padding-left:20px; }
         .calc-item {
             position:relative; padding:12px 16px; margin-bottom:12px;
@@ -244,6 +219,13 @@
         .calc-field-val.savings { color:var(--success); font-weight:800; }
         .calc-no-data { font-size:.82rem; color:var(--g400); padding:12px 0; }
 
+        /* Lead Detail */
+        .lead-detail-grid {
+            display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+            gap:12px; padding:12px 16px; background:#fff; border-radius:var(--r-sm);
+            border:1px solid var(--g100);
+        }
+
         /* Email Status */
         .email-status {
             display:inline-flex; align-items:center; gap:4px;
@@ -256,7 +238,6 @@
         .email-status.clicked { background:var(--success-light); color:#047857; }
         .email-status.bounced { background:#FEF2F2; color:#991B1B; }
         .email-status.none { background:var(--g100); color:var(--g400); }
-
         .email-dot { width:6px; height:6px; border-radius:50%; }
         .email-dot.sent { background:#4F46E5; }
         .email-dot.delivered { background:var(--primary); }
@@ -264,13 +245,44 @@
         .email-dot.clicked { background:#047857; }
         .email-dot.bounced { background:#991B1B; }
 
-        .btn-email { padding:5px 12px; font-size:.75rem; font-weight:600; font-family:var(--font); color:var(--primary); background:var(--primary-light); border:1px solid rgba(0,66,131,.2); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; }
-        .btn-email:hover { background:var(--primary); color:#fff; }
-        .btn-email:disabled { opacity:.4; cursor:not-allowed; }
+        .kunde-checkbox { width:16px; height:16px; cursor:pointer; }
 
-        .email-actions { display:flex; gap:8px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+        /* Add Kontakt Panel (collapsible) */
+        .add-panel {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:16px; display:none;
+        }
+        .add-panel.active { display:block; }
+        .add-panel h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+        .add-form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+        .add-form .fg { margin-bottom:0; }
 
-        /* Email senden Modal */
+        /* Excel Panel */
+        .excel-panel {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:16px; display:none;
+        }
+        .excel-panel.active { display:block; }
+        .excel-panel h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:4px; }
+        .excel-panel .sub { font-size:.78rem; color:var(--g500); margin-bottom:12px; }
+        .excel-upload-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .excel-file-input {
+            flex:1; min-width:200px; padding:8px 12px; font-size:.85rem;
+            font-family:var(--font); border:1.5px dashed var(--g300);
+            border-radius:var(--r-sm); background:var(--g50); cursor:pointer;
+        }
+        .excel-file-input:hover { border-color:var(--primary); background:var(--primary-light); }
+        .upload-status { font-size:.82rem; margin-top:10px; padding:8px 12px; border-radius:var(--r-sm); display:none; }
+        .upload-status.success { display:block; background:var(--success-light); color:#047857; }
+        .upload-status.error { display:block; background:#FEF2F2; color:#991B1B; }
+        .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
+        .upload-preview { margin-top:12px; max-height:200px; overflow-y:auto; }
+        .upload-preview table { font-size:.8rem; }
+        .upload-preview th { font-size:.7rem; }
+
+        /* Email Modal */
         .modal-overlay {
             display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
             z-index:1000; align-items:center; justify-content:center; padding:20px;
@@ -315,26 +327,22 @@
         .btn-send:hover { background:var(--primary-dark); }
         .btn-send:disabled { opacity:.5; cursor:not-allowed; }
 
-        .select-all-row { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:.82rem; color:var(--g600); }
-        .kunde-checkbox { width:16px; height:16px; cursor:pointer; }
-
         @media (max-width:768px) {
             .dash-body { padding:16px; }
             .stats { grid-template-columns:1fr 1fr; }
             .affiliate-link-row { flex-direction:column; }
-            .kunden-form { grid-template-columns:1fr; }
+            .add-form { grid-template-columns:1fr; }
+            .toolbar { gap:6px; }
         }
     </style>
 </head>
 <body>
 
-<!-- ================================================================
-     LOGIN
-     ================================================================ -->
+<!-- LOGIN -->
 <div class="login-wrap" id="loginView">
     <div class="login-card">
         <h1>Berater-Dashboard</h1>
-        <p class="sub">Melde dich an, um deine Leads zu sehen.</p>
+        <p class="sub">Melde dich an, um deine Kontakte zu sehen.</p>
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="fg">
                 <label for="loginEmail">E-Mail</label>
@@ -350,9 +358,7 @@
     </div>
 </div>
 
-<!-- ================================================================
-     DASHBOARD
-     ================================================================ -->
+<!-- DASHBOARD -->
 <div class="dashboard" id="dashboardView">
     <div class="dash-header">
         <h1>GKV-Rechner Dashboard</h1>
@@ -365,20 +371,21 @@
     <div class="dash-body">
         <!-- Stats -->
         <div class="stats">
-            <div class="stat-card">
-                <div class="stat-label">Leads gesamt</div>
+            <div class="stat-card" onclick="filterByStatus('alle')" data-stat="alle">
+                <div class="stat-label">Kontakte gesamt</div>
                 <div class="stat-val" id="statTotal">–</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Neue Leads</div>
+            <div class="stat-card" onclick="filterByStatus('neu')" data-stat="neu">
+                <div class="stat-label">Neu</div>
                 <div class="stat-val" id="statNeu">–</div>
                 <div class="stat-sub">Noch nicht kontaktiert</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Diesen Monat</div>
-                <div class="stat-val" id="statMonth">–</div>
+            <div class="stat-card" onclick="filterByStatus('berechnet')" data-stat="berechnet">
+                <div class="stat-label">Berechnet</div>
+                <div class="stat-val" id="statBerechnet">–</div>
+                <div class="stat-sub">Rechner genutzt</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="filterByStatus('abgeschlossen')" data-stat="abgeschlossen">
                 <div class="stat-label">Abgeschlossen</div>
                 <div class="stat-val" id="statDone">–</div>
             </div>
@@ -393,108 +400,79 @@
             </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="leads" onclick="switchTab('leads')">Leads</button>
-            <button class="tab-btn" data-tab="kunden" onclick="switchTab('kunden')">Meine Kunden</button>
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="btn-action" onclick="togglePanel('addPanel')">+ Kontakt</button>
+            <button class="btn-action secondary" onclick="togglePanel('excelPanel')">Excel Import</button>
+            <button class="btn-action secondary" id="btnEmailSelected" onclick="openEmailModal()" disabled>Email senden (0)</button>
+            <button class="btn-action secondary" onclick="emailAlleOhne()">Alle ohne Email anschreiben</button>
+            <div class="toolbar-spacer"></div>
+            <input type="text" class="search-input" id="searchInput" placeholder="Suchen..." oninput="handleSearch(this.value)">
         </div>
 
-        <!-- TAB: Leads -->
-        <div class="tab-content active" id="tabLeads">
-            <div class="filters">
-                <span class="filter-label">Status:</span>
-                <button class="filter-btn active" data-filter="alle" onclick="filterLeads('alle')">Alle</button>
-                <button class="filter-btn" data-filter="neu" onclick="filterLeads('neu')">Neu</button>
-                <button class="filter-btn" data-filter="kontaktiert" onclick="filterLeads('kontaktiert')">Kontaktiert</button>
-                <button class="filter-btn" data-filter="termin" onclick="filterLeads('termin')">Termin</button>
-                <button class="filter-btn" data-filter="abgeschlossen" onclick="filterLeads('abgeschlossen')">Abgeschlossen</button>
-                <button class="filter-btn" data-filter="storniert" onclick="filterLeads('storniert')">Storniert</button>
-            </div>
-            <div class="table-wrap">
-                <div class="loading" id="leadsLoading">Leads werden geladen...</div>
-                <table id="leadsTable" style="display:none;">
-                    <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Name</th>
-                            <th>Kontakt</th>
-                            <th>Gewählte Kasse</th>
-                            <th>Sparpotenzial</th>
-                            <th>Status</th>
-                            <th>Notizen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leadsBody"></tbody>
-                </table>
-                <div class="empty-state" id="leadsEmpty" style="display:none;">
-                    <h3>Noch keine Leads</h3>
-                    <p>Teile deinen persönlichen Link, um Leads zu generieren.</p>
+        <!-- Add Kontakt Panel -->
+        <div class="add-panel" id="addPanel">
+            <h3>Neuen Kontakt hinzufügen</h3>
+            <form class="add-form" id="kundeForm" onsubmit="addKunde(event)">
+                <div class="fg">
+                    <label for="kundeVorname">Vorname *</label>
+                    <input type="text" id="kundeVorname" required>
                 </div>
-            </div>
+                <div class="fg">
+                    <label for="kundeNachname">Nachname *</label>
+                    <input type="text" id="kundeNachname" required>
+                </div>
+                <div class="fg">
+                    <label for="kundeEmail">E-Mail</label>
+                    <input type="email" id="kundeEmail">
+                </div>
+                <button type="submit" class="btn-action" id="kundeAddBtn">Hinzufügen</button>
+            </form>
         </div>
 
-        <!-- TAB: Kunden -->
-        <div class="tab-content" id="tabKunden">
-            <!-- Kunde hinzufügen -->
-            <div class="kunden-add">
-                <h3>Neuen Kunden einladen</h3>
-                <form class="kunden-form" id="kundeForm" onsubmit="addKunde(event)">
-                    <div class="fg">
-                        <label for="kundeVorname">Vorname *</label>
-                        <input type="text" id="kundeVorname" required>
-                    </div>
-                    <div class="fg">
-                        <label for="kundeNachname">Nachname *</label>
-                        <input type="text" id="kundeNachname" required>
-                    </div>
-                    <div class="fg">
-                        <label for="kundeEmail">E-Mail</label>
-                        <input type="email" id="kundeEmail">
-                    </div>
-                    <button type="submit" class="btn-add" id="kundeAddBtn">Hinzufügen</button>
-                </form>
+        <!-- Excel Panel -->
+        <div class="excel-panel" id="excelPanel">
+            <h3>Kontakte per Excel importieren</h3>
+            <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional)</p>
+            <div class="excel-upload-row">
+                <input type="file" class="excel-file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
+                <button class="btn-action success" id="excelUploadBtn" onclick="uploadExcelKunden()" disabled>Hochladen</button>
+                <button class="btn-action secondary" onclick="downloadTemplate()">Vorlage</button>
             </div>
+            <div class="upload-status" id="uploadStatus"></div>
+            <div class="upload-preview" id="uploadPreview"></div>
+        </div>
 
-            <!-- Excel Upload -->
-            <div class="excel-upload-box">
-                <h3>Kunden per Excel hochladen</h3>
-                <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional)</p>
-                <div class="excel-upload-row">
-                    <input type="file" class="excel-file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
-                    <button class="btn-upload" id="excelUploadBtn" onclick="uploadExcelKunden()" disabled>Hochladen</button>
-                    <button class="btn-template" onclick="downloadTemplate()">Vorlage herunterladen</button>
-                </div>
-                <div class="upload-status" id="uploadStatus"></div>
-                <div class="upload-preview" id="uploadPreview"></div>
-            </div>
+        <!-- Pipeline Filters -->
+        <div class="filters" id="pipelineFilters">
+            <button class="filter-btn active" data-filter="alle" onclick="filterByStatus('alle')">Alle</button>
+            <button class="filter-btn" data-filter="neu" onclick="filterByStatus('neu')">Neu</button>
+            <button class="filter-btn" data-filter="kontaktiert" onclick="filterByStatus('kontaktiert')">Kontaktiert</button>
+            <button class="filter-btn" data-filter="berechnet" onclick="filterByStatus('berechnet')">Berechnet</button>
+            <button class="filter-btn" data-filter="termin" onclick="filterByStatus('termin')">Termin</button>
+            <button class="filter-btn" data-filter="abgeschlossen" onclick="filterByStatus('abgeschlossen')">Abgeschlossen</button>
+            <button class="filter-btn" data-filter="storniert" onclick="filterByStatus('storniert')">Storniert</button>
+        </div>
 
-            <!-- Email Aktionen -->
-            <div class="email-actions" id="emailActions" style="display:none;">
-                <button class="btn-email" onclick="openEmailModal()" id="btnEmailSelected">Ausgewählte anschreiben (0)</button>
-                <button class="btn-email" onclick="emailAlleOhne()" title="Alle Kunden anschreiben, die noch keine Email erhalten haben">Alle ohne Email anschreiben</button>
-            </div>
-
-            <!-- Kunden-Liste -->
-            <div class="table-wrap">
-                <div class="loading" id="kundenLoading">Kunden werden geladen...</div>
-                <table id="kundenTable" style="display:none;">
-                    <thead>
-                        <tr>
-                            <th style="width:30px;"><input type="checkbox" class="kunde-checkbox" onchange="toggleAlleKunden(this)"></th>
-                            <th>Name</th>
-                            <th>E-Mail</th>
-                            <th>Email-Status</th>
-                            <th>Individueller Link</th>
-                            <th>Berechnungen</th>
-                            <th>Letzte Berechnung</th>
-                        </tr>
-                    </thead>
-                    <tbody id="kundenBody"></tbody>
-                </table>
-                <div class="empty-state" id="kundenEmpty" style="display:none;">
-                    <h3>Noch keine Kunden</h3>
-                    <p>Lege Kunden an und teile ihren persönlichen Rechner-Link.</p>
-                </div>
+        <!-- Unified Table -->
+        <div class="table-wrap">
+            <div class="loading" id="contactsLoading">Kontakte werden geladen...</div>
+            <table id="contactsTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th style="width:30px;"><input type="checkbox" class="kunde-checkbox" onchange="toggleAlleKontakte(this)"></th>
+                        <th>Name</th>
+                        <th>Kontakt</th>
+                        <th>Status</th>
+                        <th>Aktivität</th>
+                        <th>Notizen</th>
+                    </tr>
+                </thead>
+                <tbody id="contactsBody"></tbody>
+            </table>
+            <div class="empty-state" id="contactsEmpty" style="display:none;">
+                <h3>Noch keine Kontakte</h3>
+                <p>Lege Kontakte an oder teile deinen Rechner-Link, um Leads zu generieren.</p>
             </div>
         </div>
     </div>
@@ -503,10 +481,9 @@
 <!-- Email Modal -->
 <div class="modal-overlay" id="emailModal">
     <div class="modal-box">
-        <h2>Email an Kunden senden</h2>
-        <p class="sub" id="emailModalSub">0 Kunden ausgewählt</p>
+        <h2>Email an Kontakte senden</h2>
+        <p class="sub" id="emailModalSub">0 Kontakte ausgewählt</p>
 
-        <!-- Anrede: Du / Sie -->
         <div class="fg">
             <label>Anrede</label>
             <div class="anrede-toggle">
@@ -515,7 +492,6 @@
             </div>
         </div>
 
-        <!-- Vorlagen -->
         <div class="fg">
             <label>Vorlage</label>
             <div class="vorlage-chips">
@@ -557,12 +533,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // State
+let allContacts = [];     // Unified list
 let allLeads = [];
 let allKunden = [];
 let kundenBerechnungen = {};
 let kundenEmails = {};
 let selectedKundenIds = new Set();
 let currentFilter = 'alle';
+let searchQuery = '';
 let beraterRecord = null;
 
 /* ==================================================================
@@ -570,9 +548,7 @@ let beraterRecord = null;
    ================================================================== */
 async function checkSession() {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-        await showDashboard(session.user);
-    }
+    if (session) await showDashboard(session.user);
 }
 
 async function handleLogin(event) {
@@ -593,7 +569,6 @@ async function handleLogin(event) {
         btn.disabled = false;
         return;
     }
-
     await showDashboard(data.user);
 }
 
@@ -610,196 +585,41 @@ async function showDashboard(user) {
     document.getElementById('loginView').style.display = 'none';
     document.getElementById('dashboardView').style.display = 'block';
 
-    // Berater-Daten laden
     const { data: berater } = await sb
-        .from('berater')
-        .select('*')
-        .eq('auth_user_id', user.id)
-        .single();
+        .from('berater').select('*')
+        .eq('auth_user_id', user.id).single();
 
     beraterRecord = berater;
 
     if (berater) {
-        document.getElementById('userName').textContent =
-            `${berater.vorname} ${berater.nachname}`;
-
-        // Affiliate-Link setzen
+        document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
         const baseUrl = window.location.origin;
-        document.getElementById('affiliateLink').value =
-            `${baseUrl}/?berater=${berater.slug}`;
+        document.getElementById('affiliateLink').value = `${baseUrl}/?berater=${berater.slug}`;
     } else {
         document.getElementById('userName').textContent = user.email;
     }
 
-    await Promise.all([loadLeads(), loadKunden()]);
+    await loadAllData();
 }
 
-async function loadLeads() {
-    document.getElementById('leadsLoading').style.display = 'block';
-    document.getElementById('leadsTable').style.display = 'none';
-    document.getElementById('leadsEmpty').style.display = 'none';
+async function loadAllData() {
+    document.getElementById('contactsLoading').style.display = 'block';
+    document.getElementById('contactsTable').style.display = 'none';
+    document.getElementById('contactsEmpty').style.display = 'none';
 
-    const { data, error } = await sb
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
+    // Load leads, kunden, berechnungen, emails in parallel
+    const [leadsRes, kundenRes] = await Promise.all([
+        sb.from('leads').select('*').order('created_at', { ascending: false }),
+        sb.from('kunden').select('*').order('created_at', { ascending: false }),
+    ]);
 
-    allLeads = data || [];
+    allLeads = leadsRes.data || [];
+    allKunden = kundenRes.data || [];
 
-    updateStats();
-    renderLeads();
-}
+    // Load berechnungen and emails for kunden
+    kundenBerechnungen = {};
+    kundenEmails = {};
 
-function updateStats() {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-    document.getElementById('statTotal').textContent = allLeads.length;
-    document.getElementById('statNeu').textContent =
-        allLeads.filter(l => l.status === 'neu').length;
-    document.getElementById('statMonth').textContent =
-        allLeads.filter(l => l.created_at >= monthStart).length;
-    document.getElementById('statDone').textContent =
-        allLeads.filter(l => l.status === 'abgeschlossen').length;
-}
-
-function renderLeads() {
-    const filtered = currentFilter === 'alle'
-        ? allLeads
-        : allLeads.filter(l => l.status === currentFilter);
-
-    document.getElementById('leadsLoading').style.display = 'none';
-
-    if (filtered.length === 0) {
-        document.getElementById('leadsTable').style.display = 'none';
-        document.getElementById('leadsEmpty').style.display = 'block';
-        return;
-    }
-
-    document.getElementById('leadsTable').style.display = 'table';
-    document.getElementById('leadsEmpty').style.display = 'none';
-
-    const tbody = document.getElementById('leadsBody');
-    tbody.innerHTML = filtered.map(lead => {
-        const date = new Date(lead.created_at);
-        const dateStr = date.toLocaleDateString('de-DE', {
-            day: '2-digit', month: '2-digit', year: 'numeric'
-        });
-        const timeStr = date.toLocaleTimeString('de-DE', {
-            hour: '2-digit', minute: '2-digit'
-        });
-
-        const statusClass = `status-${lead.status}`;
-        const savings = lead.sparpotenzial_jahr
-            ? `${lead.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
-            : '–';
-
-        return `<tr>
-            <td>
-                <div style="font-weight:600;">${dateStr}</div>
-                <div style="font-size:.75rem;color:var(--g400);">${timeStr}</div>
-            </td>
-            <td>
-                <div class="lead-name">${esc(lead.vorname)} ${esc(lead.nachname)}</div>
-                ${lead.gehalt ? `<div style="font-size:.75rem;color:var(--g400);">${lead.gehalt.toLocaleString('de-DE')} \u20AC brutto</div>` : ''}
-            </td>
-            <td>
-                <div class="lead-contact">
-                    <a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a>
-                </div>
-                ${lead.telefon ? `<div class="lead-contact"><a href="tel:${esc(lead.telefon)}">${esc(lead.telefon)}</a></div>` : ''}
-            </td>
-            <td>
-                <div class="lead-kasse">${esc(lead.gewaehlte_kasse || '–')}</div>
-                ${lead.aktuelle_kasse ? `<div style="font-size:.75rem;color:var(--g400);">Aktuell: ${esc(lead.aktuelle_kasse)}</div>` : ''}
-            </td>
-            <td class="lead-savings">${savings}</td>
-            <td>
-                <select class="status-select" onchange="updateStatus('${lead.id}', this.value)">
-                    <option value="neu" ${lead.status === 'neu' ? 'selected' : ''}>Neu</option>
-                    <option value="kontaktiert" ${lead.status === 'kontaktiert' ? 'selected' : ''}>Kontaktiert</option>
-                    <option value="termin" ${lead.status === 'termin' ? 'selected' : ''}>Termin</option>
-                    <option value="abgeschlossen" ${lead.status === 'abgeschlossen' ? 'selected' : ''}>Abgeschlossen</option>
-                    <option value="storniert" ${lead.status === 'storniert' ? 'selected' : ''}>Storniert</option>
-                </select>
-            </td>
-            <td>
-                <textarea class="notizen-input"
-                    placeholder="Notizen..."
-                    onblur="updateNotizen('${lead.id}', this.value)"
-                >${esc(lead.notizen || '')}</textarea>
-            </td>
-        </tr>`;
-    }).join('');
-}
-
-function filterLeads(filter) {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
-    });
-    renderLeads();
-}
-
-/* ==================================================================
-   LEAD UPDATES
-   ================================================================== */
-async function updateStatus(leadId, newStatus) {
-    const { error } = await sb
-        .from('leads')
-        .update({ status: newStatus })
-        .eq('id', leadId);
-
-    if (error) {
-        console.error('Status-Update fehlgeschlagen:', error);
-        return;
-    }
-
-    // Local state update
-    const lead = allLeads.find(l => l.id === leadId);
-    if (lead) lead.status = newStatus;
-    updateStats();
-}
-
-async function updateNotizen(leadId, notizen) {
-    const { error } = await sb
-        .from('leads')
-        .update({ notizen })
-        .eq('id', leadId);
-
-    if (error) {
-        console.error('Notizen-Update fehlgeschlagen:', error);
-    }
-}
-
-/* ==================================================================
-   TABS
-   ================================================================== */
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tab);
-    });
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.toggle('active', el.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
-    });
-}
-
-/* ==================================================================
-   KUNDEN
-   ================================================================== */
-async function loadKunden() {
-    document.getElementById('kundenLoading').style.display = 'block';
-    document.getElementById('kundenTable').style.display = 'none';
-    document.getElementById('kundenEmpty').style.display = 'none';
-
-    const { data: kunden } = await sb
-        .from('kunden')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    allKunden = kunden || [];
-
-    // Berechnungen und Emails für alle Kunden laden
     if (allKunden.length > 0) {
         const kundenIds = allKunden.map(k => k.id);
         const [berechRes, emailRes] = await Promise.all([
@@ -807,141 +627,360 @@ async function loadKunden() {
             sb.from('kunden_emails').select('*').in('kunde_id', kundenIds).order('created_at', { ascending: false }),
         ]);
 
-        kundenBerechnungen = {};
         ((berechRes.data) || []).forEach(b => {
             if (!kundenBerechnungen[b.kunde_id]) kundenBerechnungen[b.kunde_id] = [];
             kundenBerechnungen[b.kunde_id].push(b);
         });
 
-        kundenEmails = {};
         ((emailRes.data) || []).forEach(e => {
             if (!kundenEmails[e.kunde_id]) kundenEmails[e.kunde_id] = [];
             kundenEmails[e.kunde_id].push(e);
         });
     }
 
+    // Build unified contacts list
+    buildUnifiedContacts();
     selectedKundenIds.clear();
-    renderKunden();
+    updateStats();
+    renderContacts();
 }
 
-function renderKunden() {
-    document.getElementById('kundenLoading').style.display = 'none';
+function buildUnifiedContacts() {
+    const baseUrl = window.location.origin;
+    allContacts = [];
 
-    if (allKunden.length === 0) {
-        document.getElementById('kundenTable').style.display = 'none';
-        document.getElementById('kundenEmpty').style.display = 'block';
-        document.getElementById('emailActions').style.display = 'none';
+    // Add Kunden
+    for (const kunde of allKunden) {
+        const berechnungen = kundenBerechnungen[kunde.id] || [];
+        const emails = kundenEmails[kunde.id] || [];
+        const link = beraterRecord ? `${baseUrl}/?berater=${beraterRecord.slug}&kunde=${kunde.code}` : '';
+
+        // Derive status if not manually set or still 'neu'
+        let status = kunde.status || 'neu';
+        if (status === 'neu') {
+            if (berechnungen.length > 0) status = 'berechnet';
+            else if (emails.some(e => ['clicked', 'opened'].includes(e.status))) status = 'kontaktiert';
+            else if (emails.length > 0) status = 'kontaktiert';
+        }
+
+        allContacts.push({
+            type: 'kunde',
+            id: kunde.id,
+            vorname: kunde.vorname,
+            nachname: kunde.nachname,
+            email: kunde.email,
+            telefon: kunde.telefon || null,
+            status,
+            created_at: kunde.created_at,
+            code: kunde.code,
+            link,
+            berechnungen,
+            emails,
+            notizen: kunde.notizen || '',
+            _raw: kunde,
+        });
+    }
+
+    // Add Leads
+    for (const lead of allLeads) {
+        // Map lead status to pipeline
+        let status = lead.status || 'neu';
+        if (status === 'kontaktiert' && lead.sparpotenzial_jahr) status = 'berechnet';
+
+        allContacts.push({
+            type: 'lead',
+            id: lead.id,
+            vorname: lead.vorname,
+            nachname: lead.nachname,
+            email: lead.email,
+            telefon: lead.telefon || null,
+            status,
+            created_at: lead.created_at,
+            gehalt: lead.gehalt,
+            aktuelle_kasse: lead.aktuelle_kasse,
+            gewaehlte_kasse: lead.gewaehlte_kasse,
+            sparpotenzial_jahr: lead.sparpotenzial_jahr,
+            notizen: lead.notizen || '',
+            _raw: lead,
+        });
+    }
+
+    // Sort by created_at descending
+    allContacts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function updateStats() {
+    document.getElementById('statTotal').textContent = allContacts.length;
+    document.getElementById('statNeu').textContent = allContacts.filter(c => c.status === 'neu').length;
+    document.getElementById('statBerechnet').textContent = allContacts.filter(c => c.status === 'berechnet').length;
+    document.getElementById('statDone').textContent = allContacts.filter(c => c.status === 'abgeschlossen').length;
+
+    // Highlight active stat card
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.stat === currentFilter);
+    });
+
+    // Update filter counts
+    const counts = {};
+    allContacts.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        const f = btn.dataset.filter;
+        const count = f === 'alle' ? allContacts.length : (counts[f] || 0);
+        const countEl = btn.querySelector('.filter-count');
+        if (countEl) countEl.textContent = count;
+        else {
+            const span = document.createElement('span');
+            span.className = 'filter-count';
+            span.textContent = count;
+            btn.appendChild(span);
+        }
+    });
+}
+
+function getFilteredContacts() {
+    let filtered = currentFilter === 'alle'
+        ? allContacts
+        : allContacts.filter(c => c.status === currentFilter);
+
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(c =>
+            (c.vorname + ' ' + c.nachname).toLowerCase().includes(q) ||
+            (c.email || '').toLowerCase().includes(q)
+        );
+    }
+
+    return filtered;
+}
+
+function renderContacts() {
+    const filtered = getFilteredContacts();
+
+    document.getElementById('contactsLoading').style.display = 'none';
+
+    if (filtered.length === 0) {
+        document.getElementById('contactsTable').style.display = 'none';
+        document.getElementById('contactsEmpty').style.display = 'block';
         return;
     }
 
-    document.getElementById('kundenTable').style.display = 'table';
-    document.getElementById('kundenEmpty').style.display = 'none';
-    document.getElementById('emailActions').style.display = 'flex';
+    document.getElementById('contactsTable').style.display = 'table';
+    document.getElementById('contactsEmpty').style.display = 'none';
 
-    const baseUrl = window.location.origin;
-    const tbody = document.getElementById('kundenBody');
-    tbody.innerHTML = allKunden.map(kunde => {
-        const berechnungen = kundenBerechnungen[kunde.id] || [];
-        const emails = kundenEmails[kunde.id] || [];
-        const link = `${baseUrl}/?berater=${beraterRecord.slug}&kunde=${kunde.code}`;
-        const letzte = berechnungen[0];
-        const letzteEmail = emails[0];
+    const tbody = document.getElementById('contactsBody');
+    tbody.innerHTML = filtered.map(contact => {
+        const date = new Date(contact.created_at);
+        const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
 
-        let letzteHtml = '–';
-        if (letzte) {
-            const date = new Date(letzte.created_at);
-            const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-            const sparStr = letzte.sparpotenzial_jahr
-                ? `${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
-                : '';
-            letzteHtml = `
-                <div style="font-weight:600;">${dateStr}</div>
-                ${letzte.guenstigste_kasse ? `<div style="font-size:.75rem;color:var(--g500);">Beste: ${esc(letzte.guenstigste_kasse)}</div>` : ''}
-                ${sparStr ? `<div style="font-size:.75rem;color:var(--success);font-weight:600;">Ersparnis: ${sparStr}/Jahr</div>` : ''}
-                ${letzte.gehalt ? `<div style="font-size:.75rem;color:var(--g400);">${letzte.gehalt.toLocaleString('de-DE')} \u20AC brutto</div>` : ''}
-            `;
-        }
+        const isKunde = contact.type === 'kunde';
+        const sourceBadge = isKunde
+            ? '<span class="source-badge source-kunde">Kunde</span>'
+            : '<span class="source-badge source-lead">Lead</span>';
 
-        const countClass = berechnungen.length > 0 ? 'has' : 'none';
+        // Checkbox (only for kunden with email for email sending)
+        const canEmail = isKunde && contact.email;
+        const checked = selectedKundenIds.has(contact.id) ? 'checked' : '';
+        const checkboxHtml = canEmail
+            ? `<input type="checkbox" class="kunde-checkbox" value="${contact.id}" ${checked} onchange="toggleKontaktSelection(this)" onclick="event.stopPropagation()">`
+            : '';
 
-        // Email-Status bestimmen
-        let emailStatusHtml;
-        if (berechnungen.length > 0) {
-            emailStatusHtml = '<span class="email-status clicked"><span class="email-dot clicked"></span> Berechnet</span>';
-        } else if (letzteEmail) {
-            const statusLabels = {
-                sent: 'Gesendet', delivered: 'Zugestellt',
-                opened: 'Geöffnet', clicked: 'Geklickt', bounced: 'Fehlgeschlagen'
-            };
-            const label = statusLabels[letzteEmail.status] || letzteEmail.status;
-            emailStatusHtml = `<span class="email-status ${letzteEmail.status}"><span class="email-dot ${letzteEmail.status}"></span> ${label}</span>`;
+        // Contact info
+        const emailHtml = contact.email
+            ? `<a href="mailto:${esc(contact.email)}" class="contact-email" onclick="event.stopPropagation()">${esc(contact.email)}</a>`
+            : '<span style="font-size:.78rem;color:var(--g400);">Keine Email</span>';
+        const telHtml = contact.telefon
+            ? `<div><a href="tel:${esc(contact.telefon)}" style="font-size:.78rem;color:var(--g500);" onclick="event.stopPropagation()">${esc(contact.telefon)}</a></div>`
+            : '';
+
+        // Status
+        const statusOptions = ['neu','kontaktiert','berechnet','termin','abgeschlossen','storniert'];
+        const statusLabels = { neu:'Neu', kontaktiert:'Kontaktiert', berechnet:'Berechnet', termin:'Termin', abgeschlossen:'Abgeschlossen', storniert:'Storniert' };
+        const statusSelect = `<select class="status-select" onchange="updateContactStatus('${contact.type}','${contact.id}',this.value)" onclick="event.stopPropagation()">
+            ${statusOptions.map(s => `<option value="${s}" ${contact.status === s ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
+        </select>`;
+
+        // Activity column
+        let activityHtml = '';
+        if (isKunde) {
+            const berechnungen = contact.berechnungen || [];
+            const emails = contact.emails || [];
+            const letzteEmail = emails[0];
+
+            if (berechnungen.length > 0) {
+                const letzte = berechnungen[0];
+                const sparStr = letzte.sparpotenzial_jahr
+                    ? `${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/J`
+                    : '';
+                activityHtml = `<div style="font-size:.78rem;"><strong>${berechnungen.length}x</strong> berechnet</div>`;
+                if (sparStr) activityHtml += `<div class="lead-savings" style="font-size:.78rem;">${sparStr}</div>`;
+            }
+
+            if (letzteEmail) {
+                const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
+                activityHtml += `<div><span class="email-status ${letzteEmail.status}"><span class="email-dot ${letzteEmail.status}"></span> ${emailLabels[letzteEmail.status] || letzteEmail.status}</span></div>`;
+            }
+
+            if (!activityHtml) {
+                activityHtml = '<span style="font-size:.78rem;color:var(--g400);">Keine Aktivität</span>';
+            }
+
+            // Show link if available
+            if (contact.link) {
+                activityHtml += `<div class="kunde-link" onclick="event.stopPropagation();copyLink(this,'${esc(contact.link)}')" title="Link kopieren" style="margin-top:4px;">${esc(contact.link.replace(window.location.origin, '...'))}</div>`;
+            }
         } else {
-            emailStatusHtml = '<span class="email-status none">Nicht gesendet</span>';
+            // Lead activity
+            if (contact.sparpotenzial_jahr) {
+                const savings = `${contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/Jahr`;
+                activityHtml = `<div class="lead-savings" style="font-size:.82rem;">${savings}</div>`;
+            }
+            if (contact.gewaehlte_kasse) {
+                activityHtml += `<div style="font-size:.78rem;">${esc(contact.gewaehlte_kasse)}</div>`;
+            }
+            if (contact.gehalt) {
+                activityHtml += `<div style="font-size:.75rem;color:var(--g400);">${contact.gehalt.toLocaleString('de-DE')} \u20AC brutto</div>`;
+            }
+            if (!activityHtml) {
+                activityHtml = `<div style="font-size:.78rem;color:var(--g400);">${dateStr}</div>`;
+            }
         }
 
-        const checked = selectedKundenIds.has(kunde.id) ? 'checked' : '';
-        const hasEmail = kunde.email ? '' : 'disabled';
+        // Notizen
+        const notizenHtml = `<textarea class="notizen-input" placeholder="Notizen..." onclick="event.stopPropagation()" onblur="updateContactNotizen('${contact.type}','${contact.id}',this.value)">${esc(contact.notizen)}</textarea>`;
 
-        // Detail-Zeile mit allen Berechnungen
-        let detailHtml = '';
-        if (berechnungen.length > 0) {
-            const calcItems = berechnungen.map(b => {
-                const d = new Date(b.created_at);
-                const dStr = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-                const spar = b.sparpotenzial_jahr
-                    ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/Jahr`
-                    : '–';
-                const gehaltStr = b.gehalt ? `${b.gehalt.toLocaleString('de-DE')} \u20AC` : '–';
-                return `<div class="calc-item">
-                    <div class="calc-date">${dStr}</div>
-                    <div class="calc-grid">
-                        <div><div class="calc-field-label">Gehalt</div><div class="calc-field-val">${gehaltStr}</div></div>
-                        <div><div class="calc-field-label">Beschäftigung</div><div class="calc-field-val">${esc(b.beschaeftigung || '–')}</div></div>
-                        <div><div class="calc-field-label">Aktuelle Kasse</div><div class="calc-field-val">${esc(b.aktuelle_kasse || '–')}</div></div>
-                        <div><div class="calc-field-label">Günstigste</div><div class="calc-field-val">${esc(b.guenstigste_kasse || '–')}</div></div>
-                        <div><div class="calc-field-label">Sparpotenzial</div><div class="calc-field-val savings">${spar}</div></div>
-                        <div><div class="calc-field-label">Beitrag günstigste</div><div class="calc-field-val">${b.guenstigster_beitrag ? b.guenstigster_beitrag.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' \u20AC/Monat' : '–'}</div></div>
-                    </div>
-                </div>`;
-            }).join('');
-            detailHtml = `<div class="calc-timeline">${calcItems}</div>`;
+        // Detail row
+        let detailContent = '';
+        if (isKunde) {
+            const berechnungen = contact.berechnungen || [];
+            if (berechnungen.length > 0) {
+                const calcItems = berechnungen.map(b => {
+                    const d = new Date(b.created_at);
+                    const dStr = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                    const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC/Jahr` : '–';
+                    const gehaltStr = b.gehalt ? `${b.gehalt.toLocaleString('de-DE')} \u20AC` : '–';
+                    return `<div class="calc-item">
+                        <div class="calc-date">${dStr}</div>
+                        <div class="calc-grid">
+                            <div><div class="calc-field-label">Gehalt</div><div class="calc-field-val">${gehaltStr}</div></div>
+                            <div><div class="calc-field-label">Beschäftigung</div><div class="calc-field-val">${esc(b.beschaeftigung || '–')}</div></div>
+                            <div><div class="calc-field-label">Aktuelle Kasse</div><div class="calc-field-val">${esc(b.aktuelle_kasse || '–')}</div></div>
+                            <div><div class="calc-field-label">Günstigste</div><div class="calc-field-val">${esc(b.guenstigste_kasse || '–')}</div></div>
+                            <div><div class="calc-field-label">Sparpotenzial</div><div class="calc-field-val savings">${spar}</div></div>
+                            <div><div class="calc-field-label">Beitrag günstigste</div><div class="calc-field-val">${b.guenstigster_beitrag ? b.guenstigster_beitrag.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' \u20AC/Mon.' : '–'}</div></div>
+                        </div>
+                    </div>`;
+                }).join('');
+                detailContent = `<h4>Berechnungen von ${esc(contact.vorname)} ${esc(contact.nachname)}</h4><div class="calc-timeline">${calcItems}</div>`;
+            } else {
+                detailContent = `<h4>Details zu ${esc(contact.vorname)} ${esc(contact.nachname)}</h4><div class="calc-no-data">Noch keine Berechnungen durchgeführt.</div>`;
+            }
         } else {
-            detailHtml = '<div class="calc-no-data">Noch keine Berechnungen durchgeführt.</div>';
+            // Lead detail
+            detailContent = `<h4>Lead-Details: ${esc(contact.vorname)} ${esc(contact.nachname)}</h4>
+            <div class="lead-detail-grid">
+                <div><div class="calc-field-label">Datum</div><div class="calc-field-val">${dateStr}</div></div>
+                <div><div class="calc-field-label">Email</div><div class="calc-field-val">${esc(contact.email || '–')}</div></div>
+                <div><div class="calc-field-label">Telefon</div><div class="calc-field-val">${esc(contact.telefon || '–')}</div></div>
+                <div><div class="calc-field-label">Gehalt</div><div class="calc-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' \u20AC' : '–'}</div></div>
+                <div><div class="calc-field-label">Aktuelle Kasse</div><div class="calc-field-val">${esc(contact.aktuelle_kasse || '–')}</div></div>
+                <div><div class="calc-field-label">Gewählte Kasse</div><div class="calc-field-val">${esc(contact.gewaehlte_kasse || '–')}</div></div>
+                <div><div class="calc-field-label">Sparpotenzial</div><div class="calc-field-val savings">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' \u20AC/Jahr' : '–'}</div></div>
+            </div>`;
         }
 
-        const colCount = 7; // Anzahl Spalten in der Tabelle
+        const uid = contact.type + '-' + contact.id;
 
-        return `<tr class="kunde-row" onclick="toggleKundeDetail('${kunde.id}')">
-            <td onclick="event.stopPropagation()"><input type="checkbox" class="kunde-checkbox" value="${kunde.id}" ${checked} ${hasEmail} onchange="toggleKundeSelection(this)"></td>
+        return `<tr class="contact-row" onclick="toggleDetail('${uid}')">
+            <td onclick="event.stopPropagation()">${checkboxHtml}</td>
             <td>
-                <span class="kunde-expand">&#9654;</span>
-                <span class="lead-name">${esc(kunde.vorname)} ${esc(kunde.nachname)}</span>
+                <span class="contact-expand">&#9654;</span>
+                <span class="contact-name">${esc(contact.vorname)} ${esc(contact.nachname)}</span>
+                ${sourceBadge}
+                <div class="contact-sub">${dateStr}</div>
             </td>
-            <td>
-                ${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="font-size:.82rem;color:var(--primary);" onclick="event.stopPropagation()">${esc(kunde.email)}</a>` : '<span style="font-size:.78rem;color:var(--g400);">Keine Email</span>'}
-            </td>
-            <td>${emailStatusHtml}</td>
-            <td onclick="event.stopPropagation()">
-                <div class="kunde-link" onclick="copyKundeLink(this, '${esc(link)}')" title="Klicken zum Kopieren">
-                    ${esc(link.replace(baseUrl, '...'))}
-                </div>
-            </td>
-            <td style="text-align:center;">
-                <span class="kunde-calc-count ${countClass}">${berechnungen.length}</span>
-            </td>
-            <td>${letzteHtml}</td>
+            <td>${emailHtml}${telHtml}</td>
+            <td>${statusSelect}</td>
+            <td>${activityHtml}</td>
+            <td>${notizenHtml}</td>
         </tr>
-        <tr class="kunde-detail-row hidden" id="detail-${kunde.id}">
-            <td colspan="${colCount}">
-                <div class="kunde-detail">
-                    <h4>Berechnungen von ${esc(kunde.vorname)} ${esc(kunde.nachname)}</h4>
-                    ${detailHtml}
-                </div>
+        <tr class="contact-detail-row hidden" id="detail-${uid}">
+            <td colspan="6">
+                <div class="contact-detail">${detailContent}</div>
             </td>
         </tr>`;
     }).join('');
 
     updateEmailButton();
+}
+
+/* ==================================================================
+   FILTERS & SEARCH
+   ================================================================== */
+function filterByStatus(status) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === status);
+    });
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.stat === status);
+    });
+    renderContacts();
+}
+
+function handleSearch(query) {
+    searchQuery = query.trim();
+    renderContacts();
+}
+
+/* ==================================================================
+   STATUS & NOTIZEN UPDATES
+   ================================================================== */
+async function updateContactStatus(type, id, newStatus) {
+    if (type === 'lead') {
+        await sb.from('leads').update({ status: newStatus }).eq('id', id);
+        const lead = allLeads.find(l => l.id === id);
+        if (lead) lead.status = newStatus;
+    } else {
+        await sb.from('kunden').update({ status: newStatus }).eq('id', id);
+        const kunde = allKunden.find(k => k.id === id);
+        if (kunde) kunde.status = newStatus;
+    }
+
+    // Update unified contact
+    const contact = allContacts.find(c => c.type === type && c.id === id);
+    if (contact) contact.status = newStatus;
+    updateStats();
+}
+
+async function updateContactNotizen(type, id, notizen) {
+    if (type === 'lead') {
+        await sb.from('leads').update({ notizen }).eq('id', id);
+    } else {
+        await sb.from('kunden').update({ notizen }).eq('id', id);
+    }
+}
+
+/* ==================================================================
+   DETAIL TOGGLE
+   ================================================================== */
+function toggleDetail(uid) {
+    const detailRow = document.getElementById('detail-' + uid);
+    const mainRow = detailRow?.previousElementSibling;
+    if (detailRow) {
+        detailRow.classList.toggle('hidden');
+        mainRow?.classList.toggle('open');
+    }
+}
+
+/* ==================================================================
+   ADD KONTAKT
+   ================================================================== */
+function togglePanel(panelId) {
+    const panel = document.getElementById(panelId);
+    const isActive = panel.classList.contains('active');
+    // Close all panels
+    document.querySelectorAll('.add-panel, .excel-panel').forEach(p => p.classList.remove('active'));
+    if (!isActive) panel.classList.add('active');
 }
 
 async function addKunde(event) {
@@ -955,7 +994,6 @@ async function addKunde(event) {
     const nachname = document.getElementById('kundeNachname').value.trim();
     const email = document.getElementById('kundeEmail').value.trim() || null;
 
-    // Code generieren: vorname-nachname + random suffix
     const slug = (vorname + '-' + nachname)
         .toLowerCase()
         .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
@@ -964,44 +1002,18 @@ async function addKunde(event) {
 
     const { error } = await sb.from('kunden').insert({
         berater_id: beraterRecord.id,
-        code,
-        vorname,
-        nachname,
-        email,
+        code, vorname, nachname, email,
     });
 
     btn.disabled = false;
 
     if (error) {
-        console.error('Kunde anlegen fehlgeschlagen:', error);
         alert('Fehler beim Anlegen: ' + error.message);
         return;
     }
 
-    // Reset form
     document.getElementById('kundeForm').reset();
-    await loadKunden();
-}
-
-function toggleKundeDetail(kundeId) {
-    const detailRow = document.getElementById('detail-' + kundeId);
-    const mainRow = detailRow?.previousElementSibling;
-    if (detailRow) {
-        detailRow.classList.toggle('hidden');
-        mainRow?.classList.toggle('open');
-    }
-}
-
-function copyKundeLink(el, link) {
-    navigator.clipboard.writeText(link).then(() => {
-        const orig = el.textContent;
-        el.textContent = 'Kopiert!';
-        el.style.color = 'var(--success)';
-        setTimeout(() => {
-            el.textContent = orig;
-            el.style.color = '';
-        }, 2000);
-    });
+    await loadAllData();
 }
 
 /* ==================================================================
@@ -1035,11 +1047,10 @@ function previewExcel(input) {
                 return;
             }
 
-            // Spalten-Mapping (flexibel)
             const colMap = detectColumns(Object.keys(rows[0]));
             if (!colMap.vorname || !colMap.nachname) {
                 statusEl.className = 'upload-status error';
-                statusEl.textContent = 'Spalten "Vorname" und "Nachname" wurden nicht gefunden. Gefundene Spalten: ' + Object.keys(rows[0]).join(', ');
+                statusEl.textContent = 'Spalten "Vorname" und "Nachname" nicht gefunden. Gefunden: ' + Object.keys(rows[0]).join(', ');
                 return;
             }
 
@@ -1051,15 +1062,14 @@ function previewExcel(input) {
 
             if (excelKunden.length === 0) {
                 statusEl.className = 'upload-status error';
-                statusEl.textContent = 'Keine gültigen Kunden gefunden (Vorname und Nachname müssen ausgefüllt sein).';
+                statusEl.textContent = 'Keine gültigen Kontakte gefunden.';
                 return;
             }
 
             statusEl.className = 'upload-status info';
-            statusEl.textContent = `${excelKunden.length} Kunden erkannt. Vorschau:`;
+            statusEl.textContent = `${excelKunden.length} Kontakte erkannt:`;
             uploadBtn.disabled = false;
 
-            // Preview table
             const maxPreview = Math.min(excelKunden.length, 10);
             let html = '<table><thead><tr><th>Vorname</th><th>Nachname</th><th>E-Mail</th></tr></thead><tbody>';
             for (let i = 0; i < maxPreview; i++) {
@@ -1071,10 +1081,9 @@ function previewExcel(input) {
             }
             html += '</tbody></table>';
             previewEl.innerHTML = html;
-
         } catch (err) {
             statusEl.className = 'upload-status error';
-            statusEl.textContent = 'Fehler beim Lesen der Datei: ' + err.message;
+            statusEl.textContent = 'Fehler: ' + err.message;
         }
     };
     reader.readAsArrayBuffer(file);
@@ -1083,18 +1092,11 @@ function previewExcel(input) {
 function detectColumns(headers) {
     const map = { vorname: null, nachname: null, email: null };
     const lower = headers.map(h => h.toLowerCase().trim());
-
     for (let i = 0; i < headers.length; i++) {
         const l = lower[i];
-        if (!map.vorname && (l === 'vorname' || l === 'first name' || l === 'firstname' || l === 'first_name' || l === 'vname')) {
-            map.vorname = headers[i];
-        }
-        if (!map.nachname && (l === 'nachname' || l === 'last name' || l === 'lastname' || l === 'last_name' || l === 'nname' || l === 'name')) {
-            map.nachname = headers[i];
-        }
-        if (!map.email && (l === 'email' || l === 'e-mail' || l === 'mail' || l === 'emailadresse' || l === 'e-mail-adresse')) {
-            map.email = headers[i];
-        }
+        if (!map.vorname && ['vorname','first name','firstname','first_name','vname'].includes(l)) map.vorname = headers[i];
+        if (!map.nachname && ['nachname','last name','lastname','last_name','nname','name'].includes(l)) map.nachname = headers[i];
+        if (!map.email && ['email','e-mail','mail','emailadresse','e-mail-adresse'].includes(l)) map.email = headers[i];
     }
     return map;
 }
@@ -1106,9 +1108,8 @@ async function uploadExcelKunden() {
     const statusEl = document.getElementById('uploadStatus');
     btn.disabled = true;
     statusEl.className = 'upload-status info';
-    statusEl.textContent = `Prüfe auf Duplikate...`;
+    statusEl.textContent = 'Prüfe auf Duplikate...';
 
-    // Bestehende Kunden laden für Duplikat-Prüfung
     const existingSet = new Set(
         allKunden.map(k => (k.vorname + '|' + k.nachname + '|' + (k.email || '')).toLowerCase())
     );
@@ -1122,21 +1123,20 @@ async function uploadExcelKunden() {
             duplikate.push(kunde);
         } else {
             neueKunden.push(kunde);
-            existingSet.add(key); // Auch innerhalb der Excel-Datei Duplikate verhindern
+            existingSet.add(key);
         }
     }
 
     if (neueKunden.length === 0) {
         statusEl.className = 'upload-status error';
-        statusEl.textContent = `Alle ${duplikate.length} Kunden existieren bereits. Keine neuen Kunden zum Hochladen.`;
+        statusEl.textContent = `Alle ${duplikate.length} Kontakte existieren bereits.`;
         return;
     }
 
-    statusEl.textContent = `Lade ${neueKunden.length} neue Kunden hoch...` +
+    statusEl.textContent = `Lade ${neueKunden.length} neue Kontakte hoch...` +
         (duplikate.length > 0 ? ` (${duplikate.length} Duplikate übersprungen)` : '');
 
-    let success = 0;
-    let errors = 0;
+    let success = 0, errors = 0;
 
     for (const kunde of neueKunden) {
         const slug = (kunde.vorname + '-' + kunde.nachname)
@@ -1147,33 +1147,24 @@ async function uploadExcelKunden() {
 
         const { error } = await sb.from('kunden').insert({
             berater_id: beraterRecord.id,
-            code,
-            vorname: kunde.vorname,
-            nachname: kunde.nachname,
-            email: kunde.email,
+            code, vorname: kunde.vorname, nachname: kunde.nachname, email: kunde.email,
         });
 
-        if (error) {
-            errors++;
-            console.error('Fehler bei Kunde:', kunde, error);
-        } else {
-            success++;
-        }
+        if (error) { errors++; console.error('Fehler:', kunde, error); }
+        else success++;
     }
 
-    let msg = `${success} Kunden erfolgreich hochgeladen!`;
+    let msg = `${success} Kontakte importiert!`;
     if (duplikate.length > 0) msg += ` ${duplikate.length} Duplikate übersprungen.`;
     if (errors > 0) msg += ` ${errors} fehlgeschlagen.`;
 
     statusEl.className = errors > 0 ? 'upload-status error' : 'upload-status success';
     statusEl.textContent = msg;
 
-    // Reset
     excelKunden = [];
     document.getElementById('excelFileInput').value = '';
     document.getElementById('uploadPreview').innerHTML = '';
-
-    await loadKunden();
+    await loadAllData();
 }
 
 function downloadTemplate() {
@@ -1184,31 +1175,24 @@ function downloadTemplate() {
     ]);
     ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 30 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Kunden');
-    XLSX.writeFile(wb, 'Kunden-Vorlage.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, 'Kontakte');
+    XLSX.writeFile(wb, 'Kontakte-Vorlage.xlsx');
 }
 
 /* ==================================================================
-   EMAIL VERSAND
+   EMAIL
    ================================================================== */
-function toggleKundeSelection(checkbox) {
-    if (checkbox.checked) {
-        selectedKundenIds.add(checkbox.value);
-    } else {
-        selectedKundenIds.delete(checkbox.value);
-    }
+function toggleKontaktSelection(checkbox) {
+    if (checkbox.checked) selectedKundenIds.add(checkbox.value);
+    else selectedKundenIds.delete(checkbox.value);
     updateEmailButton();
 }
 
-function toggleAlleKunden(masterCheckbox) {
-    const checkboxes = document.querySelectorAll('#kundenBody .kunde-checkbox:not(:disabled)');
-    checkboxes.forEach(cb => {
+function toggleAlleKontakte(masterCheckbox) {
+    document.querySelectorAll('#contactsBody .kunde-checkbox:not(:disabled)').forEach(cb => {
         cb.checked = masterCheckbox.checked;
-        if (masterCheckbox.checked) {
-            selectedKundenIds.add(cb.value);
-        } else {
-            selectedKundenIds.delete(cb.value);
-        }
+        if (masterCheckbox.checked) selectedKundenIds.add(cb.value);
+        else selectedKundenIds.delete(cb.value);
     });
     updateEmailButton();
 }
@@ -1216,12 +1200,11 @@ function toggleAlleKunden(masterCheckbox) {
 function updateEmailButton() {
     const btn = document.getElementById('btnEmailSelected');
     const count = selectedKundenIds.size;
-    btn.textContent = `Ausgewählte anschreiben (${count})`;
+    btn.textContent = `Email senden (${count})`;
     btn.disabled = count === 0;
 }
 
 function emailAlleOhne() {
-    // Alle Kunden mit Email selektieren, die noch keine Email bekommen haben
     selectedKundenIds.clear();
     allKunden.forEach(k => {
         if (k.email && !(kundenEmails[k.id] && kundenEmails[k.id].length > 0)) {
@@ -1230,12 +1213,11 @@ function emailAlleOhne() {
     });
 
     if (selectedKundenIds.size === 0) {
-        alert('Alle Kunden mit E-Mail wurden bereits angeschrieben.');
+        alert('Alle Kontakte mit E-Mail wurden bereits angeschrieben.');
         return;
     }
 
-    // Checkboxen updaten
-    document.querySelectorAll('#kundenBody .kunde-checkbox').forEach(cb => {
+    document.querySelectorAll('#contactsBody .kunde-checkbox').forEach(cb => {
         cb.checked = selectedKundenIds.has(cb.value);
     });
     updateEmailButton();
@@ -1367,15 +1349,14 @@ function setVorlage(vorlage) {
 
 function applyVorlage() {
     const v = VORLAGEN[currentVorlage]?.[currentAnrede];
-    if (!v) return;
-    if (currentVorlage === 'eigene') return; // Don't overwrite custom text
+    if (!v || currentVorlage === 'eigene') return;
     document.getElementById('emailSubject').value = v.subject;
     document.getElementById('emailText').value = v.text;
 }
 
 function openEmailModal() {
     if (selectedKundenIds.size === 0) return;
-    document.getElementById('emailModalSub').textContent = `${selectedKundenIds.size} Kunden ausgewählt`;
+    document.getElementById('emailModalSub').textContent = `${selectedKundenIds.size} Kontakte ausgewählt`;
     document.getElementById('emailSendStatus').className = 'upload-status';
     applyVorlage();
     document.getElementById('emailModal').classList.add('active');
@@ -1397,7 +1378,6 @@ async function sendEmails() {
     const subject = document.getElementById('emailSubject').value.trim() || 'Ihr persönlicher GKV-Vergleich';
     const textContent = document.getElementById('emailText').value.trim() || undefined;
 
-    // Supabase Session für Auth-Token
     const { data: { session } } = await sb.auth.getSession();
     if (!session) {
         statusEl.className = 'upload-status error';
@@ -1415,8 +1395,7 @@ async function sendEmails() {
             },
             body: JSON.stringify({
                 kundeIds: Array.from(selectedKundenIds),
-                subject,
-                textContent,
+                subject, textContent,
             }),
         });
 
@@ -1424,14 +1403,13 @@ async function sendEmails() {
 
         if (response.ok) {
             statusEl.className = 'upload-status success';
-            statusEl.textContent = `${result.sent} Email(s) erfolgreich gesendet!` +
+            statusEl.textContent = `${result.sent} Email(s) gesendet!` +
                 (result.errors > 0 ? ` ${result.errors} fehlgeschlagen.` : '');
 
-            // Reset & Reload
             selectedKundenIds.clear();
             setTimeout(() => {
                 closeEmailModal();
-                loadKunden();
+                loadAllData();
             }, 2000);
         } else {
             statusEl.className = 'upload-status error';
@@ -1454,6 +1432,15 @@ function copyAffiliateLink() {
         const btn = input.nextElementSibling;
         btn.textContent = 'Kopiert!';
         setTimeout(() => btn.textContent = 'Kopieren', 2000);
+    });
+}
+
+function copyLink(el, link) {
+    navigator.clipboard.writeText(link).then(() => {
+        const orig = el.textContent;
+        el.textContent = 'Kopiert!';
+        el.style.color = 'var(--success)';
+        setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 2000);
     });
 }
 
