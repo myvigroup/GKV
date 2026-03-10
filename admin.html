@@ -174,6 +174,40 @@
         .upload-preview table { font-size:.8rem; }
         .upload-preview th { font-size:.7rem; }
 
+        /* Berater Detail View */
+        .berater-detail { display:none; }
+        .berater-detail.active { display:block; }
+        .detail-back {
+            display:inline-flex; align-items:center; gap:6px; font-size:.85rem; font-weight:600;
+            color:var(--g500); background:none; border:none; cursor:pointer; padding:0; margin-bottom:16px;
+            font-family:var(--font); transition:var(--ease);
+        }
+        .detail-back:hover { color:var(--primary); }
+        .detail-header {
+            background:#fff; border-radius:var(--r-md); padding:24px; margin-bottom:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
+        }
+        .detail-header-left h2 { font-size:1.2rem; font-weight:800; color:var(--g900); margin-bottom:2px; }
+        .detail-header-left .meta { font-size:.82rem; color:var(--g500); }
+        .detail-header-left .meta a { color:var(--primary); text-decoration:none; }
+        .detail-stats { display:flex; gap:24px; }
+        .detail-stat { text-align:center; }
+        .detail-stat-val { font-size:1.4rem; font-weight:800; color:var(--g900); }
+        .detail-stat-label { font-size:.68rem; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; }
+        .detail-tabs { display:flex; gap:0; margin-bottom:16px; border-bottom:2px solid var(--g200); }
+        .detail-tab-btn {
+            padding:8px 16px; font-size:.82rem; font-weight:600;
+            font-family:var(--font); color:var(--g500); background:none;
+            border:none; border-bottom:2px solid transparent;
+            margin-bottom:-2px; cursor:pointer; transition:var(--ease);
+        }
+        .detail-tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .detail-tab-btn:hover:not(.active) { color:var(--g700); }
+        .detail-tab-content { display:none; }
+        .detail-tab-content.active { display:block; }
+        .berater-card { cursor:pointer; }
+
         .access-denied { text-align:center; padding:80px 20px; }
         .access-denied h2 { color:var(--danger); margin-bottom:8px; }
         .access-denied p { color:var(--g500); }
@@ -349,6 +383,98 @@
                 </div>
             </div>
         </div>
+
+        <!-- BERATER DETAIL VIEW -->
+        <div class="berater-detail" id="beraterDetail">
+            <button class="detail-back" onclick="closeBeraterDetail()">&larr; Zurück zur Übersicht</button>
+            <div class="detail-header">
+                <div class="detail-header-left">
+                    <h2 id="detailName"></h2>
+                    <div class="meta" id="detailMeta"></div>
+                </div>
+                <div class="detail-stats" id="detailStats"></div>
+            </div>
+
+            <div class="detail-tabs">
+                <button class="detail-tab-btn active" data-dtab="leads" onclick="switchDetailTab('leads')">Leads</button>
+                <button class="detail-tab-btn" data-dtab="kunden" onclick="switchDetailTab('kunden')">Kunden</button>
+                <button class="detail-tab-btn" data-dtab="emails" onclick="switchDetailTab('emails')">E-Mails</button>
+            </div>
+
+            <!-- Detail: Leads -->
+            <div class="detail-tab-content active" id="detailTabLeads">
+                <div class="filter-row">
+                    <span class="filter-label">Status:</span>
+                    <select class="berater-select" id="detailLeadsStatusFilter" onchange="renderDetailLeads()">
+                        <option value="alle">Alle</option>
+                        <option value="neu">Neu</option>
+                        <option value="kontaktiert">Kontaktiert</option>
+                        <option value="termin">Termin</option>
+                        <option value="abgeschlossen">Abgeschlossen</option>
+                        <option value="storniert">Storniert</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table id="detailLeadsTable" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Name</th>
+                                <th>Kontakt</th>
+                                <th>Gewählte Kasse</th>
+                                <th>Sparpotenzial</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailLeadsBody"></tbody>
+                    </table>
+                    <div class="empty-state" id="detailLeadsEmpty" style="display:none;">
+                        <h3>Keine Leads</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail: Kunden -->
+            <div class="detail-tab-content" id="detailTabKunden">
+                <div class="table-wrap">
+                    <table id="detailKundenTable" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>E-Mail</th>
+                                <th>Code</th>
+                                <th>Berechnungen</th>
+                                <th>Erstellt am</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailKundenBody"></tbody>
+                    </table>
+                    <div class="empty-state" id="detailKundenEmpty" style="display:none;">
+                        <h3>Keine Kunden</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail: Emails -->
+            <div class="detail-tab-content" id="detailTabEmails">
+                <div class="table-wrap">
+                    <table id="detailEmailsTable" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Empfänger</th>
+                                <th>Betreff</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailEmailsBody"></tbody>
+                    </table>
+                    <div class="empty-state" id="detailEmailsEmpty" style="display:none;">
+                        <h3>Keine E-Mails gesendet</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -518,7 +644,7 @@ function renderBeraterGrid() {
         }
 
         return `
-        <div class="berater-card">
+        <div class="berater-card" onclick="openBeraterDetail('${b.id}')">
             <div class="berater-card-header">
                 <div>
                     <div class="berater-name">
@@ -682,6 +808,164 @@ function renderAlleLeads() {
             <td style="font-size:.82rem;">${esc(lead.gewaehlte_kasse || '–')}</td>
             <td style="color:var(--success);font-weight:600;font-size:.82rem;">${savings}</td>
             <td><span class="status-badge ${statusClass}">${esc(lead.status)}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+/* ==================================================================
+   BERATER DETAIL VIEW
+   ================================================================== */
+let detailBeraterId = null;
+let detailEmails = [];
+
+async function openBeraterDetail(beraterId) {
+    detailBeraterId = beraterId;
+    const berater = allBerater.find(b => b.id === beraterId);
+    if (!berater) return;
+
+    // Hide main tabs, show detail
+    document.querySelectorAll('.tabs, .tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById('beraterDetail').classList.add('active');
+
+    // Header
+    document.getElementById('detailName').textContent = `${berater.vorname} ${berater.nachname}`;
+    document.getElementById('detailMeta').innerHTML =
+        `<a href="mailto:${esc(berater.email)}">${esc(berater.email)}</a>` +
+        (berater.telefon ? ` &middot; ${esc(berater.telefon)}` : '') +
+        (berater.team ? ` &middot; Team: ${esc(berater.team)}` : '') +
+        ` &middot; Slug: <strong>${esc(berater.slug)}</strong>`;
+
+    // Stats
+    const bLeads = allLeads.filter(l => l.berater_id === beraterId);
+    const bKunden = allKunden.filter(k => k.berater_id === beraterId);
+    const abschl = bLeads.filter(l => l.status === 'abgeschlossen').length;
+    const neueLeads = bLeads.filter(l => l.status === 'neu').length;
+
+    document.getElementById('detailStats').innerHTML = `
+        <div class="detail-stat"><div class="detail-stat-val">${bLeads.length}</div><div class="detail-stat-label">Leads</div></div>
+        <div class="detail-stat"><div class="detail-stat-val">${bKunden.length}</div><div class="detail-stat-label">Kunden</div></div>
+        <div class="detail-stat"><div class="detail-stat-val">${abschl}</div><div class="detail-stat-label">Abschlüsse</div></div>
+        <div class="detail-stat"><div class="detail-stat-val">${neueLeads}</div><div class="detail-stat-label">Neue Leads</div></div>
+    `;
+
+    // Load emails for this berater
+    const { data: emails } = await sb
+        .from('kunden_emails')
+        .select('*')
+        .eq('berater_id', beraterId)
+        .order('created_at', { ascending: false });
+    detailEmails = emails || [];
+
+    // Reset to leads tab
+    switchDetailTab('leads');
+    renderDetailLeads();
+    renderDetailKunden();
+    renderDetailEmails();
+}
+
+function closeBeraterDetail() {
+    detailBeraterId = null;
+    document.getElementById('beraterDetail').classList.remove('active');
+    // Restore main tabs
+    document.querySelector('.tabs').style.display = 'flex';
+    // Show active tab content
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.classList.contains('active')) {
+            const tabId = 'tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1);
+            document.getElementById(tabId).style.display = 'block';
+        }
+    });
+}
+
+function switchDetailTab(tab) {
+    document.querySelectorAll('.detail-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.dtab === tab);
+    });
+    document.querySelectorAll('.detail-tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === 'detailTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    });
+}
+
+function renderDetailLeads() {
+    const statusFilter = document.getElementById('detailLeadsStatusFilter').value;
+    let leads = allLeads.filter(l => l.berater_id === detailBeraterId);
+    if (statusFilter !== 'alle') leads = leads.filter(l => l.status === statusFilter);
+
+    if (leads.length === 0) {
+        document.getElementById('detailLeadsTable').style.display = 'none';
+        document.getElementById('detailLeadsEmpty').style.display = 'block';
+        return;
+    }
+    document.getElementById('detailLeadsTable').style.display = 'table';
+    document.getElementById('detailLeadsEmpty').style.display = 'none';
+
+    document.getElementById('detailLeadsBody').innerHTML = leads.map(lead => {
+        const dateStr = new Date(lead.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const savings = lead.sparpotenzial_jahr
+            ? `${lead.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
+            : '\u2013';
+        return `<tr>
+            <td style="font-size:.82rem;">${dateStr}</td>
+            <td style="font-weight:600;">${esc(lead.vorname)} ${esc(lead.nachname)}</td>
+            <td>
+                <div style="font-size:.78rem;">${esc(lead.email || '\u2013')}</div>
+                ${lead.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(lead.telefon)}</div>` : ''}
+            </td>
+            <td style="font-size:.82rem;">${esc(lead.gewaehlte_kasse || '\u2013')}</td>
+            <td style="color:var(--success);font-weight:600;font-size:.82rem;">${savings}</td>
+            <td><span class="status-badge status-${lead.status}">${esc(lead.status)}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+function renderDetailKunden() {
+    const kunden = allKunden.filter(k => k.berater_id === detailBeraterId);
+
+    if (kunden.length === 0) {
+        document.getElementById('detailKundenTable').style.display = 'none';
+        document.getElementById('detailKundenEmpty').style.display = 'block';
+        return;
+    }
+    document.getElementById('detailKundenTable').style.display = 'table';
+    document.getElementById('detailKundenEmpty').style.display = 'none';
+
+    document.getElementById('detailKundenBody').innerHTML = kunden.map(kunde => {
+        const count = kundenBerechnungenCount[kunde.id] || 0;
+        const date = new Date(kunde.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        return `<tr>
+            <td style="font-weight:600;">${esc(kunde.vorname)} ${esc(kunde.nachname)}</td>
+            <td>${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="color:var(--primary);font-size:.82rem;">${esc(kunde.email)}</a>` : '\u2013'}</td>
+            <td style="font-size:.82rem;color:var(--g500);font-family:monospace;">${esc(kunde.code || '\u2013')}</td>
+            <td style="text-align:center;">${count}</td>
+            <td style="font-size:.82rem;color:var(--g500);">${date}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderDetailEmails() {
+    if (detailEmails.length === 0) {
+        document.getElementById('detailEmailsTable').style.display = 'none';
+        document.getElementById('detailEmailsEmpty').style.display = 'block';
+        return;
+    }
+    document.getElementById('detailEmailsTable').style.display = 'table';
+    document.getElementById('detailEmailsEmpty').style.display = 'none';
+
+    document.getElementById('detailEmailsBody').innerHTML = detailEmails.map(email => {
+        const dateStr = new Date(email.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        // Find kunde name
+        const kunde = allKunden.find(k => k.id === email.kunde_id);
+        const empfaenger = kunde ? `${kunde.vorname} ${kunde.nachname}` : '\u2013';
+        const statusColors = {
+            sent: 'var(--g400)', delivered: 'var(--primary)', opened: 'var(--warning)',
+            clicked: 'var(--success)', bounced: 'var(--danger)', error: 'var(--danger)'
+        };
+        const color = statusColors[email.status] || 'var(--g400)';
+        return `<tr>
+            <td style="font-size:.82rem;">${dateStr}</td>
+            <td style="font-weight:600;">${esc(empfaenger)}</td>
+            <td style="font-size:.82rem;">${esc(email.subject || '\u2013')}</td>
+            <td><span style="color:${color};font-weight:700;font-size:.78rem;text-transform:uppercase;">${esc(email.status)}</span></td>
         </tr>`;
     }).join('');
 }
