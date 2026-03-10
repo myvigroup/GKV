@@ -47,15 +47,16 @@
         /* Dashboard */
         .dashboard { display:none; }
         .dash-header {
-            background:var(--g900); border-bottom:1px solid var(--g700); padding:16px 24px;
+            background:var(--primary); border-bottom:1px solid var(--primary-dark); padding:16px 24px;
             display:flex; align-items:center; justify-content:space-between;
         }
-        .dash-header h1 { font-size:1.1rem; color:#fff; }
-        .dash-header .admin-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.7rem; font-weight:700; background:var(--warning); color:#fff; margin-left:8px; text-transform:uppercase; }
+        .dash-header .logo-text { font-size:1.2rem; font-weight:900; color:#fff; letter-spacing:-.5px; }
+        .dash-header .logo-text span { color:var(--accent); }
+        .dash-header .admin-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.7rem; font-weight:700; background:var(--accent); color:#fff; margin-left:10px; text-transform:uppercase; }
         .dash-header .user-info { display:flex; align-items:center; gap:12px; }
-        .dash-header .user-name { font-size:.85rem; color:var(--g300); }
-        .btn-sm { padding:6px 14px; font-size:.8rem; font-weight:600; font-family:var(--font); color:var(--g300); background:var(--g700); border:1px solid var(--g600); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
-        .btn-sm:hover { background:var(--g600); }
+        .dash-header .user-name { font-size:.85rem; color:rgba(255,255,255,.7); }
+        .btn-sm { padding:6px 14px; font-size:.8rem; font-weight:600; font-family:var(--font); color:rgba(255,255,255,.8); background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-sm:hover { background:rgba(255,255,255,.2); }
 
         .dash-body { max-width:1400px; margin:0 auto; padding:24px; }
 
@@ -208,6 +209,31 @@
         .detail-tab-content.active { display:block; }
         .berater-card { cursor:pointer; }
 
+        /* Modal */
+        .modal-overlay {
+            display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+            background:rgba(0,0,0,.4); z-index:1000; align-items:center; justify-content:center;
+        }
+        .modal-overlay.active { display:flex; }
+        .modal {
+            background:#fff; border-radius:var(--r-lg); padding:28px; max-width:480px; width:90%;
+            box-shadow:var(--shadow-lg); max-height:90vh; overflow-y:auto;
+        }
+        .modal h2 { font-size:1.1rem; font-weight:700; color:var(--g900); margin-bottom:16px; }
+        .modal .btn { margin-top:8px; }
+        .modal .btn-row { display:flex; gap:10px; margin-top:16px; }
+        .modal .btn-row .btn { flex:1; }
+        .btn-danger { width:100%; padding:12px; font-size:.95rem; font-weight:700; font-family:var(--font); color:#fff; border:none; background:var(--danger); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-danger:hover { background:#c41d30; }
+        .btn-secondary { width:100%; padding:12px; font-size:.95rem; font-weight:700; font-family:var(--font); color:var(--g600); border:1.5px solid var(--g200); background:#fff; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-secondary:hover { background:var(--g50); }
+        .btn-add-berater {
+            padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font);
+            color:#fff; background:var(--primary); border:none; border-radius:var(--r-sm);
+            cursor:pointer; transition:var(--ease); margin-bottom:16px;
+        }
+        .btn-add-berater:hover { background:var(--primary-dark); }
+
         .access-denied { text-align:center; padding:80px 20px; }
         .access-denied h2 { color:var(--danger); margin-bottom:8px; }
         .access-denied p { color:var(--g500); }
@@ -252,7 +278,7 @@
 <div class="dashboard" id="dashboardView">
     <div class="dash-header">
         <div style="display:flex;align-items:center;">
-            <h1>GKV-Rechner</h1>
+            <span class="logo-text">mit<span>NORM</span></span>
             <span class="admin-badge">Admin</span>
         </div>
         <div class="user-info">
@@ -266,23 +292,19 @@
         <!-- Global Stats -->
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">Berater gesamt</div>
+                <div class="stat-label">Berater</div>
                 <div class="stat-val" id="statBerater">–</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Kunden gesamt</div>
-                <div class="stat-val" id="statKunden">–</div>
+                <div class="stat-label">Kontakte gesamt</div>
+                <div class="stat-val" id="statKontakte">–</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Leads gesamt</div>
-                <div class="stat-val" id="statLeads">–</div>
+                <div class="stat-label">Diesen Monat</div>
+                <div class="stat-val" id="statMonat">–</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Leads diesen Monat</div>
-                <div class="stat-val" id="statLeadsMonth">–</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Abschlüsse gesamt</div>
+                <div class="stat-label">Abschlüsse</div>
                 <div class="stat-val" id="statAbschluesse">–</div>
             </div>
         </div>
@@ -290,23 +312,23 @@
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="berater" onclick="switchTab('berater')">Berater-Übersicht</button>
-            <button class="tab-btn" data-tab="kunden" onclick="switchTab('kunden')">Alle Kunden</button>
-            <button class="tab-btn" data-tab="leads" onclick="switchTab('leads')">Alle Leads</button>
+            <button class="tab-btn" data-tab="kontakte" onclick="switchTab('kontakte')">Alle Kontakte</button>
         </div>
 
         <!-- TAB: Berater -->
         <div class="tab-content active" id="tabBerater">
+            <button class="btn-add-berater" onclick="openBeraterModal()">+ Neuer Berater</button>
             <div class="berater-grid" id="beraterGrid">
                 <div class="loading">Berater werden geladen...</div>
             </div>
         </div>
 
-        <!-- TAB: Kunden -->
-        <div class="tab-content" id="tabKunden">
+        <!-- TAB: Alle Kontakte (merged Kunden + Leads) -->
+        <div class="tab-content" id="tabKontakte">
             <!-- Excel Upload -->
             <div class="excel-upload-box">
-                <h3>Kunden per Excel hochladen</h3>
-                <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional). Wähle den Berater, dem die Kunden zugeordnet werden sollen.</p>
+                <h3>Kontakte per Excel hochladen</h3>
+                <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional). Wähle den Berater, dem die Kontakte zugeordnet werden sollen.</p>
                 <div class="excel-upload-row">
                     <select class="berater-select" id="excelBeraterSelect" style="min-width:200px;">
                         <option value="">Berater wählen...</option>
@@ -320,66 +342,38 @@
             </div>
 
             <div class="filter-row">
-                <input type="text" class="search-input" id="kundenSearch" placeholder="Kunden suchen (Name, E-Mail)..." oninput="renderAlleKunden()" style="width:300px;margin-bottom:0;">
+                <input type="text" class="search-input" id="kontakteSearch" placeholder="Kontakte suchen (Name, E-Mail)..." oninput="renderAlleKontakte()" style="width:300px;margin-bottom:0;">
                 <span class="filter-label">Berater:</span>
-                <select class="berater-select" id="kundenBeraterFilter" onchange="renderAlleKunden()">
-                    <option value="alle">Alle Berater</option>
-                </select>
-            </div>
-            <div class="table-wrap">
-                <table id="kundenTable" style="display:none;">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>E-Mail</th>
-                            <th>Zugeordneter Berater</th>
-                            <th>Berechnungen</th>
-                            <th>Erstellt am</th>
-                        </tr>
-                    </thead>
-                    <tbody id="kundenBody"></tbody>
-                </table>
-                <div class="empty-state" id="kundenEmpty" style="display:none;">
-                    <h3>Keine Kunden gefunden</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB: Leads -->
-        <div class="tab-content" id="tabLeads">
-            <div class="filter-row">
-                <input type="text" class="search-input" id="leadsSearch" placeholder="Leads suchen (Name, E-Mail)..." oninput="renderAlleLeads()" style="width:300px;margin-bottom:0;">
-                <span class="filter-label">Berater:</span>
-                <select class="berater-select" id="leadsBeraterFilter" onchange="renderAlleLeads()">
+                <select class="berater-select" id="kontakteBeraterFilter" onchange="renderAlleKontakte()">
                     <option value="alle">Alle Berater</option>
                 </select>
                 <span class="filter-label">Status:</span>
-                <select class="berater-select" id="leadsStatusFilter" onchange="renderAlleLeads()">
+                <select class="berater-select" id="kontakteStatusFilter" onchange="renderAlleKontakte()">
                     <option value="alle">Alle</option>
                     <option value="neu">Neu</option>
                     <option value="kontaktiert">Kontaktiert</option>
                     <option value="termin">Termin</option>
                     <option value="abgeschlossen">Abgeschlossen</option>
                     <option value="storniert">Storniert</option>
+                    <option value="kunde">Kunde</option>
                 </select>
             </div>
             <div class="table-wrap">
-                <table id="leadsTable" style="display:none;">
+                <table id="kontakteTable" style="display:none;">
                     <thead>
                         <tr>
                             <th>Datum</th>
                             <th>Name</th>
                             <th>Kontakt</th>
                             <th>Berater</th>
-                            <th>Gewählte Kasse</th>
                             <th>Sparpotenzial</th>
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody id="leadsBody"></tbody>
+                    <tbody id="kontakteBody"></tbody>
                 </table>
-                <div class="empty-state" id="leadsEmpty" style="display:none;">
-                    <h3>Keine Leads gefunden</h3>
+                <div class="empty-state" id="kontakteEmpty" style="display:none;">
+                    <h3>Keine Kontakte gefunden</h3>
                 </div>
             </div>
         </div>
@@ -396,61 +390,39 @@
             </div>
 
             <div class="detail-tabs">
-                <button class="detail-tab-btn active" data-dtab="leads" onclick="switchDetailTab('leads')">Leads</button>
-                <button class="detail-tab-btn" data-dtab="kunden" onclick="switchDetailTab('kunden')">Kunden</button>
+                <button class="detail-tab-btn active" data-dtab="kontakte" onclick="switchDetailTab('kontakte')">Kontakte</button>
                 <button class="detail-tab-btn" data-dtab="emails" onclick="switchDetailTab('emails')">E-Mails</button>
             </div>
 
-            <!-- Detail: Leads -->
-            <div class="detail-tab-content active" id="detailTabLeads">
+            <!-- Detail: Kontakte (merged) -->
+            <div class="detail-tab-content active" id="detailTabKontakte">
                 <div class="filter-row">
                     <span class="filter-label">Status:</span>
-                    <select class="berater-select" id="detailLeadsStatusFilter" onchange="renderDetailLeads()">
+                    <select class="berater-select" id="detailKontakteStatusFilter" onchange="renderDetailKontakte()">
                         <option value="alle">Alle</option>
                         <option value="neu">Neu</option>
                         <option value="kontaktiert">Kontaktiert</option>
                         <option value="termin">Termin</option>
                         <option value="abgeschlossen">Abgeschlossen</option>
                         <option value="storniert">Storniert</option>
+                        <option value="kunde">Kunde</option>
                     </select>
                 </div>
                 <div class="table-wrap">
-                    <table id="detailLeadsTable" style="display:none;">
+                    <table id="detailKontakteTable" style="display:none;">
                         <thead>
                             <tr>
                                 <th>Datum</th>
                                 <th>Name</th>
                                 <th>Kontakt</th>
-                                <th>Gewählte Kasse</th>
                                 <th>Sparpotenzial</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody id="detailLeadsBody"></tbody>
+                        <tbody id="detailKontakteBody"></tbody>
                     </table>
-                    <div class="empty-state" id="detailLeadsEmpty" style="display:none;">
-                        <h3>Keine Leads</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Detail: Kunden -->
-            <div class="detail-tab-content" id="detailTabKunden">
-                <div class="table-wrap">
-                    <table id="detailKundenTable" style="display:none;">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>E-Mail</th>
-                                <th>Code</th>
-                                <th>Berechnungen</th>
-                                <th>Erstellt am</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailKundenBody"></tbody>
-                    </table>
-                    <div class="empty-state" id="detailKundenEmpty" style="display:none;">
-                        <h3>Keine Kunden</h3>
+                    <div class="empty-state" id="detailKontakteEmpty" style="display:none;">
+                        <h3>Keine Kontakte</h3>
                     </div>
                 </div>
             </div>
@@ -475,6 +447,46 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Berater Modal -->
+<div class="modal-overlay" id="beraterModal">
+    <div class="modal">
+        <h2 id="beraterModalTitle">Neuer Berater</h2>
+        <input type="hidden" id="beraterModalId">
+        <div class="fg">
+            <label>Vorname *</label>
+            <input type="text" id="bmVorname" required>
+        </div>
+        <div class="fg">
+            <label>Nachname *</label>
+            <input type="text" id="bmNachname" required>
+        </div>
+        <div class="fg">
+            <label>E-Mail *</label>
+            <input type="email" id="bmEmail" required>
+        </div>
+        <div class="fg">
+            <label>Telefon</label>
+            <input type="text" id="bmTelefon">
+        </div>
+        <div class="fg">
+            <label>Team</label>
+            <input type="text" id="bmTeam">
+        </div>
+        <div class="fg">
+            <label>Calendly-URL</label>
+            <input type="text" id="bmCalendly">
+        </div>
+        <div class="btn-row">
+            <button class="btn-secondary" onclick="closeBeraterModal()">Abbrechen</button>
+            <button class="btn" onclick="saveBerater()" id="bmSaveBtn">Speichern</button>
+        </div>
+        <div id="bmDeleteRow" style="margin-top:12px;display:none;">
+            <button class="btn-danger" onclick="deleteBerater()" id="bmDeleteBtn">Berater löschen</button>
+        </div>
+        <div class="error-msg" id="bmError"></div>
     </div>
 </div>
 
@@ -589,8 +601,7 @@ async function loadAllData() {
     populateBeraterFilters();
     updateGlobalStats();
     renderBeraterGrid();
-    renderAlleKunden();
-    renderAlleLeads();
+    renderAlleKontakte();
 }
 
 function populateBeraterFilters() {
@@ -598,9 +609,7 @@ function populateBeraterFilters() {
         `<option value="${b.id}">${esc(b.vorname)} ${esc(b.nachname)}</option>`
     ).join('');
 
-    document.getElementById('kundenBeraterFilter').innerHTML =
-        '<option value="alle">Alle Berater</option>' + options;
-    document.getElementById('leadsBeraterFilter').innerHTML =
+    document.getElementById('kontakteBeraterFilter').innerHTML =
         '<option value="alle">Alle Berater</option>' + options;
     document.getElementById('excelBeraterSelect').innerHTML =
         '<option value="">Berater wählen...</option>' + options;
@@ -609,12 +618,13 @@ function populateBeraterFilters() {
 function updateGlobalStats() {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const totalKontakte = allKunden.length + allLeads.length;
+    const monatKontakte = allLeads.filter(l => l.created_at >= monthStart).length +
+        allKunden.filter(k => k.created_at >= monthStart).length;
 
     document.getElementById('statBerater').textContent = allBerater.length;
-    document.getElementById('statKunden').textContent = allKunden.length;
-    document.getElementById('statLeads').textContent = allLeads.length;
-    document.getElementById('statLeadsMonth').textContent =
-        allLeads.filter(l => l.created_at >= monthStart).length;
+    document.getElementById('statKontakte').textContent = totalKontakte;
+    document.getElementById('statMonat').textContent = monatKontakte;
     document.getElementById('statAbschluesse').textContent =
         allLeads.filter(l => l.status === 'abgeschlossen').length;
 }
@@ -653,7 +663,10 @@ function renderBeraterGrid() {
                     </div>
                     <div class="berater-email">${esc(b.email)}</div>
                 </div>
-                ${b.team ? `<span class="berater-team">${esc(b.team)}</span>` : ''}
+                <div style="display:flex;align-items:center;gap:6px;">
+                    ${b.team ? `<span class="berater-team">${esc(b.team)}</span>` : ''}
+                    <button onclick="event.stopPropagation();openBeraterModal('${b.id}')" style="background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--g400);padding:4px;" title="Bearbeiten">&#9998;</button>
+                </div>
             </div>
             <div class="berater-stats">
                 <div class="berater-stat">
@@ -681,18 +694,30 @@ function renderBeraterGrid() {
 }
 
 /* ==================================================================
-   ALLE KUNDEN
+   ALLE KONTAKTE (merged Kunden + Leads)
    ================================================================== */
-function renderAlleKunden() {
-    const search = document.getElementById('kundenSearch').value.toLowerCase().trim();
-    const beraterFilter = document.getElementById('kundenBeraterFilter').value;
+function buildKontakteList() {
+    // Merge kunden and leads into one list
+    const kontakte = [];
+    allLeads.forEach(l => kontakte.push({ ...l, _type: 'lead' }));
+    allKunden.forEach(k => kontakte.push({ ...k, _type: 'kunde', status: 'kunde' }));
+    kontakte.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return kontakte;
+}
 
-    let filtered = allKunden;
+function renderAlleKontakte() {
+    const search = document.getElementById('kontakteSearch').value.toLowerCase().trim();
+    const beraterFilter = document.getElementById('kontakteBeraterFilter').value;
+    const statusFilter = document.getElementById('kontakteStatusFilter').value;
+
+    let filtered = buildKontakteList();
 
     if (beraterFilter !== 'alle') {
         filtered = filtered.filter(k => k.berater_id === beraterFilter);
     }
-
+    if (statusFilter !== 'alle') {
+        filtered = filtered.filter(k => k.status === statusFilter);
+    }
     if (search) {
         filtered = filtered.filter(k =>
             (k.vorname + ' ' + k.nachname).toLowerCase().includes(search) ||
@@ -701,113 +726,34 @@ function renderAlleKunden() {
     }
 
     if (filtered.length === 0) {
-        document.getElementById('kundenTable').style.display = 'none';
-        document.getElementById('kundenEmpty').style.display = 'block';
+        document.getElementById('kontakteTable').style.display = 'none';
+        document.getElementById('kontakteEmpty').style.display = 'block';
         return;
     }
 
-    document.getElementById('kundenTable').style.display = 'table';
-    document.getElementById('kundenEmpty').style.display = 'none';
+    document.getElementById('kontakteTable').style.display = 'table';
+    document.getElementById('kontakteEmpty').style.display = 'none';
 
-    const tbody = document.getElementById('kundenBody');
-    tbody.innerHTML = filtered.map(kunde => {
-        const berater = allBerater.find(b => b.id === kunde.berater_id);
-        const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
-        const count = kundenBerechnungenCount[kunde.id] || 0;
-        const date = new Date(kunde.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-
-        // Berater-Dropdown
-        const beraterOptions = allBerater.map(b =>
-            `<option value="${b.id}" ${b.id === kunde.berater_id ? 'selected' : ''}>${esc(b.vorname)} ${esc(b.nachname)}</option>`
-        ).join('');
-
-        return `<tr>
-            <td style="font-weight:600;">${esc(kunde.vorname)} ${esc(kunde.nachname)}</td>
-            <td>${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="color:var(--primary);font-size:.82rem;">${esc(kunde.email)}</a>` : '–'}</td>
-            <td>
-                <select class="berater-select" onchange="reassignKunde('${kunde.id}', this.value)">
-                    ${beraterOptions}
-                </select>
-            </td>
-            <td style="text-align:center;">${count}</td>
-            <td style="font-size:.82rem;color:var(--g500);">${date}</td>
-        </tr>`;
-    }).join('');
-}
-
-async function reassignKunde(kundeId, newBeraterId) {
-    const { error } = await sb
-        .from('kunden')
-        .update({ berater_id: newBeraterId })
-        .eq('id', kundeId);
-
-    if (error) {
-        console.error('Zuordnung fehlgeschlagen:', error);
-        alert('Fehler bei der Zuordnung: ' + error.message);
-        return;
-    }
-
-    // Update local state
-    const kunde = allKunden.find(k => k.id === kundeId);
-    if (kunde) kunde.berater_id = newBeraterId;
-
-    renderBeraterGrid();
-}
-
-/* ==================================================================
-   ALLE LEADS
-   ================================================================== */
-function renderAlleLeads() {
-    const search = document.getElementById('leadsSearch').value.toLowerCase().trim();
-    const beraterFilter = document.getElementById('leadsBeraterFilter').value;
-    const statusFilter = document.getElementById('leadsStatusFilter').value;
-
-    let filtered = allLeads;
-
-    if (beraterFilter !== 'alle') {
-        filtered = filtered.filter(l => l.berater_id === beraterFilter);
-    }
-    if (statusFilter !== 'alle') {
-        filtered = filtered.filter(l => l.status === statusFilter);
-    }
-    if (search) {
-        filtered = filtered.filter(l =>
-            (l.vorname + ' ' + l.nachname).toLowerCase().includes(search) ||
-            (l.email || '').toLowerCase().includes(search)
-        );
-    }
-
-    if (filtered.length === 0) {
-        document.getElementById('leadsTable').style.display = 'none';
-        document.getElementById('leadsEmpty').style.display = 'block';
-        return;
-    }
-
-    document.getElementById('leadsTable').style.display = 'table';
-    document.getElementById('leadsEmpty').style.display = 'none';
-
-    const tbody = document.getElementById('leadsBody');
-    tbody.innerHTML = filtered.map(lead => {
-        const berater = allBerater.find(b => b.id === lead.berater_id);
-        const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
-        const date = new Date(lead.created_at);
-        const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-        const savings = lead.sparpotenzial_jahr
-            ? `${lead.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
-            : '–';
-        const statusClass = `status-${lead.status}`;
+    document.getElementById('kontakteBody').innerHTML = filtered.map(k => {
+        const berater = allBerater.find(b => b.id === k.berater_id);
+        const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '\u2013';
+        const dateStr = new Date(k.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const savings = k.sparpotenzial_jahr
+            ? `${k.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
+            : '\u2013';
+        const statusLabel = k._type === 'kunde' ? 'Kunde' : k.status;
+        const statusClass = k._type === 'kunde' ? 'status-abgeschlossen' : `status-${k.status}`;
 
         return `<tr>
             <td style="font-size:.82rem;">${dateStr}</td>
-            <td style="font-weight:600;">${esc(lead.vorname)} ${esc(lead.nachname)}</td>
+            <td style="font-weight:600;">${esc(k.vorname)} ${esc(k.nachname)}</td>
             <td>
-                <div style="font-size:.78rem;">${esc(lead.email || '–')}</div>
-                ${lead.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(lead.telefon)}</div>` : ''}
+                <div style="font-size:.78rem;">${esc(k.email || '\u2013')}</div>
+                ${k.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(k.telefon)}</div>` : ''}
             </td>
             <td style="font-size:.82rem;">${esc(beraterName)}</td>
-            <td style="font-size:.82rem;">${esc(lead.gewaehlte_kasse || '–')}</td>
             <td style="color:var(--success);font-weight:600;font-size:.82rem;">${savings}</td>
-            <td><span class="status-badge ${statusClass}">${esc(lead.status)}</span></td>
+            <td><span class="status-badge ${statusClass}">${esc(statusLabel)}</span></td>
         </tr>`;
     }).join('');
 }
@@ -838,14 +784,14 @@ async function openBeraterDetail(beraterId) {
     // Stats
     const bLeads = allLeads.filter(l => l.berater_id === beraterId);
     const bKunden = allKunden.filter(k => k.berater_id === beraterId);
+    const totalKontakte = bLeads.length + bKunden.length;
     const abschl = bLeads.filter(l => l.status === 'abgeschlossen').length;
     const neueLeads = bLeads.filter(l => l.status === 'neu').length;
 
     document.getElementById('detailStats').innerHTML = `
-        <div class="detail-stat"><div class="detail-stat-val">${bLeads.length}</div><div class="detail-stat-label">Leads</div></div>
-        <div class="detail-stat"><div class="detail-stat-val">${bKunden.length}</div><div class="detail-stat-label">Kunden</div></div>
+        <div class="detail-stat"><div class="detail-stat-val">${totalKontakte}</div><div class="detail-stat-label">Kontakte</div></div>
         <div class="detail-stat"><div class="detail-stat-val">${abschl}</div><div class="detail-stat-label">Abschlüsse</div></div>
-        <div class="detail-stat"><div class="detail-stat-val">${neueLeads}</div><div class="detail-stat-label">Neue Leads</div></div>
+        <div class="detail-stat"><div class="detail-stat-val">${neueLeads}</div><div class="detail-stat-label">Neue</div></div>
     `;
 
     // Load emails for this berater
@@ -856,10 +802,9 @@ async function openBeraterDetail(beraterId) {
         .order('created_at', { ascending: false });
     detailEmails = emails || [];
 
-    // Reset to leads tab
-    switchDetailTab('leads');
-    renderDetailLeads();
-    renderDetailKunden();
+    // Reset to kontakte tab
+    switchDetailTab('kontakte');
+    renderDetailKontakte();
     renderDetailEmails();
 }
 
@@ -886,58 +831,40 @@ function switchDetailTab(tab) {
     });
 }
 
-function renderDetailLeads() {
-    const statusFilter = document.getElementById('detailLeadsStatusFilter').value;
-    let leads = allLeads.filter(l => l.berater_id === detailBeraterId);
-    if (statusFilter !== 'alle') leads = leads.filter(l => l.status === statusFilter);
+function renderDetailKontakte() {
+    const statusFilter = document.getElementById('detailKontakteStatusFilter').value;
+    // Merge leads + kunden for this berater
+    let kontakte = [];
+    allLeads.filter(l => l.berater_id === detailBeraterId).forEach(l => kontakte.push({ ...l, _type: 'lead' }));
+    allKunden.filter(k => k.berater_id === detailBeraterId).forEach(k => kontakte.push({ ...k, _type: 'kunde', status: 'kunde' }));
+    kontakte.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    if (leads.length === 0) {
-        document.getElementById('detailLeadsTable').style.display = 'none';
-        document.getElementById('detailLeadsEmpty').style.display = 'block';
+    if (statusFilter !== 'alle') kontakte = kontakte.filter(k => k.status === statusFilter);
+
+    if (kontakte.length === 0) {
+        document.getElementById('detailKontakteTable').style.display = 'none';
+        document.getElementById('detailKontakteEmpty').style.display = 'block';
         return;
     }
-    document.getElementById('detailLeadsTable').style.display = 'table';
-    document.getElementById('detailLeadsEmpty').style.display = 'none';
+    document.getElementById('detailKontakteTable').style.display = 'table';
+    document.getElementById('detailKontakteEmpty').style.display = 'none';
 
-    document.getElementById('detailLeadsBody').innerHTML = leads.map(lead => {
-        const dateStr = new Date(lead.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-        const savings = lead.sparpotenzial_jahr
-            ? `${lead.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
+    document.getElementById('detailKontakteBody').innerHTML = kontakte.map(k => {
+        const dateStr = new Date(k.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const savings = k.sparpotenzial_jahr
+            ? `${k.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
             : '\u2013';
+        const statusLabel = k._type === 'kunde' ? 'Kunde' : k.status;
+        const statusClass = k._type === 'kunde' ? 'status-abgeschlossen' : `status-${k.status}`;
         return `<tr>
             <td style="font-size:.82rem;">${dateStr}</td>
-            <td style="font-weight:600;">${esc(lead.vorname)} ${esc(lead.nachname)}</td>
+            <td style="font-weight:600;">${esc(k.vorname)} ${esc(k.nachname)}</td>
             <td>
-                <div style="font-size:.78rem;">${esc(lead.email || '\u2013')}</div>
-                ${lead.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(lead.telefon)}</div>` : ''}
+                <div style="font-size:.78rem;">${esc(k.email || '\u2013')}</div>
+                ${k.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(k.telefon)}</div>` : ''}
             </td>
-            <td style="font-size:.82rem;">${esc(lead.gewaehlte_kasse || '\u2013')}</td>
             <td style="color:var(--success);font-weight:600;font-size:.82rem;">${savings}</td>
-            <td><span class="status-badge status-${lead.status}">${esc(lead.status)}</span></td>
-        </tr>`;
-    }).join('');
-}
-
-function renderDetailKunden() {
-    const kunden = allKunden.filter(k => k.berater_id === detailBeraterId);
-
-    if (kunden.length === 0) {
-        document.getElementById('detailKundenTable').style.display = 'none';
-        document.getElementById('detailKundenEmpty').style.display = 'block';
-        return;
-    }
-    document.getElementById('detailKundenTable').style.display = 'table';
-    document.getElementById('detailKundenEmpty').style.display = 'none';
-
-    document.getElementById('detailKundenBody').innerHTML = kunden.map(kunde => {
-        const count = kundenBerechnungenCount[kunde.id] || 0;
-        const date = new Date(kunde.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-        return `<tr>
-            <td style="font-weight:600;">${esc(kunde.vorname)} ${esc(kunde.nachname)}</td>
-            <td>${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="color:var(--primary);font-size:.82rem;">${esc(kunde.email)}</a>` : '\u2013'}</td>
-            <td style="font-size:.82rem;color:var(--g500);font-family:monospace;">${esc(kunde.code || '\u2013')}</td>
-            <td style="text-align:center;">${count}</td>
-            <td style="font-size:.82rem;color:var(--g500);">${date}</td>
+            <td><span class="status-badge ${statusClass}">${esc(statusLabel)}</span></td>
         </tr>`;
     }).join('');
 }
@@ -980,6 +907,110 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.toggle('active', el.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
     });
+}
+
+/* ==================================================================
+   BERATER CRUD
+   ================================================================== */
+function openBeraterModal(beraterId) {
+    const modal = document.getElementById('beraterModal');
+    const errorEl = document.getElementById('bmError');
+    errorEl.style.display = 'none';
+
+    if (beraterId) {
+        // Edit mode
+        const b = allBerater.find(x => x.id === beraterId);
+        if (!b) return;
+        document.getElementById('beraterModalTitle').textContent = 'Berater bearbeiten';
+        document.getElementById('beraterModalId').value = b.id;
+        document.getElementById('bmVorname').value = b.vorname || '';
+        document.getElementById('bmNachname').value = b.nachname || '';
+        document.getElementById('bmEmail').value = b.email || '';
+        document.getElementById('bmTelefon').value = b.telefon || '';
+        document.getElementById('bmTeam').value = b.team || '';
+        document.getElementById('bmCalendly').value = b.calendly_url || '';
+        document.getElementById('bmDeleteRow').style.display = 'block';
+    } else {
+        // Create mode
+        document.getElementById('beraterModalTitle').textContent = 'Neuer Berater';
+        document.getElementById('beraterModalId').value = '';
+        document.getElementById('bmVorname').value = '';
+        document.getElementById('bmNachname').value = '';
+        document.getElementById('bmEmail').value = '';
+        document.getElementById('bmTelefon').value = '';
+        document.getElementById('bmTeam').value = '';
+        document.getElementById('bmCalendly').value = '';
+        document.getElementById('bmDeleteRow').style.display = 'none';
+    }
+
+    modal.classList.add('active');
+}
+
+function closeBeraterModal() {
+    document.getElementById('beraterModal').classList.remove('active');
+}
+
+async function saveBerater() {
+    const id = document.getElementById('beraterModalId').value;
+    const vorname = document.getElementById('bmVorname').value.trim();
+    const nachname = document.getElementById('bmNachname').value.trim();
+    const email = document.getElementById('bmEmail').value.trim();
+    const telefon = document.getElementById('bmTelefon').value.trim() || null;
+    const team = document.getElementById('bmTeam').value.trim() || null;
+    const calendly_url = document.getElementById('bmCalendly').value.trim() || null;
+    const errorEl = document.getElementById('bmError');
+    errorEl.style.display = 'none';
+
+    if (!vorname || !nachname || !email) {
+        errorEl.textContent = 'Vorname, Nachname und E-Mail sind Pflichtfelder.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    const slug = (vorname + '-' + nachname)
+        .toLowerCase()
+        .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
+        .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+
+    const data = { vorname, nachname, email, telefon, team, calendly_url, slug };
+
+    let error;
+    if (id) {
+        ({ error } = await sb.from('berater').update(data).eq('id', id));
+    } else {
+        ({ error } = await sb.from('berater').insert(data));
+    }
+
+    if (error) {
+        errorEl.textContent = 'Fehler: ' + error.message;
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    closeBeraterModal();
+    await loadAllData();
+}
+
+async function deleteBerater() {
+    const id = document.getElementById('beraterModalId').value;
+    if (!id) return;
+
+    const berater = allBerater.find(b => b.id === id);
+    const name = berater ? `${berater.vorname} ${berater.nachname}` : '';
+
+    if (!confirm(`Berater "${name}" wirklich löschen? Alle zugeordneten Kontakte verlieren ihre Zuordnung.`)) return;
+
+    const { error } = await sb.from('berater').delete().eq('id', id);
+
+    if (error) {
+        const errorEl = document.getElementById('bmError');
+        errorEl.textContent = 'Fehler beim Löschen: ' + error.message;
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    closeBeraterModal();
+    await loadAllData();
 }
 
 /* ==================================================================
