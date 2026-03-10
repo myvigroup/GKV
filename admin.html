@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin-Dashboard – GKV-Rechner</title>
+    <style>
+        :root {
+            --primary: #004283;
+            --primary-dark: #003068;
+            --primary-light: #E6F5FB;
+            --accent: #06BADD;
+            --success: #00B67A;
+            --success-light: #E6F9F1;
+            --warning: #FF8C00;
+            --warning-light: #FFF4E5;
+            --danger: #E5243B;
+            --g50: #F8FAFC; --g100: #F1F5F9; --g200: #E2E8F0;
+            --g300: #CBD5E1; --g400: #94A3B8; --g500: #64748B;
+            --g600: #475569; --g700: #334155; --g800: #1E293B;
+            --g900: #0F172A;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+            --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+            --ease: .2s cubic-bezier(.4,0,.2,1);
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { font-size:16px; -webkit-font-smoothing:antialiased; }
+        body { font-family:var(--font); color:var(--g800); background:var(--g50); line-height:1.6; min-height:100vh; }
+
+        /* Login */
+        .login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+        .login-card { background:#fff; border-radius:var(--r-lg); padding:40px; max-width:400px; width:100%; box-shadow:var(--shadow-lg); }
+        .login-card h1 { font-size:1.3rem; color:var(--g900); margin-bottom:4px; }
+        .login-card .sub { font-size:.85rem; color:var(--g500); margin-bottom:24px; }
+        .fg { margin-bottom:16px; }
+        .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--g600); margin-bottom:4px; }
+        .fg input, .fg select { width:100%; padding:10px 14px; font-size:.92rem; border:1.5px solid var(--g200); border-radius:var(--r-sm); font-family:var(--font); transition:var(--ease); }
+        .fg input:focus, .fg select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.12); }
+        .btn { width:100%; padding:12px; font-size:.95rem; font-weight:700; font-family:var(--font); color:#fff; border:none; background:var(--primary); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn:hover { background:var(--primary-dark); }
+        .btn:disabled { opacity:.5; cursor:not-allowed; }
+        .error-msg { color:var(--danger); font-size:.82rem; margin-top:8px; display:none; }
+
+        /* Dashboard */
+        .dashboard { display:none; }
+        .dash-header {
+            background:var(--g900); border-bottom:1px solid var(--g700); padding:16px 24px;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .dash-header h1 { font-size:1.1rem; color:#fff; }
+        .dash-header .admin-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.7rem; font-weight:700; background:var(--warning); color:#fff; margin-left:8px; text-transform:uppercase; }
+        .dash-header .user-info { display:flex; align-items:center; gap:12px; }
+        .dash-header .user-name { font-size:.85rem; color:var(--g300); }
+        .btn-sm { padding:6px 14px; font-size:.8rem; font-weight:600; font-family:var(--font); color:var(--g300); background:var(--g700); border:1px solid var(--g600); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
+        .btn-sm:hover { background:var(--g600); }
+
+        .dash-body { max-width:1400px; margin:0 auto; padding:24px; }
+
+        /* Stats */
+        .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card { background:#fff; border-radius:var(--r-md); padding:20px; box-shadow:var(--shadow-sm); border:1px solid var(--g100); }
+        .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); margin-bottom:4px; }
+        .stat-val { font-size:1.6rem; font-weight:800; color:var(--g900); }
+        .stat-sub { font-size:.78rem; color:var(--g500); margin-top:2px; }
+
+        /* Tabs */
+        .tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--g200); }
+        .tab-btn {
+            padding:10px 20px; font-size:.85rem; font-weight:600;
+            font-family:var(--font); color:var(--g500); background:none;
+            border:none; border-bottom:2px solid transparent;
+            margin-bottom:-2px; cursor:pointer; transition:var(--ease);
+        }
+        .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .tab-btn:hover:not(.active) { color:var(--g700); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* Table */
+        .table-wrap { background:#fff; border-radius:var(--r-md); box-shadow:var(--shadow-sm); border:1px solid var(--g100); overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:.85rem; }
+        thead th { padding:12px 16px; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--g400); border-bottom:2px solid var(--g100); background:var(--g50); white-space:nowrap; }
+        tbody td { padding:12px 16px; border-bottom:1px solid var(--g100); vertical-align:middle; }
+        tbody tr:hover { background:var(--g50); }
+
+        /* Berater Cards */
+        .berater-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px; margin-bottom:24px; }
+        .berater-card {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            transition:var(--ease);
+        }
+        .berater-card:hover { box-shadow:var(--shadow-md); }
+        .berater-card-header { display:flex; justify-content:space-between; align-items:start; margin-bottom:16px; }
+        .berater-name { font-size:1rem; font-weight:700; color:var(--g900); }
+        .berater-email { font-size:.78rem; color:var(--g500); }
+        .berater-team { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:600; background:var(--primary-light); color:var(--primary); }
+        .berater-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:12px; }
+        .berater-stat { text-align:center; }
+        .berater-stat-val { font-size:1.2rem; font-weight:800; color:var(--g900); }
+        .berater-stat-label { font-size:.68rem; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; }
+        .berater-bar { height:4px; background:var(--g100); border-radius:2px; margin-top:12px; overflow:hidden; }
+        .berater-bar-fill { height:100%; border-radius:2px; background:var(--success); transition:width .5s ease; }
+        .berater-aktiv { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+        .berater-aktiv.ja { background:var(--success); }
+        .berater-aktiv.nein { background:var(--g300); }
+
+        /* Kunden Zuordnung */
+        .zuordnung-box {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:24px;
+        }
+        .zuordnung-box h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:12px; }
+        .berater-select {
+            padding:6px 10px; font-size:.82rem; font-family:var(--font);
+            border:1px solid var(--g200); border-radius:var(--r-sm);
+            background:#fff; cursor:pointer; min-width:150px;
+        }
+        .berater-select:focus { outline:none; border-color:var(--primary); }
+
+        .search-input {
+            width:100%; padding:10px 14px; font-size:.9rem;
+            border:1.5px solid var(--g200); border-radius:var(--r-sm);
+            font-family:var(--font); margin-bottom:16px;
+        }
+        .search-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,66,131,.12); }
+
+        .status-badge {
+            display:inline-block; padding:3px 10px; border-radius:20px;
+            font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+        }
+        .status-neu { background:#EEF2FF; color:#4F46E5; }
+        .status-kontaktiert { background:var(--warning-light); color:#B45309; }
+        .status-termin { background:var(--primary-light); color:var(--primary); }
+        .status-abgeschlossen { background:var(--success-light); color:#047857; }
+        .status-storniert { background:#FEF2F2; color:#991B1B; }
+
+        .loading { text-align:center; padding:40px; color:var(--g400); }
+        .empty-state { text-align:center; padding:60px 20px; color:var(--g400); }
+        .empty-state h3 { font-size:1.1rem; margin-bottom:8px; color:var(--g500); }
+
+        .filter-row { display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+        .filter-label { font-size:.78rem; font-weight:600; color:var(--g500); }
+
+        /* Excel Upload */
+        .excel-upload-box {
+            background:#fff; border-radius:var(--r-md); padding:20px;
+            box-shadow:var(--shadow-sm); border:1px solid var(--g100);
+            margin-bottom:24px;
+        }
+        .excel-upload-box h3 { font-size:.9rem; font-weight:700; color:var(--g800); margin-bottom:4px; }
+        .excel-upload-box .sub { font-size:.78rem; color:var(--g500); margin-bottom:12px; }
+        .excel-upload-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .excel-file-input {
+            flex:1; min-width:200px; padding:8px 12px; font-size:.85rem;
+            font-family:var(--font); border:1.5px dashed var(--g300);
+            border-radius:var(--r-sm); background:var(--g50); cursor:pointer;
+        }
+        .excel-file-input:hover { border-color:var(--primary); background:var(--primary-light); }
+        .btn-upload { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:#fff; background:var(--success); border:none; border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; }
+        .btn-upload:hover { background:#009966; }
+        .btn-upload:disabled { opacity:.5; cursor:not-allowed; }
+        .btn-template { padding:10px 20px; font-size:.82rem; font-weight:600; font-family:var(--font); color:var(--g600); background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); white-space:nowrap; height:42px; text-decoration:none; display:inline-flex; align-items:center; }
+        .btn-template:hover { background:var(--g200); }
+        .upload-status { font-size:.82rem; margin-top:10px; padding:8px 12px; border-radius:var(--r-sm); display:none; }
+        .upload-status.success { display:block; background:var(--success-light); color:#047857; }
+        .upload-status.error { display:block; background:#FEF2F2; color:#991B1B; }
+        .upload-status.info { display:block; background:var(--primary-light); color:var(--primary); }
+        .upload-preview { margin-top:12px; max-height:200px; overflow-y:auto; }
+        .upload-preview table { font-size:.8rem; }
+        .upload-preview th { font-size:.7rem; }
+
+        .access-denied { text-align:center; padding:80px 20px; }
+        .access-denied h2 { color:var(--danger); margin-bottom:8px; }
+        .access-denied p { color:var(--g500); }
+
+        @media (max-width:768px) {
+            .dash-body { padding:16px; }
+            .stats { grid-template-columns:1fr 1fr; }
+            .berater-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginView">
+    <div class="login-card">
+        <h1>Admin-Dashboard</h1>
+        <p class="sub">Zugang nur für Administratoren.</p>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="fg">
+                <label for="loginEmail">E-Mail</label>
+                <input type="email" id="loginEmail" required autocomplete="email">
+            </div>
+            <div class="fg">
+                <label for="loginPassword">Passwort</label>
+                <input type="password" id="loginPassword" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn" id="loginBtn">Anmelden</button>
+            <div class="error-msg" id="loginError"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ACCESS DENIED -->
+<div class="access-denied" id="accessDenied" style="display:none;">
+    <h2>Kein Zugriff</h2>
+    <p>Dein Account hat keine Admin-Berechtigung.</p>
+    <p style="margin-top:16px;"><a href="dashboard.html">Zum Berater-Dashboard</a></p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboardView">
+    <div class="dash-header">
+        <div style="display:flex;align-items:center;">
+            <h1>GKV-Rechner</h1>
+            <span class="admin-badge">Admin</span>
+        </div>
+        <div class="user-info">
+            <span class="user-name" id="userName"></span>
+            <a href="dashboard.html" class="btn-sm" style="text-decoration:none;">Berater-Dashboard</a>
+            <button class="btn-sm" onclick="handleLogout()">Abmelden</button>
+        </div>
+    </div>
+
+    <div class="dash-body">
+        <!-- Global Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Berater gesamt</div>
+                <div class="stat-val" id="statBerater">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Kunden gesamt</div>
+                <div class="stat-val" id="statKunden">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Leads gesamt</div>
+                <div class="stat-val" id="statLeads">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Leads diesen Monat</div>
+                <div class="stat-val" id="statLeadsMonth">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Abschlüsse gesamt</div>
+                <div class="stat-val" id="statAbschluesse">–</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="berater" onclick="switchTab('berater')">Berater-Übersicht</button>
+            <button class="tab-btn" data-tab="kunden" onclick="switchTab('kunden')">Alle Kunden</button>
+            <button class="tab-btn" data-tab="leads" onclick="switchTab('leads')">Alle Leads</button>
+        </div>
+
+        <!-- TAB: Berater -->
+        <div class="tab-content active" id="tabBerater">
+            <div class="berater-grid" id="beraterGrid">
+                <div class="loading">Berater werden geladen...</div>
+            </div>
+        </div>
+
+        <!-- TAB: Kunden -->
+        <div class="tab-content" id="tabKunden">
+            <!-- Excel Upload -->
+            <div class="excel-upload-box">
+                <h3>Kunden per Excel hochladen</h3>
+                <p class="sub">Excel-Datei (.xlsx, .xls) mit den Spalten: <strong>Vorname</strong>, <strong>Nachname</strong>, <strong>Email</strong> (optional). Wähle den Berater, dem die Kunden zugeordnet werden sollen.</p>
+                <div class="excel-upload-row">
+                    <select class="berater-select" id="excelBeraterSelect" style="min-width:200px;">
+                        <option value="">Berater wählen...</option>
+                    </select>
+                    <input type="file" class="excel-file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="previewExcel(this)">
+                    <button class="btn-upload" id="excelUploadBtn" onclick="uploadExcelKunden()" disabled>Hochladen</button>
+                    <button class="btn-template" onclick="downloadTemplate()">Vorlage</button>
+                </div>
+                <div class="upload-status" id="uploadStatus"></div>
+                <div class="upload-preview" id="uploadPreview"></div>
+            </div>
+
+            <div class="filter-row">
+                <input type="text" class="search-input" id="kundenSearch" placeholder="Kunden suchen (Name, E-Mail)..." oninput="renderAlleKunden()" style="width:300px;margin-bottom:0;">
+                <span class="filter-label">Berater:</span>
+                <select class="berater-select" id="kundenBeraterFilter" onchange="renderAlleKunden()">
+                    <option value="alle">Alle Berater</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table id="kundenTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>E-Mail</th>
+                            <th>Zugeordneter Berater</th>
+                            <th>Berechnungen</th>
+                            <th>Erstellt am</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kundenBody"></tbody>
+                </table>
+                <div class="empty-state" id="kundenEmpty" style="display:none;">
+                    <h3>Keine Kunden gefunden</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Leads -->
+        <div class="tab-content" id="tabLeads">
+            <div class="filter-row">
+                <input type="text" class="search-input" id="leadsSearch" placeholder="Leads suchen (Name, E-Mail)..." oninput="renderAlleLeads()" style="width:300px;margin-bottom:0;">
+                <span class="filter-label">Berater:</span>
+                <select class="berater-select" id="leadsBeraterFilter" onchange="renderAlleLeads()">
+                    <option value="alle">Alle Berater</option>
+                </select>
+                <span class="filter-label">Status:</span>
+                <select class="berater-select" id="leadsStatusFilter" onchange="renderAlleLeads()">
+                    <option value="alle">Alle</option>
+                    <option value="neu">Neu</option>
+                    <option value="kontaktiert">Kontaktiert</option>
+                    <option value="termin">Termin</option>
+                    <option value="abgeschlossen">Abgeschlossen</option>
+                    <option value="storniert">Storniert</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table id="leadsTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Name</th>
+                            <th>Kontakt</th>
+                            <th>Berater</th>
+                            <th>Gewählte Kasse</th>
+                            <th>Sparpotenzial</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsBody"></tbody>
+                </table>
+                <div class="empty-state" id="leadsEmpty" style="display:none;">
+                    <h3>Keine Leads gefunden</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- SheetJS for Excel parsing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+/* ==================================================================
+   SUPABASE CLIENT
+   ================================================================== */
+const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// State
+let adminRecord = null;
+let allBerater = [];
+let allKunden = [];
+let allLeads = [];
+let kundenBerechnungenCount = {};
+
+/* ==================================================================
+   AUTH
+   ================================================================== */
+async function checkSession() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+        await tryShowDashboard(session.user);
+    }
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const errorEl = document.getElementById('loginError');
+    btn.disabled = true;
+    errorEl.style.display = 'none';
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        errorEl.textContent = 'Anmeldung fehlgeschlagen: ' + error.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        return;
+    }
+
+    await tryShowDashboard(data.user);
+}
+
+async function tryShowDashboard(user) {
+    // Prüfe Admin-Status
+    const { data: berater } = await sb
+        .from('berater')
+        .select('*')
+        .eq('auth_user_id', user.id)
+        .single();
+
+    if (!berater || !berater.is_admin) {
+        document.getElementById('loginView').style.display = 'none';
+        document.getElementById('accessDenied').style.display = 'block';
+        return;
+    }
+
+    adminRecord = berater;
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+    document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
+
+    await loadAllData();
+}
+
+async function handleLogout() {
+    await sb.auth.signOut();
+    window.location.reload();
+}
+
+/* ==================================================================
+   DATA LOADING
+   ================================================================== */
+async function loadAllData() {
+    const [beraterRes, kundenRes, leadsRes] = await Promise.all([
+        sb.from('berater').select('*').order('vorname'),
+        sb.from('kunden').select('*').order('created_at', { ascending: false }),
+        sb.from('leads').select('*').order('created_at', { ascending: false }),
+    ]);
+
+    allBerater = beraterRes.data || [];
+    allKunden = kundenRes.data || [];
+    allLeads = leadsRes.data || [];
+
+    // Berechnungen zählen pro Kunde
+    if (allKunden.length > 0) {
+        const kundenIds = allKunden.map(k => k.id);
+        const { data: berechnungen } = await sb
+            .from('kunden_berechnungen')
+            .select('kunde_id')
+            .in('kunde_id', kundenIds);
+
+        kundenBerechnungenCount = {};
+        (berechnungen || []).forEach(b => {
+            kundenBerechnungenCount[b.kunde_id] = (kundenBerechnungenCount[b.kunde_id] || 0) + 1;
+        });
+    }
+
+    // Berater-Filter befüllen
+    populateBeraterFilters();
+    updateGlobalStats();
+    renderBeraterGrid();
+    renderAlleKunden();
+    renderAlleLeads();
+}
+
+function populateBeraterFilters() {
+    const options = allBerater.map(b =>
+        `<option value="${b.id}">${esc(b.vorname)} ${esc(b.nachname)}</option>`
+    ).join('');
+
+    document.getElementById('kundenBeraterFilter').innerHTML =
+        '<option value="alle">Alle Berater</option>' + options;
+    document.getElementById('leadsBeraterFilter').innerHTML =
+        '<option value="alle">Alle Berater</option>' + options;
+    document.getElementById('excelBeraterSelect').innerHTML =
+        '<option value="">Berater wählen...</option>' + options;
+}
+
+function updateGlobalStats() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    document.getElementById('statBerater').textContent = allBerater.length;
+    document.getElementById('statKunden').textContent = allKunden.length;
+    document.getElementById('statLeads').textContent = allLeads.length;
+    document.getElementById('statLeadsMonth').textContent =
+        allLeads.filter(l => l.created_at >= monthStart).length;
+    document.getElementById('statAbschluesse').textContent =
+        allLeads.filter(l => l.status === 'abgeschlossen').length;
+}
+
+/* ==================================================================
+   BERATER OVERVIEW
+   ================================================================== */
+function renderBeraterGrid() {
+    const grid = document.getElementById('beraterGrid');
+    const maxLeads = Math.max(...allBerater.map(b =>
+        allLeads.filter(l => l.berater_id === b.id).length
+    ), 1);
+
+    grid.innerHTML = allBerater.map(b => {
+        const beraterLeads = allLeads.filter(l => l.berater_id === b.id);
+        const beraterKunden = allKunden.filter(k => k.berater_id === b.id);
+        const abschluesse = beraterLeads.filter(l => l.status === 'abgeschlossen').length;
+        const neueLeads = beraterLeads.filter(l => l.status === 'neu').length;
+        const barWidth = (beraterLeads.length / maxLeads * 100).toFixed(0);
+
+        // Letzte Aktivität
+        let letzteAktivitaet = '–';
+        if (beraterLeads.length > 0) {
+            const letzterLead = beraterLeads[0]; // already sorted desc
+            const d = new Date(letzterLead.created_at);
+            letzteAktivitaet = d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        }
+
+        return `
+        <div class="berater-card">
+            <div class="berater-card-header">
+                <div>
+                    <div class="berater-name">
+                        <span class="berater-aktiv ${b.aktiv ? 'ja' : 'nein'}"></span>
+                        ${esc(b.vorname)} ${esc(b.nachname)}
+                    </div>
+                    <div class="berater-email">${esc(b.email)}</div>
+                </div>
+                ${b.team ? `<span class="berater-team">${esc(b.team)}</span>` : ''}
+            </div>
+            <div class="berater-stats">
+                <div class="berater-stat">
+                    <div class="berater-stat-val">${beraterLeads.length}</div>
+                    <div class="berater-stat-label">Leads</div>
+                </div>
+                <div class="berater-stat">
+                    <div class="berater-stat-val">${beraterKunden.length}</div>
+                    <div class="berater-stat-label">Kunden</div>
+                </div>
+                <div class="berater-stat">
+                    <div class="berater-stat-val">${abschluesse}</div>
+                    <div class="berater-stat-label">Abschlüsse</div>
+                </div>
+            </div>
+            <div class="berater-bar">
+                <div class="berater-bar-fill" style="width:${barWidth}%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--g400);">
+                <span>${neueLeads} neue Leads</span>
+                <span>Letzter Lead: ${letzteAktivitaet}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+/* ==================================================================
+   ALLE KUNDEN
+   ================================================================== */
+function renderAlleKunden() {
+    const search = document.getElementById('kundenSearch').value.toLowerCase().trim();
+    const beraterFilter = document.getElementById('kundenBeraterFilter').value;
+
+    let filtered = allKunden;
+
+    if (beraterFilter !== 'alle') {
+        filtered = filtered.filter(k => k.berater_id === beraterFilter);
+    }
+
+    if (search) {
+        filtered = filtered.filter(k =>
+            (k.vorname + ' ' + k.nachname).toLowerCase().includes(search) ||
+            (k.email || '').toLowerCase().includes(search)
+        );
+    }
+
+    if (filtered.length === 0) {
+        document.getElementById('kundenTable').style.display = 'none';
+        document.getElementById('kundenEmpty').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('kundenTable').style.display = 'table';
+    document.getElementById('kundenEmpty').style.display = 'none';
+
+    const tbody = document.getElementById('kundenBody');
+    tbody.innerHTML = filtered.map(kunde => {
+        const berater = allBerater.find(b => b.id === kunde.berater_id);
+        const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
+        const count = kundenBerechnungenCount[kunde.id] || 0;
+        const date = new Date(kunde.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+        // Berater-Dropdown
+        const beraterOptions = allBerater.map(b =>
+            `<option value="${b.id}" ${b.id === kunde.berater_id ? 'selected' : ''}>${esc(b.vorname)} ${esc(b.nachname)}</option>`
+        ).join('');
+
+        return `<tr>
+            <td style="font-weight:600;">${esc(kunde.vorname)} ${esc(kunde.nachname)}</td>
+            <td>${kunde.email ? `<a href="mailto:${esc(kunde.email)}" style="color:var(--primary);font-size:.82rem;">${esc(kunde.email)}</a>` : '–'}</td>
+            <td>
+                <select class="berater-select" onchange="reassignKunde('${kunde.id}', this.value)">
+                    ${beraterOptions}
+                </select>
+            </td>
+            <td style="text-align:center;">${count}</td>
+            <td style="font-size:.82rem;color:var(--g500);">${date}</td>
+        </tr>`;
+    }).join('');
+}
+
+async function reassignKunde(kundeId, newBeraterId) {
+    const { error } = await sb
+        .from('kunden')
+        .update({ berater_id: newBeraterId })
+        .eq('id', kundeId);
+
+    if (error) {
+        console.error('Zuordnung fehlgeschlagen:', error);
+        alert('Fehler bei der Zuordnung: ' + error.message);
+        return;
+    }
+
+    // Update local state
+    const kunde = allKunden.find(k => k.id === kundeId);
+    if (kunde) kunde.berater_id = newBeraterId;
+
+    renderBeraterGrid();
+}
+
+/* ==================================================================
+   ALLE LEADS
+   ================================================================== */
+function renderAlleLeads() {
+    const search = document.getElementById('leadsSearch').value.toLowerCase().trim();
+    const beraterFilter = document.getElementById('leadsBeraterFilter').value;
+    const statusFilter = document.getElementById('leadsStatusFilter').value;
+
+    let filtered = allLeads;
+
+    if (beraterFilter !== 'alle') {
+        filtered = filtered.filter(l => l.berater_id === beraterFilter);
+    }
+    if (statusFilter !== 'alle') {
+        filtered = filtered.filter(l => l.status === statusFilter);
+    }
+    if (search) {
+        filtered = filtered.filter(l =>
+            (l.vorname + ' ' + l.nachname).toLowerCase().includes(search) ||
+            (l.email || '').toLowerCase().includes(search)
+        );
+    }
+
+    if (filtered.length === 0) {
+        document.getElementById('leadsTable').style.display = 'none';
+        document.getElementById('leadsEmpty').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('leadsTable').style.display = 'table';
+    document.getElementById('leadsEmpty').style.display = 'none';
+
+    const tbody = document.getElementById('leadsBody');
+    tbody.innerHTML = filtered.map(lead => {
+        const berater = allBerater.find(b => b.id === lead.berater_id);
+        const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
+        const date = new Date(lead.created_at);
+        const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const savings = lead.sparpotenzial_jahr
+            ? `${lead.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
+            : '–';
+        const statusClass = `status-${lead.status}`;
+
+        return `<tr>
+            <td style="font-size:.82rem;">${dateStr}</td>
+            <td style="font-weight:600;">${esc(lead.vorname)} ${esc(lead.nachname)}</td>
+            <td>
+                <div style="font-size:.78rem;">${esc(lead.email || '–')}</div>
+                ${lead.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(lead.telefon)}</div>` : ''}
+            </td>
+            <td style="font-size:.82rem;">${esc(beraterName)}</td>
+            <td style="font-size:.82rem;">${esc(lead.gewaehlte_kasse || '–')}</td>
+            <td style="color:var(--success);font-weight:600;font-size:.82rem;">${savings}</td>
+            <td><span class="status-badge ${statusClass}">${esc(lead.status)}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+/* ==================================================================
+   TABS
+   ================================================================== */
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    });
+}
+
+/* ==================================================================
+   EXCEL UPLOAD
+   ================================================================== */
+let excelKunden = [];
+
+function previewExcel(input) {
+    const file = input.files[0];
+    const statusEl = document.getElementById('uploadStatus');
+    const previewEl = document.getElementById('uploadPreview');
+    const uploadBtn = document.getElementById('excelUploadBtn');
+
+    statusEl.className = 'upload-status';
+    previewEl.innerHTML = '';
+    excelKunden = [];
+    uploadBtn.disabled = true;
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const workbook = XLSX.read(e.target.result, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+            if (rows.length === 0) {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = 'Die Datei enthält keine Daten.';
+                return;
+            }
+
+            const colMap = detectColumns(Object.keys(rows[0]));
+            if (!colMap.vorname || !colMap.nachname) {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = 'Spalten "Vorname" und "Nachname" nicht gefunden. Gefundene Spalten: ' + Object.keys(rows[0]).join(', ');
+                return;
+            }
+
+            excelKunden = rows.map(row => ({
+                vorname: String(row[colMap.vorname] || '').trim(),
+                nachname: String(row[colMap.nachname] || '').trim(),
+                email: colMap.email ? String(row[colMap.email] || '').trim() || null : null,
+            })).filter(k => k.vorname && k.nachname);
+
+            if (excelKunden.length === 0) {
+                statusEl.className = 'upload-status error';
+                statusEl.textContent = 'Keine gültigen Kunden gefunden (Vorname und Nachname müssen ausgefüllt sein).';
+                return;
+            }
+
+            statusEl.className = 'upload-status info';
+            statusEl.textContent = `${excelKunden.length} Kunden erkannt. Vorschau:`;
+            updateUploadBtnState();
+
+            const maxPreview = Math.min(excelKunden.length, 10);
+            let html = '<table><thead><tr><th>Vorname</th><th>Nachname</th><th>E-Mail</th></tr></thead><tbody>';
+            for (let i = 0; i < maxPreview; i++) {
+                const k = excelKunden[i];
+                html += `<tr><td>${esc(k.vorname)}</td><td>${esc(k.nachname)}</td><td>${esc(k.email || '–')}</td></tr>`;
+            }
+            if (excelKunden.length > 10) {
+                html += `<tr><td colspan="3" style="text-align:center;color:var(--g400);">... und ${excelKunden.length - 10} weitere</td></tr>`;
+            }
+            html += '</tbody></table>';
+            previewEl.innerHTML = html;
+
+        } catch (err) {
+            statusEl.className = 'upload-status error';
+            statusEl.textContent = 'Fehler beim Lesen der Datei: ' + err.message;
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function detectColumns(headers) {
+    const map = { vorname: null, nachname: null, email: null };
+    const lower = headers.map(h => h.toLowerCase().trim());
+    for (let i = 0; i < headers.length; i++) {
+        const l = lower[i];
+        if (!map.vorname && (l === 'vorname' || l === 'first name' || l === 'firstname' || l === 'first_name' || l === 'vname')) map.vorname = headers[i];
+        if (!map.nachname && (l === 'nachname' || l === 'last name' || l === 'lastname' || l === 'last_name' || l === 'nname' || l === 'name')) map.nachname = headers[i];
+        if (!map.email && (l === 'email' || l === 'e-mail' || l === 'mail' || l === 'emailadresse' || l === 'e-mail-adresse')) map.email = headers[i];
+    }
+    return map;
+}
+
+function updateUploadBtnState() {
+    const beraterSelected = document.getElementById('excelBeraterSelect').value;
+    document.getElementById('excelUploadBtn').disabled = excelKunden.length === 0 || !beraterSelected;
+}
+
+// Berater-Auswahl ändert Upload-Button-Status
+document.getElementById('excelBeraterSelect').addEventListener('change', updateUploadBtnState);
+
+async function uploadExcelKunden() {
+    const beraterId = document.getElementById('excelBeraterSelect').value;
+    if (!beraterId || excelKunden.length === 0) return;
+
+    const btn = document.getElementById('excelUploadBtn');
+    const statusEl = document.getElementById('uploadStatus');
+    btn.disabled = true;
+    statusEl.className = 'upload-status info';
+    statusEl.textContent = 'Prüfe auf Duplikate...';
+
+    // Duplikat-Prüfung gegen bestehende Kunden des gewählten Beraters
+    const beraterKunden = allKunden.filter(k => k.berater_id === beraterId);
+    const existingSet = new Set(
+        beraterKunden.map(k => (k.vorname + '|' + k.nachname + '|' + (k.email || '')).toLowerCase())
+    );
+
+    const neueKunden = [];
+    const duplikate = [];
+
+    for (const kunde of excelKunden) {
+        const key = (kunde.vorname + '|' + kunde.nachname + '|' + (kunde.email || '')).toLowerCase();
+        if (existingSet.has(key)) {
+            duplikate.push(kunde);
+        } else {
+            neueKunden.push(kunde);
+            existingSet.add(key);
+        }
+    }
+
+    if (neueKunden.length === 0) {
+        statusEl.className = 'upload-status error';
+        statusEl.textContent = `Alle ${duplikate.length} Kunden existieren bereits bei diesem Berater.`;
+        return;
+    }
+
+    statusEl.textContent = `Lade ${neueKunden.length} neue Kunden hoch...` +
+        (duplikate.length > 0 ? ` (${duplikate.length} Duplikate übersprungen)` : '');
+
+    let success = 0;
+    let errors = 0;
+
+    for (const kunde of neueKunden) {
+        const slug = (kunde.vorname + '-' + kunde.nachname)
+            .toLowerCase()
+            .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
+            .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+        const code = slug + '-' + Math.random().toString(36).substr(2, 4);
+
+        const { error } = await sb.from('kunden').insert({
+            berater_id: beraterId,
+            code,
+            vorname: kunde.vorname,
+            nachname: kunde.nachname,
+            email: kunde.email,
+        });
+
+        if (error) {
+            errors++;
+            console.error('Fehler bei Kunde:', kunde, error);
+        } else {
+            success++;
+        }
+    }
+
+    let msg = `${success} Kunden erfolgreich hochgeladen!`;
+    if (duplikate.length > 0) msg += ` ${duplikate.length} Duplikate übersprungen.`;
+    if (errors > 0) msg += ` ${errors} fehlgeschlagen.`;
+
+    statusEl.className = errors > 0 ? 'upload-status error' : 'upload-status success';
+    statusEl.textContent = msg;
+
+    // Reset
+    excelKunden = [];
+    document.getElementById('excelFileInput').value = '';
+    document.getElementById('uploadPreview').innerHTML = '';
+
+    await loadAllData();
+}
+
+function downloadTemplate() {
+    const ws = XLSX.utils.aoa_to_sheet([
+        ['Vorname', 'Nachname', 'Email'],
+        ['Max', 'Mustermann', 'max@beispiel.de'],
+        ['Erika', 'Musterfrau', 'erika@beispiel.de'],
+    ]);
+    ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 30 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Kunden');
+    XLSX.writeFile(wb, 'Kunden-Vorlage.xlsx');
+}
+
+/* ==================================================================
+   HELPERS
+   ================================================================== */
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/* ==================================================================
+   INIT
+   ================================================================== */
+checkSession();
+</script>
+
+</body>
+</html>
