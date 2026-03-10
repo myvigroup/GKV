@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berater-Dashboard – GKV-Rechner</title>
+    <title>Berater-Dashboard – mitNORM</title>
     <style>
         :root {
             --primary: #004283;
@@ -42,8 +42,10 @@
             max-width:400px; width:100%; box-shadow:var(--shadow-lg);
         }
         .login-logo { text-align:center; margin-bottom:24px; }
-        .login-logo svg { width:48px; height:48px; }
-        .login-card h1 { font-size:1.3rem; color:var(--g900); margin-bottom:4px; text-align:center; }
+        .login-logo .logo-text { font-size:1.8rem; font-weight:900; color:var(--primary); letter-spacing:-.03em; }
+        .login-logo .logo-text span { color:var(--accent); }
+        .login-logo .logo-sub { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.15em; color:var(--g400); margin-top:2px; }
+        .login-card h1 { font-size:1.2rem; color:var(--g900); margin-bottom:4px; text-align:center; }
         .login-card .sub { font-size:.85rem; color:var(--g500); margin-bottom:24px; text-align:center; }
         .fg { margin-bottom:16px; }
         .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--g600); margin-bottom:4px; }
@@ -61,9 +63,11 @@
             display:flex; align-items:center; justify-content:space-between;
             position:sticky; top:0; z-index:100;
         }
-        .dash-header-left { display:flex; align-items:center; gap:12px; }
-        .dash-header-left h1 { font-size:1rem; font-weight:800; color:var(--primary); letter-spacing:-.02em; }
-        .dash-header-left h1 span { color:var(--accent); }
+        .dash-header-left { display:flex; align-items:center; gap:10px; }
+        .dash-header-logo { font-size:1.15rem; font-weight:900; color:var(--primary); letter-spacing:-.02em; }
+        .dash-header-logo span { color:var(--accent); }
+        .dash-header-divider { width:1px; height:24px; background:var(--g200); }
+        .dash-header-title { font-size:.82rem; font-weight:600; color:var(--g500); }
         .dash-header .user-info { display:flex; align-items:center; gap:12px; }
         .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; }
         .user-name { font-size:.85rem; color:var(--g600); font-weight:500; }
@@ -408,10 +412,11 @@
 <div class="login-wrap" id="loginView">
     <div class="login-card">
         <div class="login-logo">
-            <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#004283"/><path d="M14 24l7 7 13-14" stroke="#06BADD" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div class="logo-text">mit<span>NORM</span></div>
+            <div class="logo-sub">GKV-Vergleichsrechner</div>
         </div>
         <h1>Berater-Dashboard</h1>
-        <p class="sub">GKV-Rechner Login</p>
+        <p class="sub">Melden Sie sich mit Ihrem Berater-Zugang an</p>
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="fg">
                 <label for="loginEmail">E-Mail</label>
@@ -433,7 +438,9 @@
     <!-- Header -->
     <div class="dash-header">
         <div class="dash-header-left">
-            <h1>GKV<span>-Rechner</span></h1>
+            <div class="dash-header-logo">mit<span>NORM</span></div>
+            <div class="dash-header-divider"></div>
+            <div class="dash-header-title">Berater-Dashboard</div>
         </div>
         <div class="user-info">
             <div class="user-avatar" id="userAvatar">LJ</div>
