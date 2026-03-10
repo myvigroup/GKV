@@ -103,6 +103,7 @@ export default async function handler(req, res) {
 
         case 'berater_welcome': {
             subject = `Willkommen bei mitNORM, ${berater.vorname}!`;
+            const hasPassword = data.password;
             htmlContent = buildNotificationHtml(berater, `
                 <h2 style="margin:0 0 8px;font-size:18px;color:#0F172A;">Willkommen im Team!</h2>
                 <p style="margin:0 0 16px;color:#475569;line-height:1.6;">
@@ -111,12 +112,18 @@ export default async function handler(req, res) {
                     Über dein persönliches Dashboard kannst du deine Kontakte verwalten,
                     E-Mails versenden und den Überblick über deine Leads behalten.
                 </p>
+                <div style="background:#F1F5F9;border-radius:8px;padding:16px;margin-bottom:20px;">
+                    <p style="margin:0 0 4px;font-size:13px;color:#64748B;font-weight:600;">DEINE ZUGANGSDATEN</p>
+                    <table style="width:100%;border-collapse:collapse;">
+                        <tr><td style="padding:6px 0;color:#64748B;font-size:14px;width:120px;">E-Mail</td><td style="padding:6px 0;font-weight:600;font-size:14px;">${esc(berater.email)}</td></tr>
+                        ${hasPassword ? `<tr><td style="padding:6px 0;color:#64748B;font-size:14px;">Passwort</td><td style="padding:6px 0;font-weight:600;font-size:14px;font-family:monospace;">${esc(data.password)}</td></tr>` : ''}
+                    </table>
+                </div>
                 <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-                    <tr><td style="padding:8px 0;color:#64748B;font-size:14px;width:140px;">Dein Slug</td><td style="padding:8px 0;font-weight:600;font-size:14px;font-family:monospace;">${esc(berater.slug)}</td></tr>
-                    <tr><td style="padding:8px 0;color:#64748B;font-size:14px;">Rechner-Link</td><td style="padding:8px 0;font-size:14px;"><a href="https://gkv-phi.vercel.app/?berater=${esc(berater.slug)}" style="color:#004283;">gkv-phi.vercel.app/?berater=${esc(berater.slug)}</a></td></tr>
+                    <tr><td style="padding:8px 0;color:#64748B;font-size:14px;width:140px;">Dein Rechner-Link</td><td style="padding:8px 0;font-size:14px;"><a href="https://krankenversicherung.mitnorm.de/?berater=${esc(berater.slug)}" style="color:#004283;">krankenversicherung.mitnorm.de/?berater=${esc(berater.slug)}</a></td></tr>
                 </table>
                 ${ctaButton(dashboardUrl, 'Zum Dashboard')}
-                <p style="margin:16px 0 0;font-size:13px;color:#94A3B8;">Falls du noch keinen Login hast, wende dich an deinen Administrator.</p>
+                <p style="margin:16px 0 0;font-size:13px;color:#94A3B8;">Bitte ändere dein Passwort nach dem ersten Login.</p>
             `);
             break;
         }

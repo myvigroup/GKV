@@ -479,6 +479,10 @@
             <label>Buchungs-Link</label>
             <input type="text" id="bmCalendly">
         </div>
+        <div class="fg" id="bmPasswordRow">
+            <label>Passwort *</label>
+            <input type="text" id="bmPassword" placeholder="Initiales Passwort für den Login">
+        </div>
         <div class="btn-row">
             <button class="btn-secondary" onclick="closeBeraterModal()">Abbrechen</button>
             <button class="btn" onclick="saveBerater()" id="bmSaveBtn">Speichern</button>
@@ -949,6 +953,7 @@ function openBeraterModal(beraterId) {
         document.getElementById('bmTeam').value = b.team || '';
         document.getElementById('bmCalendly').value = b.calendly_url || '';
         document.getElementById('bmDeleteRow').style.display = 'block';
+        document.getElementById('bmPasswordRow').style.display = 'none';
     } else {
         // Create mode
         document.getElementById('beraterModalTitle').textContent = 'Neuer Berater';
@@ -959,7 +964,9 @@ function openBeraterModal(beraterId) {
         document.getElementById('bmTelefon').value = '';
         document.getElementById('bmTeam').value = '';
         document.getElementById('bmCalendly').value = '';
+        document.getElementById('bmPassword').value = '';
         document.getElementById('bmDeleteRow').style.display = 'none';
+        document.getElementById('bmPasswordRow').style.display = 'block';
     }
 
     modal.classList.add('active');
@@ -980,8 +987,22 @@ async function saveBerater() {
     const errorEl = document.getElementById('bmError');
     errorEl.style.display = 'none';
 
+    const password = document.getElementById('bmPassword').value.trim();
+
     if (!vorname || !nachname || !email) {
         errorEl.textContent = 'Vorname, Nachname und E-Mail sind Pflichtfelder.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    if (!id && !password) {
+        errorEl.textContent = 'Bitte ein Passwort für den neuen Berater setzen.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    if (!id && password.length < 6) {
+        errorEl.textContent = 'Das Passwort muss mindestens 6 Zeichen haben.';
         errorEl.style.display = 'block';
         return;
     }
@@ -1008,15 +1029,38 @@ async function saveBerater() {
         return;
     }
 
-    // Willkommens-Mail an neuen Berater senden
+    // Auth-User erstellen und Willkommens-Mail senden
     if (!id && newBerater) {
+        const { data: { session } } = await sb.auth.getSession();
+        const token = session?.access_token;
+
+        if (token) {
+            const authRes = await fetch('/api/create-berater-auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    berater_id: newBerater.id
+                })
+            });
+            const authData = await authRes.json();
+            if (!authRes.ok) {
+                alert('Berater angelegt, aber Login konnte nicht erstellt werden: ' + (authData.error || 'Unbekannter Fehler'));
+            }
+        }
+
+        // Willkommens-Mail mit Zugangsdaten
         fetch('/api/notify-berater', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 event: 'berater_welcome',
                 berater_id: newBerater.id,
-                data: {}
+                data: { password }
             })
         }).catch(() => {});
     }
