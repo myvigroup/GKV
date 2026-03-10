@@ -735,14 +735,16 @@ function renderAlleKontakte() {
     document.getElementById('kontakteEmpty').style.display = 'none';
 
     document.getElementById('kontakteBody').innerHTML = filtered.map(k => {
-        const berater = allBerater.find(b => b.id === k.berater_id);
-        const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '\u2013';
         const dateStr = new Date(k.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
         const savings = k.sparpotenzial_jahr
             ? `${k.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} \u20AC`
             : '\u2013';
         const statusLabel = k._type === 'kunde' ? 'Kunde' : k.status;
         const statusClass = k._type === 'kunde' ? 'status-abgeschlossen' : `status-${k.status}`;
+        const table = k._type === 'kunde' ? 'kunden' : 'leads';
+        const beraterOptions = allBerater.map(b =>
+            `<option value="${b.id}" ${b.id === k.berater_id ? 'selected' : ''}>${esc(b.vorname)} ${esc(b.nachname)}</option>`
+        ).join('');
 
         return `<tr>
             <td style="font-size:.82rem;">${dateStr}</td>
@@ -751,11 +753,28 @@ function renderAlleKontakte() {
                 <div style="font-size:.78rem;">${esc(k.email || '\u2013')}</div>
                 ${k.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(k.telefon)}</div>` : ''}
             </td>
-            <td style="font-size:.82rem;">${esc(beraterName)}</td>
+            <td>
+                <select class="berater-select" onchange="reassignKontakt('${table}','${k.id}',this.value)">
+                    ${beraterOptions}
+                </select>
+            </td>
             <td style="color:var(--success);font-weight:600;font-size:.82rem;">${savings}</td>
             <td><span class="status-badge ${statusClass}">${esc(statusLabel)}</span></td>
         </tr>`;
     }).join('');
+}
+
+async function reassignKontakt(table, id, newBeraterId) {
+    const { error } = await sb.from(table).update({ berater_id: newBeraterId }).eq('id', id);
+    if (error) {
+        alert('Fehler bei der Zuordnung: ' + error.message);
+        return;
+    }
+    // Update local state
+    const list = table === 'kunden' ? allKunden : allLeads;
+    const item = list.find(x => x.id === id);
+    if (item) item.berater_id = newBeraterId;
+    renderBeraterGrid();
 }
 
 /* ==================================================================
