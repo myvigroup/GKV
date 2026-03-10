@@ -117,24 +117,30 @@ export default async function handler(req, res) {
             ? `${baseUrl}/?berater=${berater.slug}&kunde=${kunde.code}`
             : `${baseUrl}/?berater=${berater.slug}`;
 
-        // Email-Body mit Platzhaltern ersetzen
-        const finalHtml = (htmlContent || defaultHtmlTemplate(berater))
-            .replace(/\{\{vorname\}\}/g, kunde.vorname)
-            .replace(/\{\{nachname\}\}/g, kunde.nachname)
-            .replace(/\{\{link\}\}/g, kundeLink)
-            .replace(/\{\{berater_vorname\}\}/g, berater.vorname)
-            .replace(/\{\{berater_nachname\}\}/g, berater.nachname);
+        // Platzhalter ersetzen
+        function replacePlaceholders(str) {
+            return str
+                .replace(/\{\{vorname\}\}/g, kunde.vorname)
+                .replace(/\{\{nachname\}\}/g, kunde.nachname)
+                .replace(/\{\{link\}\}/g, kundeLink)
+                .replace(/\{\{berater_vorname\}\}/g, berater.vorname)
+                .replace(/\{\{berater_nachname\}\}/g, berater.nachname);
+        }
 
-        const finalText = (textContent || defaultTextTemplate(berater))
-            .replace(/\{\{vorname\}\}/g, kunde.vorname)
-            .replace(/\{\{nachname\}\}/g, kunde.nachname)
-            .replace(/\{\{link\}\}/g, kundeLink)
-            .replace(/\{\{berater_vorname\}\}/g, berater.vorname)
-            .replace(/\{\{berater_nachname\}\}/g, berater.nachname);
+        const finalSubject = replacePlaceholders(subject || 'Ihr persönlicher GKV-Vergleich');
 
-        const finalSubject = (subject || 'Ihr persönlicher GKV-Vergleich')
-            .replace(/\{\{vorname\}\}/g, kunde.vorname)
-            .replace(/\{\{nachname\}\}/g, kunde.nachname);
+        // Text-Version: entweder vom User oder Default
+        const rawText = textContent || defaultTextTemplate(berater);
+        const finalText = replacePlaceholders(rawText);
+
+        // HTML-Version: wenn vom User nur textContent kommt, wrappen wir es in ein HTML-Template
+        let finalHtml;
+        if (htmlContent) {
+            finalHtml = replacePlaceholders(htmlContent);
+        } else {
+            // Text in ein HTML-Template mit Tracking-fähigem Link wrappen
+            finalHtml = wrapTextInHtml(finalText, kundeLink, berater, finalSubject);
+        }
 
         try {
             // Via Brevo senden
@@ -203,28 +209,37 @@ export default async function handler(req, res) {
     return res.status(200).json({ sent, errors, results });
 }
 
-function defaultHtmlTemplate(berater) {
-    return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-    <div style="background: #004283; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
-        <h1 style="color: #fff; margin: 0; font-size: 20px;">Ihr persönlicher GKV-Vergleich</h1>
+function wrapTextInHtml(text, link, berater, subject) {
+    // Text in Absätze aufteilen und {{link}} durch einen klickbaren Button ersetzen
+    const paragraphs = text.split(/\n\n+/).map(p => {
+        // Wenn der Absatz den Link enthält, einen Button daraus machen
+        if (p.includes(link)) {
+            const beforeLink = p.replace(link, '').trim();
+            return (beforeLink ? `<p style="margin:0 0 8px;line-height:1.6;">${escHtml(beforeLink)}</p>` : '') +
+                `<div style="text-align:center;margin:20px 0;">
+                    <a href="${link}" style="display:inline-block;background:#06BADD;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;">Jetzt Beitrag vergleichen</a>
+                </div>`;
+        }
+        return `<p style="margin:0 0 12px;line-height:1.6;">${escHtml(p).replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:0;color:#333;background:#f8fafc;">
+    <div style="background:#004283;padding:24px 28px;text-align:center;">
+        <span style="font-size:20px;font-weight:900;color:#fff;letter-spacing:-0.5px;">mit<span style="color:#06BADD;">NORM</span></span>
     </div>
-    <div style="background: #fff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-        <p>Hallo {{vorname}},</p>
-        <p>es ist wieder Zeit für Ihr jährliches Krankenkassen-Update! Die Beitragssätze haben sich geändert – prüfen Sie jetzt, ob Sie sparen können.</p>
-        <p>Ich habe Ihnen einen <strong>persönlichen Vergleichsrechner</strong> erstellt:</p>
-        <div style="text-align: center; margin: 24px 0;">
-            <a href="{{link}}" style="display: inline-block; background: #06BADD; color: #fff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Jetzt Beitrag vergleichen</a>
-        </div>
-        <p style="font-size: 14px; color: #64748b;">Der Vergleich dauert nur 30 Sekunden und ist natürlich kostenlos.</p>
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        <p style="font-size: 14px;">Mit freundlichen Grüßen,<br><strong>{{berater_vorname}} {{berater_nachname}}</strong></p>
+    <div style="background:#fff;padding:28px;border:1px solid #e2e8f0;border-top:none;">
+        ${paragraphs}
     </div>
-</body>
-</html>`;
+    <div style="background:#f8fafc;padding:16px 28px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
+        <p style="margin:0;font-size:12px;color:#94a3b8;">Diese E-Mail wurde über den mitNORM GKV-Vergleichsrechner versendet.</p>
+    </div>
+</body></html>`;
+}
+
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function defaultTextTemplate(berater) {
