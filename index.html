@@ -2060,16 +2060,16 @@ async function submitLead(event) {
     document.getElementById('leadForm').classList.add('hidden');
     document.getElementById('leadSuccess').classList.remove('hidden');
 
-    const bookBtn = document.getElementById('leadBookBtn');
+    const bookWrap = document.getElementById('leadBookWrap');
     if (berater) {
         document.getElementById('leadSuccessText').textContent =
             `${berater.vorname} ${berater.nachname} wird sich in Kürze bei dir melden.`;
 
-        // Show booking button if berater has a booking link
+        // Show booking section if berater has a booking link
         if (berater.calendlyUrl) {
-            bookBtn.classList.remove('hidden');
+            bookWrap.classList.remove('hidden');
             document.getElementById('leadBookLabel').textContent =
-                `Direkt Termin bei ${berater.vorname} buchen`;
+                `Termin bei ${berater.vorname} buchen`;
         }
     }
 }
@@ -2289,10 +2289,14 @@ function syncKinderlosField() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
             <h4>Vielen Dank!</h4>
             <p id="leadSuccessText">Wir melden uns in Kürze bei dir.</p>
-            <button class="btn-submit btn-book-now hidden" id="leadBookBtn" onclick="bookAfterLead()" style="margin-top:16px;background:#00B67A;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                <span id="leadBookLabel">Direkt Termin buchen</span>
-            </button>
+            <div class="book-after-lead hidden" id="leadBookWrap" style="margin-top:20px;padding:16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;text-align:center;">
+                <p style="margin:0 0 10px;font-size:.85rem;color:#15803D;font-weight:600;">Du möchtest nicht warten?</p>
+                <button class="btn-submit" id="leadBookBtn" onclick="bookAfterLead()" style="background:#00B67A;padding:12px 24px;font-size:.9rem;display:inline-flex;align-items:center;gap:8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <span id="leadBookLabel">Jetzt Termin buchen</span>
+                </button>
+                <p style="margin:8px 0 0;font-size:.75rem;color:#6B7280;">Kostenlos & unverbindlich</p>
+            </div>
         </div>
     </div>
 </div>
