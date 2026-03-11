@@ -79,7 +79,7 @@
         .dash-header-divider { width:1px; height:24px; background:var(--g200); }
         .dash-header-title { font-size:.82rem; font-weight:600; color:var(--g500); }
         .dash-header .user-info { display:flex; align-items:center; gap:12px; }
-        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; }
+        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; position:relative; overflow:hidden; }
         .user-name { font-size:.85rem; color:var(--g600); font-weight:500; }
         .btn-logout { padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font); color:var(--g500); background:transparent; border:1px solid var(--g200); border-radius:var(--r-sm); cursor:pointer; transition:var(--ease); }
         .btn-logout:hover { background:var(--g100); color:var(--g700); }
@@ -788,7 +788,7 @@
         <h3 style="margin:0 0 20px;font-size:1.1rem;font-weight:700;color:var(--g900);">Mein Profil</h3>
 
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-            <div id="profilAvatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0;overflow:hidden;"></div>
+            <div id="profilAvatar" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.4rem;flex-shrink:0;overflow:hidden;position:relative;"></div>
             <div>
                 <label style="display:inline-block;padding:6px 14px;font-size:.78rem;font-weight:600;border:1px solid var(--g200);border-radius:var(--r-sm);cursor:pointer;color:var(--primary);background:#fff;">
                     Bild ändern
@@ -957,7 +957,7 @@ async function showDashboard(user) {
         document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
         const headerAvatar = document.getElementById('userAvatar');
         if (berater.bild_url) {
-            headerAvatar.innerHTML = `<img src="${berater.bild_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            headerAvatar.innerHTML = `<img src="${berater.bild_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`;
         } else {
             headerAvatar.textContent = (berater.vorname[0] + berater.nachname[0]).toUpperCase();
         }
@@ -1437,11 +1437,11 @@ function openProfil() {
 
     const avatar = document.getElementById('profilAvatar');
     if (b.bild_url) {
-        avatar.innerHTML = `<img src="${b.bild_url}" style="width:100%;height:100%;object-fit:cover;">`;
+        avatar.innerHTML = `<img src="${b.bild_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`;
         document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
     } else {
+        avatar.innerHTML = '';
         avatar.textContent = (b.vorname?.[0] || '') + (b.nachname?.[0] || '');
-        avatar.querySelector('img')?.remove();
         document.getElementById('profilBildRemoveBtn').classList.add('hidden');
     }
 
@@ -1592,12 +1592,12 @@ async function applyCrop() {
     // Update profil avatar
     const bildUrl = beraterRecord.bild_url;
     const avatar = document.getElementById('profilAvatar');
-    avatar.innerHTML = `<img src="${bildUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    avatar.innerHTML = `<img src="${bildUrl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`;
     document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
 
     // Update header avatar
     const headerAvatar = document.getElementById('userAvatar');
-    headerAvatar.innerHTML = `<img src="${bildUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    headerAvatar.innerHTML = `<img src="${bildUrl}" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
 
     btn.disabled = false; btn.textContent = 'Übernehmen';
     closeCropper();
