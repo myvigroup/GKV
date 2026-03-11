@@ -233,7 +233,7 @@
         .berater-name { font-size:1rem; font-weight:700; color:var(--g900); }
         .berater-email { font-size:.78rem; color:var(--g500); }
         .berater-team { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:600; background:var(--primary-light); color:var(--primary); }
-        .berater-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:12px; }
+        .berater-stats { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
         .berater-stat { text-align:center; }
         .berater-stat-val { font-size:1.2rem; font-weight:800; color:var(--g900); }
         .berater-stat-label { font-size:.68rem; color:var(--g400); text-transform:uppercase; letter-spacing:.04em; }
@@ -464,10 +464,6 @@
             <div class="chart-card chart-card-wide">
                 <div class="chart-header">
                     <h3>Neue Kontakte (letzte 30 Tage)</h3>
-                    <div class="chart-legend">
-                        <span class="legend-dot" style="background:var(--primary);"></span> Leads
-                        <span class="legend-dot" style="background:var(--accent);margin-left:12px;"></span> Kunden
-                    </div>
                 </div>
                 <div class="kontakte-chart" id="kontakteChart"></div>
             </div>
@@ -866,7 +862,8 @@ function updateGlobalStats() {
     document.getElementById('statBeraterOnline').innerHTML = `<span style="color:var(--success);">● ${onlineBerater} online</span>`;
 
     document.getElementById('statKontakte').textContent = totalKontakte;
-    document.getElementById('statKontakteSub').textContent = `${allLeads.length} Leads · ${allKunden.length} Kunden`;
+    const neuCount = allLeads.filter(l => l.status === 'neu').length;
+    document.getElementById('statKontakteSub').textContent = `${neuCount} neu · ${abschluesse} abgeschlossen`;
 
     document.getElementById('statMonat').textContent = monatKontakte;
     if (letzterMonatKontakte > 0) {
@@ -875,7 +872,7 @@ function updateGlobalStats() {
         const arrow = trendPct >= 0 ? '↑' : '↓';
         document.getElementById('statMonatTrend').innerHTML = `<span class="${trendClass}">${arrow} ${Math.abs(trendPct)}% vs. Vormonat</span>`;
     } else {
-        document.getElementById('statMonatTrend').textContent = `${monatLeads} Leads · ${monatKunden} Kunden`;
+        document.getElementById('statMonatTrend').textContent = `${monatKontakte} neue Kontakte`;
     }
 
     document.getElementById('statAbschluesse').textContent = abschluesse;
@@ -926,34 +923,29 @@ function renderKontakteChart() {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
         const key = d.toISOString().slice(0, 10);
-        days.push({ key, label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), leads: 0, kunden: 0 });
+        days.push({ key, label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), count: 0 });
     }
 
     allLeads.forEach(l => {
         const day = (l.created_at || '').slice(0, 10);
         const entry = days.find(d => d.key === day);
-        if (entry) entry.leads++;
+        if (entry) entry.count++;
     });
     allKunden.forEach(k => {
         const day = (k.created_at || '').slice(0, 10);
         const entry = days.find(d => d.key === day);
-        if (entry) entry.kunden++;
+        if (entry) entry.count++;
     });
 
-    const max = Math.max(...days.map(d => d.leads + d.kunden), 1);
+    const max = Math.max(...days.map(d => d.count), 1);
 
     document.getElementById('kontakteChart').innerHTML = days.map((d, i) => {
-        const total = d.leads + d.kunden;
-        const leadH = Math.max(d.leads / max * 100, d.leads > 0 ? 3 : 0);
-        const kundeH = Math.max(d.kunden / max * 100, d.kunden > 0 ? 3 : 0);
+        const h = Math.max(d.count / max * 110, d.count > 0 ? 3 : 0);
         const showLabel = i % 3 === 0;
         return `
-        <div class="kontakte-chart-bar-wrap" title="${d.label}: ${d.leads} Leads, ${d.kunden} Kunden">
-            <span class="kontakte-chart-count">${total || ''}</span>
-            <div class="kontakte-chart-stack">
-                <div class="kontakte-chart-bar-lead" style="height:${leadH}px;"></div>
-                <div class="kontakte-chart-bar-kunde" style="height:${kundeH}px;${d.kunden > 0 ? 'border-radius:3px 3px 0 0;' : ''}"></div>
-            </div>
+        <div class="kontakte-chart-bar-wrap" title="${d.label}: ${d.count} Kontakte">
+            <span class="kontakte-chart-count">${d.count || ''}</span>
+            <div class="kontakte-chart-bar-lead" style="height:${h}px;"></div>
             ${showLabel ? `<span class="kontakte-chart-label">${d.label}</span>` : '<span class="kontakte-chart-label"></span>'}
         </div>`;
     }).join('');
@@ -1011,16 +1003,20 @@ function renderBeraterRanking() {
    ================================================================== */
 function renderBeraterGrid() {
     const grid = document.getElementById('beraterGrid');
-    const maxLeads = Math.max(...allBerater.map(b =>
-        allLeads.filter(l => l.berater_id === b.id).length
+    const maxKontakte = Math.max(...allBerater.map(b =>
+        allLeads.filter(l => l.berater_id === b.id).length + allKunden.filter(k => k.berater_id === b.id).length
     ), 1);
 
     grid.innerHTML = allBerater.map(b => {
         const beraterLeads = allLeads.filter(l => l.berater_id === b.id);
         const beraterKunden = allKunden.filter(k => k.berater_id === b.id);
+        const totalKontakte = beraterLeads.length + beraterKunden.length;
         const abschluesse = beraterLeads.filter(l => l.status === 'abgeschlossen').length;
-        const neueLeads = beraterLeads.filter(l => l.status === 'neu').length;
-        const barWidth = (beraterLeads.length / maxLeads * 100).toFixed(0);
+        const neueKontakte = beraterLeads.filter(l => l.status === 'neu').length + beraterKunden.filter(k => {
+            const d = new Date(k.created_at); const now = new Date();
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }).length;
+        const barWidth = (totalKontakte / maxKontakte * 100).toFixed(0);
 
         // Online-Status
         const now = Date.now();
@@ -1053,12 +1049,8 @@ function renderBeraterGrid() {
             </div>
             <div class="berater-stats">
                 <div class="berater-stat">
-                    <div class="berater-stat-val">${beraterLeads.length}</div>
-                    <div class="berater-stat-label">Leads</div>
-                </div>
-                <div class="berater-stat">
-                    <div class="berater-stat-val">${beraterKunden.length}</div>
-                    <div class="berater-stat-label">Kunden</div>
+                    <div class="berater-stat-val">${totalKontakte}</div>
+                    <div class="berater-stat-label">Kontakte</div>
                 </div>
                 <div class="berater-stat">
                     <div class="berater-stat-val">${abschluesse}</div>
@@ -1069,7 +1061,7 @@ function renderBeraterGrid() {
                 <div class="berater-bar-fill" style="width:${barWidth}%"></div>
             </div>
             <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--g400);">
-                <span>${neueLeads} neue Leads</span>
+                <span>${neueKontakte} neue Kontakte</span>
                 <span style="${isOnline ? 'color:var(--success);font-weight:600;' : ''}">${isOnline ? '● Online' : 'Letzter Login: ' + statusText}</span>
             </div>
         </div>`;
