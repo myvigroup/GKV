@@ -1953,10 +1953,8 @@ function berechnen() {
         );
     }
 
-    // Smooth scroll to results on mobile
-    if (window.innerWidth <= 960) {
-        document.getElementById('resultsContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    // Smooth scroll to results
+    document.getElementById('summaryCards').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /**
