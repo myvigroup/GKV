@@ -1,5 +1,6 @@
 // Vercel Serverless Function: Brevo Webhook-Events empfangen
 // Trackt: delivered, opened, clicked, bounced
+// Erstellt automatisch Einträge für Brevo-Kampagnen-Mails (nicht über Dashboard)
 // ENV vars needed: SUPABASE_URL, SUPABASE_SERVICE_KEY
 
 export default async function handler(req, res) {
@@ -11,19 +12,26 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Server-Konfiguration fehlt' });
     }
 
+    const headers = {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+    };
+
     // Brevo sendet Events als Array oder einzelnes Objekt
     const events = Array.isArray(req.body) ? req.body : [req.body];
 
     for (const event of events) {
         const messageId = event['message-id'] || event.messageId;
         const eventType = event.event;
+        const recipientEmail = event.email;
+        const subject = event.subject || null;
 
         if (!messageId || !eventType) continue;
 
         // Status-Mapping: Brevo Event → unser Status
         const statusMap = {
             'delivered': 'delivered',
-            'opened': 'opened',      // Nur erstes Öffnen tracken
+            'opened': 'opened',
             'click': 'clicked',
             'hard_bounce': 'bounced',
             'soft_bounce': 'bounced',
@@ -33,18 +41,73 @@ export default async function handler(req, res) {
         const newStatus = statusMap[eventType];
         if (!newStatus) continue;
 
-        // Email-Record finden
+        // Email-Record anhand messageId suchen
         const findRes = await fetch(
             `${SUPABASE_URL}/rest/v1/kunden_emails?brevo_message_id=eq.${encodeURIComponent(messageId)}&select=id,status`,
-            {
-                headers: {
-                    apikey: SUPABASE_SERVICE_KEY,
-                    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                }
-            }
+            { headers }
         );
 
-        const records = await findRes.json();
+        let records = await findRes.json();
+
+        // Kein bestehender Eintrag? → Brevo-Kampagne/Automation
+        // Kunde über E-Mail-Adresse suchen und Eintrag erstellen
+        if ((!records || records.length === 0) && recipientEmail) {
+            const kundeRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/kunden?email=eq.${encodeURIComponent(recipientEmail)}&select=id,berater_id&limit=1`,
+                { headers }
+            );
+            const kunden = await kundeRes.json();
+
+            if (kunden && kunden.length > 0) {
+                const kunde = kunden[0];
+                const now = new Date().toISOString();
+                const insertData = {
+                    kunde_id: kunde.id,
+                    berater_id: kunde.berater_id,
+                    brevo_message_id: messageId,
+                    subject: subject,
+                    status: newStatus === 'bounced' ? 'bounced' : 'sent',
+                    quelle: 'brevo',
+                };
+                if (newStatus === 'delivered') { insertData.status = 'delivered'; insertData.delivered_at = now; }
+                if (newStatus === 'opened') { insertData.status = 'opened'; insertData.opened_at = now; }
+                if (newStatus === 'clicked') { insertData.status = 'clicked'; insertData.clicked_at = now; }
+
+                await fetch(`${SUPABASE_URL}/rest/v1/kunden_emails`, {
+                    method: 'POST',
+                    headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+                    body: JSON.stringify(insertData),
+                });
+                continue; // Eintrag wurde bereits mit richtigem Status erstellt
+            }
+
+            // Auch in leads suchen
+            const leadRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/leads?email=eq.${encodeURIComponent(recipientEmail)}&select=id,berater_id&limit=1`,
+                { headers }
+            );
+            const leads = await leadRes.json();
+
+            if (leads && leads.length > 0) {
+                // Lead gefunden – als Kontaktverlauf in kontakt_aenderungen loggen
+                const lead = leads[0];
+                const now = new Date().toISOString();
+                await fetch(`${SUPABASE_URL}/rest/v1/kontakt_aenderungen`, {
+                    method: 'POST',
+                    headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+                    body: JSON.stringify({
+                        kontakt_type: 'lead',
+                        kontakt_id: lead.id,
+                        feld: 'brevo_email',
+                        alter_wert: null,
+                        neuer_wert: `${subject || 'E-Mail'} (${newStatus})`,
+                        geaendert_von: 'brevo',
+                    }),
+                });
+            }
+            continue;
+        }
+
         if (!records || records.length === 0) continue;
 
         const record = records[0];
@@ -58,7 +121,6 @@ export default async function handler(req, res) {
         if (newStatus === 'bounced' || newIdx > currentIdx) {
             const updateData = { status: newStatus };
 
-            // Timestamps setzen
             if (newStatus === 'delivered') updateData.delivered_at = new Date().toISOString();
             if (newStatus === 'opened') updateData.opened_at = new Date().toISOString();
             if (newStatus === 'clicked') updateData.clicked_at = new Date().toISOString();
@@ -67,12 +129,7 @@ export default async function handler(req, res) {
                 `${SUPABASE_URL}/rest/v1/kunden_emails?id=eq.${record.id}`,
                 {
                     method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        apikey: SUPABASE_SERVICE_KEY,
-                        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                        Prefer: 'return=minimal',
-                    },
+                    headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
                     body: JSON.stringify(updateData),
                 }
             );

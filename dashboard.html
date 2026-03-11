@@ -1211,6 +1211,7 @@ function openSidebar(uid) {
         <div class="sidebar-section-title">Kontaktdaten</div>
         <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${contact.email ? `<a href="mailto:${esc(contact.email)}" style="color:var(--primary);text-decoration:none;">${esc(contact.email)}</a>` : '–'}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${contact.telefon ? `<a href="tel:${esc(contact.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(contact.telefon)}</a>` : '–'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">finfire ID</div><div class="sidebar-field-val">${esc(contact._raw?.finfire_id || '–')}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
@@ -1262,11 +1263,12 @@ function openSidebar(uid) {
         const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
         for (const e of cEmails) {
             const d = new Date(e.created_at);
+            const quelle = e.quelle === 'brevo' ? ' <span style="font-size:.7rem;background:#E0F2FE;color:#0369A1;padding:1px 6px;border-radius:4px;">Brevo</span>' : '';
             timelineItems.push({
                 date: d,
                 html: `<div class="timeline-item email">
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                    <div class="timeline-content"><strong>Email: ${esc(e.subject || 'Kein Betreff')}</strong><br>
+                    <div class="timeline-content"><strong>Email: ${esc(e.subject || 'Kein Betreff')}</strong>${quelle}<br>
                         Status: <span class="email-dot-inline"><span class="dot ${e.status}"></span> ${emailLabels[e.status] || e.status}</span>
                     </div>
                 </div>`

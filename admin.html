@@ -1512,6 +1512,7 @@ async function openKontaktSidebar(type, id) {
         <div class="sidebar-section-title">Kontaktdaten</div>
         ${editableField('E-Mail', 'email', kontakt.email, kontakt.email)}
         ${editableField('Telefon', 'telefon', kontakt.telefon, kontakt.telefon)}
+        ${editableField('finfire ID', 'finfire_id', kontakt.finfire_id, kontakt.finfire_id || '–')}
         <div class="sidebar-field"><div class="sidebar-field-label">Berater</div><div class="sidebar-field-val">${esc(beraterName)}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(kontakt.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
@@ -1550,11 +1551,12 @@ async function openKontaktSidebar(type, id) {
     const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
     for (const e of emails) {
         const d = new Date(e.created_at);
+        const quelle = e.quelle === 'brevo' ? ' <span style="font-size:.7rem;background:#E0F2FE;color:#0369A1;padding:1px 6px;border-radius:4px;">Brevo</span>' : '';
         timelineItems.push({
             date: d,
             html: `<div class="timeline-item email">
                 <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                <div class="timeline-content"><strong>E-Mail: ${esc(e.subject || 'Kein Betreff')}</strong><br>
+                <div class="timeline-content"><strong>E-Mail: ${esc(e.subject || 'Kein Betreff')}</strong>${quelle}<br>
                     Status: ${emailLabels[e.status] || e.status}
                 </div>
             </div>`
