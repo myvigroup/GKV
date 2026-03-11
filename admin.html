@@ -67,6 +67,36 @@
         .stat-val { font-size:1.6rem; font-weight:800; color:var(--g900); }
         .stat-sub { font-size:.78rem; color:var(--g500); margin-top:2px; }
 
+        /* Email Chart */
+        .email-chart-card {
+            background:#fff; border:1px solid var(--g100); border-radius:var(--r-md);
+            padding:20px 24px; margin-bottom:24px;
+        }
+        .email-chart-header {
+            display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;
+        }
+        .email-chart-header h3 { font-size:.9rem; font-weight:700; color:var(--g800); }
+        .email-chart-total { font-size:.82rem; color:var(--g400); }
+        .email-chart-total strong { color:var(--primary); font-weight:700; }
+        .email-chart {
+            display:flex; align-items:flex-end; gap:4px; height:100px;
+        }
+        .email-chart-bar-wrap {
+            flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+        }
+        .email-chart-bar {
+            width:100%; min-height:2px; background:var(--primary); border-radius:3px 3px 0 0;
+            transition:height .3s ease; position:relative;
+        }
+        .email-chart-bar:hover { background:var(--accent); }
+        .email-chart-bar-count {
+            font-size:.65rem; font-weight:700; color:var(--g500); line-height:1;
+        }
+        .email-chart-label {
+            font-size:.6rem; color:var(--g400); text-align:center; margin-top:2px;
+            white-space:nowrap;
+        }
+
         /* Tabs */
         .tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--g200); }
         .tab-btn {
@@ -309,6 +339,15 @@
             </div>
         </div>
 
+        <!-- Email Chart -->
+        <div class="email-chart-card" id="emailChartCard" style="display:none;">
+            <div class="email-chart-header">
+                <h3>Versendete E-Mails (letzte 14 Tage)</h3>
+                <div class="email-chart-total">Gesamt: <strong id="emailChartTotal">0</strong></div>
+            </div>
+            <div class="email-chart" id="emailChart"></div>
+        </div>
+
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="berater" onclick="switchTab('berater')">Berater-Übersicht</button>
@@ -516,6 +555,7 @@ let allBerater = [];
 let allKunden = [];
 let allLeads = [];
 let kundenBerechnungenCount = {};
+let allEmailsList = [];
 
 /* ==================================================================
    AUTH
@@ -604,9 +644,17 @@ async function loadAllData() {
         });
     }
 
+    // E-Mails laden für Chart
+    const { data: allEmailsData } = await sb
+        .from('kunden_emails')
+        .select('created_at')
+        .order('created_at', { ascending: false });
+    allEmailsList = allEmailsData || [];
+
     // Berater-Filter befüllen
     populateBeraterFilters();
     updateGlobalStats();
+    renderEmailChart();
     renderBeraterGrid();
     renderAlleKontakte();
 }
@@ -634,6 +682,37 @@ function updateGlobalStats() {
     document.getElementById('statMonat').textContent = monatKontakte;
     document.getElementById('statAbschluesse').textContent =
         allLeads.filter(l => l.status === 'abgeschlossen').length;
+}
+
+function renderEmailChart() {
+    const days = [];
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        days.push({ key, label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), count: 0 });
+    }
+
+    allEmailsList.forEach(e => {
+        const day = (e.created_at || '').slice(0, 10);
+        const entry = days.find(d => d.key === day);
+        if (entry) entry.count++;
+    });
+
+    const total = days.reduce((s, d) => s + d.count, 0);
+    const max = Math.max(...days.map(d => d.count), 1);
+
+    document.getElementById('emailChartCard').style.display = 'block';
+    document.getElementById('emailChartTotal').textContent = total;
+
+    document.getElementById('emailChart').innerHTML = days.map(d => `
+        <div class="email-chart-bar-wrap">
+            <span class="email-chart-bar-count">${d.count || ''}</span>
+            <div class="email-chart-bar" style="height:${Math.max(d.count / max * 80, 2)}px;" title="${d.label}: ${d.count} E-Mails"></div>
+            <span class="email-chart-label">${d.label}</span>
+        </div>
+    `).join('');
 }
 
 /* ==================================================================
