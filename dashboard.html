@@ -993,12 +993,13 @@ function buildUnifiedContacts() {
         if (status === 'kontaktiert' && lead.sparpotenzial_jahr) status = 'berechnet';
 
         const anrufe = kontaktAnrufe[`lead_${lead.id}`] || [];
+        const leadLink = beraterRecord ? `${baseUrl}/?berater=${beraterRecord.slug}` : '';
         allContacts.push({
             type: 'lead', id: lead.id, vorname: lead.vorname, nachname: lead.nachname,
             email: lead.email, telefon: lead.telefon || null, status, created_at: lead.created_at, anrufe,
             gehalt: lead.gehalt, aktuelle_kasse: lead.aktuelle_kasse,
             gewaehlte_kasse: lead.gewaehlte_kasse, sparpotenzial_jahr: lead.sparpotenzial_jahr,
-            notizen: lead.notizen || '', _raw: lead,
+            link: leadLink, notizen: lead.notizen || '', _raw: lead,
         });
     }
 
