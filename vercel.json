@@ -1,4 +1,9 @@
 {
+    "functions": {
+        "api/generate-protokoll.js": {
+            "includeFiles": "mitnorm-logo.png"
+        }
+    },
     "cleanUrls": true,
     "headers": [
         {

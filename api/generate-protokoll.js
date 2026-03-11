@@ -77,13 +77,65 @@ export default async function handler(req, res) {
 
         // PDF generieren
         const pdfBuffer = await generatePDF(kontakt, berater, berechnungen, kontakt_type);
+        const filename = `Beratungsprotokoll_${kontakt.nachname}_${kontakt.vorname}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
-        // Als base64 Data-URL zurückgeben (für einfaches Handling im Frontend)
+        // PDF im Supabase Storage speichern
+        const storagePath = `protokolle/${kontakt_type}/${kontakt_id}/${filename}`;
+        const uploadRes = await fetch(
+            `${SUPABASE_URL}/storage/v1/object/kunden-dokumente/${storagePath}`,
+            {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
+                body: pdfBuffer,
+            }
+        );
+
+        let storage_url = null;
+        if (uploadRes.ok) {
+            // Signed URL erstellen (1 Jahr gültig)
+            const signRes = await fetch(
+                `${SUPABASE_URL}/storage/v1/object/sign/kunden-dokumente/${storagePath}`,
+                {
+                    method: 'POST',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ expiresIn: 31536000 }),
+                }
+            );
+            if (signRes.ok) {
+                const signData = await signRes.json();
+                storage_url = `${SUPABASE_URL}/storage/v1${signData.signedURL}`;
+            }
+        } else {
+            console.warn('Storage upload failed, PDF wird nur als Download zurückgegeben');
+        }
+
+        // Dokument-Eintrag in DB speichern
+        const dokEintrag = {
+            kontakt_type: kontakt_type,
+            kontakt_id: kontakt_id,
+            berater_id: kontakt.berater_id || null,
+            typ: 'beratungsprotokoll',
+            dateiname: filename,
+            storage_path: storagePath,
+            storage_url: storage_url,
+            dateigroesse: pdfBuffer.length,
+            mime_type: 'application/pdf',
+        };
+
+        await fetch(`${SUPABASE_URL}/rest/v1/kontakt_dokumente`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify(dokEintrag),
+        });
+
+        // PDF auch als base64 zurückgeben für sofortigen Download
         const base64 = pdfBuffer.toString('base64');
 
         return res.status(200).json({
             pdf_base64: base64,
-            filename: `Beratungsprotokoll_${kontakt.nachname}_${kontakt.vorname}_${new Date().toISOString().slice(0, 10)}.pdf`,
+            filename,
+            storage_url,
+            stored: !!storage_url,
         });
 
     } catch (err) {
@@ -119,25 +171,36 @@ function generatePDF(kontakt, berater, berechnungen, kontaktType) {
         // ═══════════════════════════════════════════
         // HEADER
         // ═══════════════════════════════════════════
-        // Logo-Bereich (blauer Header-Balken)
-        doc.rect(0, 0, doc.page.width, 85).fill(primaryColor);
+        // Weißer Header mit Logo-Bild
+        doc.rect(0, 0, doc.page.width, 90).fill('#FFFFFF');
 
-        // Logo Text
-        doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF');
-        doc.text('mit', 50, 28, { continued: true });
-        doc.fillColor(accentColor).text('NORM', { continued: false });
-
-        // Untertitel
-        doc.font('Helvetica').fontSize(9).fillColor('rgba(255,255,255,0.7)');
-        doc.text('FINANZPLANUNG · FÜR DICH', 50, 55);
+        // Logo einfügen
+        try {
+            const logoPath = path.join(process.cwd(), 'mitnorm-logo.png');
+            if (fs.existsSync(logoPath)) {
+                doc.image(logoPath, 50, 18, { height: 40 });
+            } else {
+                // Fallback: Text-Logo
+                doc.font('Helvetica-Bold').fontSize(22).fillColor(primaryColor);
+                doc.text('mit', 50, 28, { continued: true });
+                doc.fillColor(accentColor).text('NORM', { continued: false });
+            }
+        } catch (e) {
+            doc.font('Helvetica-Bold').fontSize(22).fillColor(primaryColor);
+            doc.text('mit', 50, 28, { continued: true });
+            doc.fillColor(accentColor).text('NORM', { continued: false });
+        }
 
         // Rechts: Dokumenttyp
-        doc.font('Helvetica-Bold').fontSize(14).fillColor('#FFFFFF');
-        doc.text('Beratungsprotokoll', 300, 28, { align: 'right', width: pageWidth - 250 });
-        doc.font('Helvetica').fontSize(9).fillColor('rgba(255,255,255,0.7)');
-        doc.text(`Erstellt am ${formatDate(new Date())}`, 300, 50, { align: 'right', width: pageWidth - 250 });
+        doc.font('Helvetica-Bold').fontSize(14).fillColor(primaryColor);
+        doc.text('Beratungsprotokoll', 300, 22, { align: 'right', width: pageWidth - 250 });
+        doc.font('Helvetica').fontSize(9).fillColor(gray400);
+        doc.text(`Erstellt am ${formatDate(new Date())}`, 300, 44, { align: 'right', width: pageWidth - 250 });
 
-        let y = 105;
+        // Blauer Trennbalken
+        doc.rect(0, 88, doc.page.width, 3).fill(primaryColor);
+
+        let y = 108;
 
         // ═══════════════════════════════════════════
         // VORGANGSINFORMATIONEN
