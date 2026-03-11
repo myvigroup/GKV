@@ -1535,6 +1535,22 @@ const LeadAPI = (() => {
                 top5: ergebnisseData.top5 || null,
             });
             _showToast('Deine Ergebnisse wurden deinem Berater bereitgestellt.');
+
+            // Berater per E-Mail benachrichtigen (fire-and-forget)
+            fetch('/api/notify-berater', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event: 'berechnung',
+                    berater_id: _kundeRecord.berater_id,
+                    data: {
+                        vorname: _kundeRecord.vorname,
+                        nachname: _kundeRecord.nachname,
+                        gewaehlte_kasse: ergebnisseData.guenstigsteKasse,
+                        sparpotenzial_jahr: ergebnisseData.sparpotenzialJahr,
+                    }
+                })
+            }).catch(() => {});
         } catch (err) {
             console.warn('[LeadAPI] Berechnung speichern fehlgeschlagen:', err.message);
         }
@@ -2498,6 +2514,26 @@ async function submitLead(event) {
 
     // Erfolg
     AffiliateTracker.trackEvent('lead_submitted', { kasse });
+
+    // Berater per E-Mail benachrichtigen (fire-and-forget)
+    if (beraterId && !existingKunde) {
+        fetch('/api/notify-berater', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event: 'new_lead',
+                berater_id: beraterId,
+                data: {
+                    vorname: formData.vorname,
+                    nachname: formData.nachname,
+                    email: formData.email,
+                    telefon: formData.telefon,
+                    gewaehlte_kasse: kasse,
+                    sparpotenzial_jahr: sparpotenzial,
+                }
+            })
+        }).catch(() => {});
+    }
     document.getElementById('leadModal')._leadId = recordId;
     document.getElementById('leadModal')._isKunde = !!existingKunde;
     document.getElementById('leadForm').classList.add('hidden');
