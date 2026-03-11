@@ -2880,14 +2880,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
             <h4>Vielen Dank!</h4>
             <p id="leadSuccessText">Wir melden uns in Kürze bei dir.</p>
-            <div id="leadSparWrap" class="hidden" style="margin-top:16px;padding:14px 18px;background:#EFF6FF;border:1px solid #BAE6FD;border-radius:12px;text-align:center;">
-                <div style="font-size:.78rem;color:#004283;font-weight:600;margin-bottom:4px;">Dein Sparpotenzial mit <span id="leadSparKasse"></span></div>
-                <div style="font-size:1.5rem;font-weight:800;color:#004283;" id="leadSparBetrag"></div>
+            <div id="leadSparWrap" class="hidden" style="margin-top:16px;padding:14px 18px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;text-align:center;">
+                <div style="font-size:.78rem;color:#15803D;font-weight:600;margin-bottom:4px;">Dein Sparpotenzial mit <span id="leadSparKasse"></span></div>
+                <div style="font-size:1.5rem;font-weight:800;color:#00B67A;" id="leadSparBetrag"></div>
                 <div style="font-size:.78rem;color:#64748B;margin-top:2px;" id="leadSparMonat"></div>
             </div>
-            <div class="book-after-lead hidden" id="leadBookWrap" style="margin-top:20px;padding:16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;text-align:center;">
-                <p style="margin:0 0 10px;font-size:.85rem;color:#15803D;font-weight:600;">Du möchtest nicht warten?</p>
-                <button class="btn-submit" id="leadBookBtn" onclick="bookAfterLead()" style="background:#00B67A;padding:14px 24px;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:10px;">
+            <div class="book-after-lead hidden" id="leadBookWrap" style="margin-top:20px;padding:16px;background:#EFF6FF;border:1px solid #BAE6FD;border-radius:12px;text-align:center;">
+                <p style="margin:0 0 10px;font-size:.85rem;color:#004283;font-weight:600;">Du möchtest nicht warten?</p>
+                <button class="btn-submit" id="leadBookBtn" onclick="bookAfterLead()" style="background:#004283;padding:14px 24px;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:10px;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="16" r="1.5" fill="#fff" stroke="none"/></svg>
                     <span id="leadBookLabel">Jetzt Termin buchen</span>
                 </button>
