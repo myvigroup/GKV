@@ -1488,12 +1488,12 @@ const LeadAPI = (() => {
             const wrap = document.getElementById('consentWrap');
             if (wrap) wrap.classList.remove('hidden');
 
-            // Upload-Bereich nur anzeigen wenn Kunde geladen
-            if (_kundeRecord) {
-                const dokSection = document.getElementById('dokUploadSection');
-                if (dokSection) dokSection.classList.remove('hidden');
-                ladeDokumente();
-            }
+            // Upload-Bereich deaktiviert (Code bleibt für spätere Nutzung)
+            // if (_kundeRecord) {
+            //     const dokSection = document.getElementById('dokUploadSection');
+            //     if (dokSection) dokSection.classList.remove('hidden');
+            //     ladeDokumente();
+            // }
 
             const berater = AffiliateTracker.getBerater();
             if (berater) {
