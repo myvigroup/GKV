@@ -1033,11 +1033,6 @@ function renderContacts() {
     tbody.innerHTML = filtered.map(contact => {
         const date = new Date(contact.created_at);
         const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-        const isKunde = contact.type === 'kunde';
-
-        const sourceBadge = isKunde
-            ? '<span class="source-badge source-kunde">Kunde</span>'
-            : '<span class="source-badge source-lead">Lead</span>';
 
         // Checkbox
         const canEmail = contact.email;
@@ -1063,54 +1058,38 @@ function renderContacts() {
 
         // Sparpotenzial
         let sparHtml = '<span class="savings-cell neutral">–</span>';
-        if (isKunde && contact.berechnungen && contact.berechnungen.length > 0) {
-            const letzte = contact.berechnungen[0];
-            if (letzte.sparpotenzial_jahr) {
-                sparHtml = `<span class="savings-cell">${letzte.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
-            }
-        } else if (!isKunde && contact.sparpotenzial_jahr) {
+        if (contact.berechnungen && contact.berechnungen.length > 0 && contact.berechnungen[0].sparpotenzial_jahr) {
+            sparHtml = `<span class="savings-cell">${contact.berechnungen[0].sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
+        } else if (contact.sparpotenzial_jahr) {
             sparHtml = `<span class="savings-cell">${contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/J</span>`;
         }
 
         // Activity
         let activityHtml = '';
         const anrufe = contact.anrufe || [];
-        if (isKunde) {
-            const emails = contact.emails || [];
-            const berechnungen = contact.berechnungen || [];
-            const parts = [];
-            if (berechnungen.length > 0) parts.push(`<span class="activity-item">${berechnungen.length}x berechnet</span>`);
-            if (emails.length > 0) {
-                const last = emails[0];
-                const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
-                parts.push(`<span class="email-dot-inline"><span class="dot ${last.status}"></span> ${emailLabels[last.status] || last.status}</span>`);
-            }
-            if (anrufe.length > 0) {
-                const last = anrufe[0];
-                const icon = last.direction === 'in' ? '📞' : '📱';
-                const missed = last.hangup_type === 'missed' ? ' (verpasst)' : '';
-                parts.push(`<span class="activity-item">${icon} ${anrufe.length}x Anruf${missed}</span>`);
-            }
-            activityHtml = parts.length > 0
-                ? `<div class="activity-items">${parts.join('')}</div>`
-                : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
-        } else {
-            const parts = [];
-            if (contact.gewaehlte_kasse) parts.push(`<span class="activity-item">${esc(contact.gewaehlte_kasse)}</span>`);
-            if (contact.gehalt) parts.push(`<span class="activity-item" style="color:var(--g400);">${contact.gehalt.toLocaleString('de-DE')} € brutto</span>`);
-            if (anrufe.length > 0) {
-                const last = anrufe[0];
-                const missed = last.hangup_type === 'missed' ? ' (verpasst)' : '';
-                parts.push(`<span class="activity-item">📞 ${anrufe.length}x Anruf${missed}</span>`);
-            }
-            activityHtml = parts.length > 0
-                ? `<div class="activity-items">${parts.join('')}</div>`
-                : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
+        const emails = contact.emails || [];
+        const berechnungen = contact.berechnungen || [];
+        const parts = [];
+        if (berechnungen.length > 0) parts.push(`<span class="activity-item">${berechnungen.length}x berechnet</span>`);
+        if (emails.length > 0) {
+            const last = emails[0];
+            const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
+            parts.push(`<span class="email-dot-inline"><span class="dot ${last.status}"></span> ${emailLabels[last.status] || last.status}</span>`);
         }
+        if (contact.gewaehlte_kasse && !berechnungen.length) parts.push(`<span class="activity-item">${esc(contact.gewaehlte_kasse)}</span>`);
+        if (anrufe.length > 0) {
+            const last = anrufe[0];
+            const icon = last.direction === 'in' ? '📞' : '📱';
+            const missed = last.hangup_type === 'missed' ? ' (verpasst)' : '';
+            parts.push(`<span class="activity-item">${icon} ${anrufe.length}x Anruf${missed}</span>`);
+        }
+        activityHtml = parts.length > 0
+            ? `<div class="activity-items">${parts.join('')}</div>`
+            : '<span style="font-size:.75rem;color:var(--g400);">–</span>';
 
         // Link icon
         let linkHtml = '';
-        if (isKunde && contact.link) {
+        if (contact.link) {
             linkHtml = `<span class="link-icon" onclick="event.stopPropagation();copyLink(this,'${esc(contact.link)}')" title="Link kopieren">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
             </span>`;
@@ -1125,7 +1104,6 @@ function renderContacts() {
             <td onclick="event.stopPropagation()" style="text-align:center;">${checkboxHtml}</td>
             <td>
                 <span class="contact-name">${esc(contact.vorname)} ${esc(contact.nachname)}</span>
-                ${sourceBadge}
                 <div class="contact-sub">${dateStr}</div>
             </td>
             <td>${emailHtml}${telHtml}</td>
@@ -1150,7 +1128,6 @@ function openSidebar(uid) {
     if (!contact) return;
 
     openSidebarContact = contact;
-    const isKunde = contact.type === 'kunde';
 
     document.getElementById('sidebarTitle').textContent = `${contact.vorname} ${contact.nachname}`;
 
@@ -1159,16 +1136,15 @@ function openSidebar(uid) {
     // Info section
     html += `<div class="sidebar-section">
         <div class="sidebar-section-title">Kontaktdaten</div>
-        <div class="sidebar-field"><div class="sidebar-field-label">Typ</div><div class="sidebar-field-val">${isKunde ? 'Kunde' : 'Lead'}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${contact.email ? `<a href="mailto:${esc(contact.email)}" style="color:var(--primary);text-decoration:none;">${esc(contact.email)}</a>` : '–'}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${contact.telefon ? `<a href="tel:${esc(contact.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(contact.telefon)}</a>` : '–'}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
-    // Lead-specific data
-    if (!isKunde) {
+    // Versicherungsdaten
+    if (contact.gehalt || contact.sparpotenzial_jahr || contact.aktuelle_kasse || contact.gewaehlte_kasse) {
         html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Lead-Daten</div>
+            <div class="sidebar-section-title">Versicherungsdaten</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                 <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
                 <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
@@ -1178,8 +1154,8 @@ function openSidebar(uid) {
         </div>`;
     }
 
-    // Kunde link
-    if (isKunde && contact.link) {
+    // Rechner-Link
+    if (contact.link) {
         html += `<div class="sidebar-section">
             <div class="sidebar-section-title">Persönlicher Rechner-Link</div>
             <div style="display:flex;gap:8px;align-items:center;">
@@ -1189,20 +1165,17 @@ function openSidebar(uid) {
         </div>`;
     }
 
-    // Timeline (Berechnungen + Emails)
-    if (isKunde) {
-        const berechnungen = contact.berechnungen || [];
-        const emails = contact.emails || [];
-
-        // Build timeline items
+    // Timeline
+    {
+        const cBerechnungen = contact.berechnungen || [];
+        const cEmails = contact.emails || [];
         const timelineItems = [];
 
-        for (const b of berechnungen) {
+        for (const b of cBerechnungen) {
             const d = new Date(b.created_at);
             const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/Jahr` : '–';
             timelineItems.push({
                 date: d,
-                type: 'calc',
                 html: `<div class="timeline-item calc">
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
                     <div class="timeline-content"><strong>Berechnung durchgeführt</strong><br>
@@ -1213,12 +1186,11 @@ function openSidebar(uid) {
             });
         }
 
-        for (const e of emails) {
+        const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
+        for (const e of cEmails) {
             const d = new Date(e.created_at);
-            const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
             timelineItems.push({
                 date: d,
-                type: 'email',
                 html: `<div class="timeline-item email">
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
                     <div class="timeline-content"><strong>Email: ${esc(e.subject || 'Kein Betreff')}</strong><br>
@@ -1230,12 +1202,12 @@ function openSidebar(uid) {
 
         timelineItems.sort((a, b) => b.date - a.date);
 
-        html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
-            ${timelineItems.length > 0
-                ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
-                : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
-        </div>`;
+        if (timelineItems.length > 0) {
+            html += `<div class="sidebar-section">
+                <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
+                <div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>
+            </div>`;
+        }
     }
 
     // Notizen
