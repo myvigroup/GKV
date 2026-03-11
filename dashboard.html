@@ -410,6 +410,7 @@
         }
         .timeline-item.email::before { background:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
         .timeline-item.calc::before { background:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
+        .timeline-item.termin::before { background:var(--success); box-shadow:0 0 0 2px var(--success-light); }
         .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
         .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
         .timeline-content strong { color:var(--g800); }
@@ -1258,6 +1259,21 @@ function openSidebar(uid) {
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
                     <div class="timeline-content"><strong>Email: ${esc(e.subject || 'Kein Betreff')}</strong><br>
                         Status: <span class="email-dot-inline"><span class="dot ${e.status}"></span> ${emailLabels[e.status] || e.status}</span>
+                    </div>
+                </div>`
+            });
+        }
+
+        // Termin gebucht
+        const terminAt = contact._raw?.termin_gebucht_at;
+        if (terminAt) {
+            const d = new Date(terminAt);
+            timelineItems.push({
+                date: d,
+                html: `<div class="timeline-item termin">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong>Termin gebucht</strong><br>
+                        Kunde hat einen Beratungstermin vereinbart
                     </div>
                 </div>`
             });

@@ -2027,7 +2027,7 @@ async function submitLead(event) {
         return;
     }
 
-    const { error } = await sb.from('leads').insert({
+    const { data: insertedLead, error } = await sb.from('leads').insert({
         vorname: document.getElementById('leadVorname').value.trim(),
         nachname: document.getElementById('leadNachname').value.trim(),
         email: document.getElementById('leadEmail').value.trim(),
@@ -2044,7 +2044,7 @@ async function submitLead(event) {
         kinder: eingaben.kinder,
         sparpotenzial_jahr: sparpotenzial,
         session_id: AffiliateTracker.getTrackingData().sessionId,
-    });
+    }).select('id').single();
 
     if (error) {
         console.error('[Lead] Fehler:', error);
@@ -2057,6 +2057,7 @@ async function submitLead(event) {
 
     // Erfolg
     AffiliateTracker.trackEvent('lead_submitted', { kasse });
+    document.getElementById('leadModal')._leadId = insertedLead?.id || null;
     document.getElementById('leadForm').classList.add('hidden');
     document.getElementById('leadSuccess').classList.remove('hidden');
 
@@ -2075,9 +2076,17 @@ async function submitLead(event) {
 }
 
 /** Termin buchen nach Lead-Abgabe */
-function bookAfterLead() {
+async function bookAfterLead() {
     AffiliateTracker.trackEvent('booking_after_lead', { position: 'lead_modal' });
-    LeadAPI.sendeEvent('booking_after_lead', { position: 'lead_modal' });
+
+    // Termin-Buchung auf dem Lead speichern
+    const leadId = document.getElementById('leadModal')._leadId;
+    if (leadId) {
+        const sb = getSupabase();
+        if (sb) {
+            sb.from('leads').update({ termin_gebucht_at: new Date().toISOString(), status: 'termin' }).eq('id', leadId).then(() => {});
+        }
+    }
 
     const kasse = document.getElementById('leadModal')._kasse;
     const url = AffiliateTracker.getBookingUrl(kasse);

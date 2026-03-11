@@ -111,6 +111,7 @@
         }
         .timeline-item.email::before { background:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
         .timeline-item.calc::before { background:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
+        .timeline-item.termin::before { background:var(--success); box-shadow:0 0 0 2px var(--success-light); }
         .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
         .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
         .timeline-content strong { color:var(--g800); }
@@ -1578,6 +1579,20 @@ async function openKontaktSidebar(type, id) {
                     <strong class="timeline-change-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.timeline-change-details').classList.toggle('open')">Änderung: ${summary}</strong>
                     <div style="font-size:.75rem;color:var(--g400);">von ${esc(changedBy)}</div>
                     <div class="timeline-change-details">${details}</div>
+                </div>
+            </div>`
+        });
+    }
+
+    // Termin gebucht
+    if (kontakt.termin_gebucht_at) {
+        const d = new Date(kontakt.termin_gebucht_at);
+        timelineItems.push({
+            date: d,
+            html: `<div class="timeline-item termin">
+                <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                <div class="timeline-content"><strong>Termin gebucht</strong><br>
+                    Kunde hat einen Beratungstermin vereinbart
                 </div>
             </div>`
         });
