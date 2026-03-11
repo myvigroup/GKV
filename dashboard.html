@@ -1319,6 +1319,14 @@ function openSidebar(uid) {
         </div>`;
     }
 
+    // Beratungsprotokoll PDF Button
+    html += `<div class="sidebar-section">
+        <button onclick="generateProtokoll('${contact.type}','${contact.id}')" style="width:100%;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:var(--primary);background:var(--primary-light);border:1px solid rgba(0,66,131,.15);border-radius:var(--r-sm);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.background='rgba(0,66,131,.12)'" onmouseout="this.style.background='var(--primary-light)'">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Beratungsprotokoll (PDF)
+        </button>
+    </div>`;
+
     // Rechner-Link
     if (contact.link) {
         html += `<div class="sidebar-section">
@@ -1854,6 +1862,59 @@ async function updateContactStatus(type, id, newStatus) {
     const contact = allContacts.find(c => c.type === type && c.id === id);
     if (contact) contact.status = newStatus;
     updateStats();
+
+    // Bei "abgeschlossen": Automatisch Beratungsprotokoll PDF generieren
+    if (newStatus === 'abgeschlossen') {
+        generateProtokoll(type, id);
+    }
+}
+
+async function generateProtokoll(kontaktType, kontaktId) {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { console.warn('Kein Auth-Token für PDF-Generierung'); return; }
+
+        showToast('Beratungsprotokoll wird erstellt...');
+
+        const res = await fetch('/api/generate-protokoll', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ kontakt_type: kontaktType, kontakt_id: kontaktId }),
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'PDF-Fehler');
+
+        // PDF herunterladen
+        const link = document.createElement('a');
+        link.href = 'data:application/pdf;base64,' + result.pdf_base64;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('Beratungsprotokoll erstellt ✓');
+    } catch (err) {
+        console.error('Protokoll-Fehler:', err);
+        showToast('Protokoll konnte nicht erstellt werden');
+    }
+}
+
+function showToast(msg) {
+    let toast = document.getElementById('toastMsg');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toastMsg';
+        toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--g800);color:#fff;padding:12px 24px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:99999;opacity:0;transition:opacity .3s;font-family:var(--font);';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
 }
 
 async function updateContactNotizen(type, id, notizen) {
