@@ -1493,12 +1493,14 @@ async function openKontaktSidebar(type, id) {
         promises.push(
             sb.from('kunden_emails').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
             sb.from('kunden_berechnungen').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
+            sb.from('kunden_dokumente').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
         );
     }
     const results = await Promise.all(promises);
     const aenderungen = results[0].data || [];
     const emails = isKunde ? (results[1].data || []) : [];
     const berechnungen = isKunde ? (results[2].data || []) : [];
+    const dokumente = isKunde ? (results[3]?.data || []) : [];
 
     const berater = allBerater.find(b => b.id === kontakt.berater_id);
     const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
@@ -1606,6 +1608,32 @@ async function openKontaktSidebar(type, id) {
             ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
             : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
     </div>`;
+
+    // Dokumente
+    if (dokumente.length > 0) {
+        const typLabels = { gehaltsnachweis: 'Gehaltsnachweis', kassenbescheid: 'Kassenbescheid', kuendigung: 'Kündigung', sonstiges: 'Sonstiges' };
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Dokumente (${dokumente.length})</div>`;
+        for (const doc of dokumente) {
+            const d = new Date(doc.created_at);
+            const isPdf = doc.mime_type === 'application/pdf';
+            const size = doc.dateigroesse ? `${(doc.dateigroesse / 1024).toFixed(0)} KB` : '';
+            html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--g100);">
+                <div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${isPdf ? '#FEF2F2' : '#EFF6FF'};">
+                    ${isPdf
+                        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+                        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+                    }
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:.82rem;font-weight:600;color:var(--g800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(doc.original_name)}</div>
+                    <div style="font-size:.72rem;color:var(--g400);">${typLabels[doc.typ] || doc.typ} &middot; ${d.toLocaleDateString('de-DE')} &middot; ${size}</div>
+                </div>
+                <button onclick="downloadDokument('${esc(doc.storage_path)}','${esc(doc.original_name)}')" style="padding:4px 10px;font-size:.75rem;border:1px solid var(--g200);border-radius:6px;background:#fff;cursor:pointer;color:var(--primary);font-weight:600;">Laden</button>
+            </div>`;
+        }
+        html += `</div>`;
+    }
 
     // Notizen
     html += `<div class="sidebar-section">
@@ -1720,6 +1748,14 @@ function groupChangesByTime(changes) {
 
 async function updateKontaktNotizen(table, id, notizen) {
     await sb.from(table).update({ notizen }).eq('id', id);
+}
+
+async function downloadDokument(storagePath, filename) {
+    const { data, error } = await sb.storage
+        .from('kunden-dokumente')
+        .createSignedUrl(storagePath, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+    else console.error('[Dok] Download-Fehler:', error);
 }
 
 /* ==================================================================
