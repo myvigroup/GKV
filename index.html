@@ -2124,6 +2124,17 @@ async function submitLead(event) {
     document.getElementById('leadForm').classList.add('hidden');
     document.getElementById('leadSuccess').classList.remove('hidden');
 
+    // Sparpotenzial anzeigen
+    const sparWrap = document.getElementById('leadSparWrap');
+    if (sparpotenzial && sparpotenzial > 0 && kasse) {
+        document.getElementById('leadSparKasse').textContent = kasse;
+        document.getElementById('leadSparBetrag').textContent = `${Number(sparpotenzial).toLocaleString('de-DE', { minimumFractionDigits: 2 })} € / Jahr`;
+        document.getElementById('leadSparMonat').textContent = `(${Number(sparpotenzial / 12).toLocaleString('de-DE', { minimumFractionDigits: 2 })} € / Monat)`;
+        sparWrap.classList.remove('hidden');
+    } else {
+        sparWrap.classList.add('hidden');
+    }
+
     const bookWrap = document.getElementById('leadBookWrap');
     if (berater) {
         document.getElementById('leadSuccessText').textContent =
@@ -2383,6 +2394,11 @@ function syncKinderlosField() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
             <h4>Vielen Dank!</h4>
             <p id="leadSuccessText">Wir melden uns in Kürze bei dir.</p>
+            <div id="leadSparWrap" class="hidden" style="margin-top:16px;padding:14px 18px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;text-align:center;">
+                <div style="font-size:.78rem;color:#15803D;font-weight:600;margin-bottom:4px;">Dein Sparpotenzial mit <span id="leadSparKasse"></span></div>
+                <div style="font-size:1.5rem;font-weight:800;color:#00B67A;" id="leadSparBetrag"></div>
+                <div style="font-size:.78rem;color:#64748B;margin-top:2px;" id="leadSparMonat"></div>
+            </div>
             <div class="book-after-lead hidden" id="leadBookWrap" style="margin-top:20px;padding:16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;text-align:center;">
                 <p style="margin:0 0 10px;font-size:.85rem;color:#15803D;font-weight:600;">Du möchtest nicht warten?</p>
                 <button class="btn-submit" id="leadBookBtn" onclick="bookAfterLead()" style="background:#00B67A;padding:14px 24px;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:10px;">
