@@ -1324,16 +1324,19 @@ function switchView(view) {
 
     const tableWrap = document.querySelector('.table-wrap');
     const filtersEl = document.querySelector('.filters');
+    const statsEl = document.querySelector('.stats');
     const pipelineEl = document.getElementById('pipelineView');
 
     if (view === 'pipeline') {
         tableWrap.style.display = 'none';
         filtersEl.style.display = 'none';
+        statsEl.style.display = 'none';
         pipelineEl.classList.add('active');
         renderPipeline();
     } else {
         tableWrap.style.display = '';
         filtersEl.style.display = '';
+        statsEl.style.display = '';
         pipelineEl.classList.remove('active');
         renderContacts();
     }
