@@ -957,7 +957,10 @@ async function showDashboard(user) {
         document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
         const headerAvatar = document.getElementById('userAvatar');
         if (berater.bild_url) {
-            headerAvatar.innerHTML = `<img src="${berater.bild_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`;
+            headerAvatar.textContent = '';
+            headerAvatar.style.backgroundImage = `url('${berater.bild_url}')`;
+            headerAvatar.style.backgroundSize = 'cover';
+            headerAvatar.style.backgroundPosition = 'center';
         } else {
             headerAvatar.textContent = (berater.vorname[0] + berater.nachname[0]).toUpperCase();
         }
@@ -1437,10 +1440,13 @@ function openProfil() {
 
     const avatar = document.getElementById('profilAvatar');
     if (b.bild_url) {
-        avatar.innerHTML = `<img src="${b.bild_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`;
+        avatar.textContent = '';
+        avatar.style.backgroundImage = `url('${b.bild_url}')`;
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
         document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
     } else {
-        avatar.innerHTML = '';
+        avatar.style.backgroundImage = '';
         avatar.textContent = (b.vorname?.[0] || '') + (b.nachname?.[0] || '');
         document.getElementById('profilBildRemoveBtn').classList.add('hidden');
     }
@@ -1592,12 +1598,18 @@ async function applyCrop() {
     // Update profil avatar
     const bildUrl = beraterRecord.bild_url;
     const avatar = document.getElementById('profilAvatar');
-    avatar.innerHTML = `<img src="${bildUrl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">`;
+    avatar.textContent = '';
+    avatar.style.backgroundImage = `url('${bildUrl}')`;
+    avatar.style.backgroundSize = 'cover';
+    avatar.style.backgroundPosition = 'center';
     document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
 
     // Update header avatar
     const headerAvatar = document.getElementById('userAvatar');
-    headerAvatar.innerHTML = `<img src="${bildUrl}" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+    headerAvatar.textContent = '';
+    headerAvatar.style.backgroundImage = `url('${bildUrl}')`;
+    headerAvatar.style.backgroundSize = 'cover';
+    headerAvatar.style.backgroundPosition = 'center';
 
     btn.disabled = false; btn.textContent = 'Übernehmen';
     closeCropper();
@@ -1608,12 +1620,12 @@ async function removeProfilBild() {
     beraterRecord.bild_url = null;
 
     const avatar = document.getElementById('profilAvatar');
-    avatar.innerHTML = '';
+    avatar.style.backgroundImage = '';
     avatar.textContent = (beraterRecord.vorname?.[0] || '') + (beraterRecord.nachname?.[0] || '');
     document.getElementById('profilBildRemoveBtn').classList.add('hidden');
 
     const headerAvatar = document.getElementById('userAvatar');
-    headerAvatar.innerHTML = '';
+    headerAvatar.style.backgroundImage = '';
     headerAvatar.textContent = (beraterRecord.vorname?.[0] || '') + (beraterRecord.nachname?.[0] || '');
 }
 
