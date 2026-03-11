@@ -114,6 +114,20 @@
         .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
         .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
         .timeline-content strong { color:var(--g800); }
+        .timeline-item.change::before { background:var(--warning); box-shadow:0 0 0 2px var(--warning-light); }
+        .timeline-change-toggle { cursor:pointer; user-select:none; }
+        .timeline-change-toggle::after { content:' ▸'; font-size:.7rem; }
+        .timeline-change-toggle.open::after { content:' ▾'; }
+        .timeline-change-details { display:none; margin-top:4px; font-size:.78rem; color:var(--g500); }
+        .timeline-change-details.open { display:block; }
+        .sidebar-field-val.editable { cursor:pointer; padding:2px 6px; margin:-2px -6px; border-radius:var(--r-sm); transition:var(--ease); }
+        .sidebar-field-val.editable:hover { background:var(--g100); }
+        .sidebar-field-editing input {
+            width:100%; font-size:.88rem; font-family:var(--font); font-weight:500;
+            padding:4px 8px; border:1.5px solid var(--accent); border-radius:var(--r-sm);
+            background:#fff; outline:none;
+        }
+        .sidebar-field-editing input:focus { box-shadow:0 0 0 3px rgba(6,186,221,.15); }
 
         /* Email Chart */
         .email-chart-card {
@@ -1438,8 +1452,26 @@ function esc(str) {
 /* ==================================================================
    KONTAKT SIDEBAR
    ================================================================== */
+let sidebarKontakt = null;
+
+const feldLabels = {
+    vorname: 'Vorname', nachname: 'Nachname', email: 'E-Mail',
+    telefon: 'Telefon', gehalt: 'Gehalt', aktuelle_kasse: 'Aktuelle Kasse',
+    gewaehlte_kasse: 'Gewählte Kasse'
+};
+
+function editableField(label, fieldName, rawValue, displayValue) {
+    const val = rawValue != null ? String(rawValue) : '';
+    const display = displayValue || val || '–';
+    return `<div class="sidebar-field">
+        <div class="sidebar-field-label">${label}</div>
+        <div class="sidebar-field-val editable" data-field="${fieldName}" data-original="${esc(val)}" onclick="startFieldEdit(this)">
+            ${esc(display)}
+        </div>
+    </div>`;
+}
+
 async function openKontaktSidebar(type, id) {
-    // Find kontakt in loaded data
     let kontakt;
     if (type === 'lead') {
         kontakt = allLeads.find(l => l.id === id);
@@ -1448,88 +1480,120 @@ async function openKontaktSidebar(type, id) {
     }
     if (!kontakt) return;
 
+    sidebarKontakt = { type, id, data: kontakt };
     const isKunde = type === 'kunde';
-    document.getElementById('sidebarTitle').textContent = `${kontakt.vorname} ${kontakt.nachname}`;
+    document.getElementById('sidebarTitle').innerHTML =
+        `<span class="editable" data-field="vorname" data-original="${esc(kontakt.vorname)}" onclick="startFieldEdit(this)" style="cursor:pointer;padding:2px 4px;border-radius:4px;">${esc(kontakt.vorname)}</span> ` +
+        `<span class="editable" data-field="nachname" data-original="${esc(kontakt.nachname)}" onclick="startFieldEdit(this)" style="cursor:pointer;padding:2px 4px;border-radius:4px;">${esc(kontakt.nachname)}</span>`;
 
-    // Load emails + berechnungen for this kontakt
-    let emails = [], berechnungen = [];
+    // Load emails, berechnungen, aenderungen
+    const promises = [
+        sb.from('kontakt_aenderungen').select('*').eq('kontakt_type', type).eq('kontakt_id', id).order('created_at', { ascending: false }),
+    ];
     if (isKunde) {
-        const [emailRes, berechRes] = await Promise.all([
+        promises.push(
             sb.from('kunden_emails').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
             sb.from('kunden_berechnungen').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
-        ]);
-        emails = emailRes.data || [];
-        berechnungen = berechRes.data || [];
+        );
     }
+    const results = await Promise.all(promises);
+    const aenderungen = results[0].data || [];
+    const emails = isKunde ? (results[1].data || []) : [];
+    const berechnungen = isKunde ? (results[2].data || []) : [];
 
-    // Berater name
     const berater = allBerater.find(b => b.id === kontakt.berater_id);
     const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
 
     let html = '';
 
-    // Info section
+    // Editable info section
     html += `<div class="sidebar-section">
         <div class="sidebar-section-title">Kontaktdaten</div>
         <div class="sidebar-field"><div class="sidebar-field-label">Typ</div><div class="sidebar-field-val">${isKunde ? 'Kunde' : 'Lead'}</div></div>
-        <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${kontakt.email ? `<a href="mailto:${esc(kontakt.email)}" style="color:var(--primary);text-decoration:none;">${esc(kontakt.email)}</a>` : '–'}</div></div>
-        <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${kontakt.telefon ? `<a href="tel:${esc(kontakt.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(kontakt.telefon)}</a>` : '–'}</div></div>
+        ${editableField('E-Mail', 'email', kontakt.email, kontakt.email)}
+        ${editableField('Telefon', 'telefon', kontakt.telefon, kontakt.telefon)}
         <div class="sidebar-field"><div class="sidebar-field-label">Berater</div><div class="sidebar-field-val">${esc(beraterName)}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(kontakt.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
-    // Lead-specific data
-    if (!isKunde && (kontakt.gehalt || kontakt.sparpotenzial_jahr || kontakt.aktuelle_kasse || kontakt.gewaehlte_kasse)) {
+    // Lead-specific editable data
+    if (!isKunde) {
         html += `<div class="sidebar-section">
             <div class="sidebar-section-title">Lead-Daten</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${kontakt.gehalt ? kontakt.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
+                ${editableField('Gehalt', 'gehalt', kontakt.gehalt, kontakt.gehalt ? kontakt.gehalt.toLocaleString('de-DE') + ' €' : '')}
                 <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${kontakt.sparpotenzial_jahr ? kontakt.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
-                <div class="sidebar-field"><div class="sidebar-field-label">Aktuelle Kasse</div><div class="sidebar-field-val">${esc(kontakt.aktuelle_kasse || '–')}</div></div>
-                <div class="sidebar-field"><div class="sidebar-field-label">Gewählte Kasse</div><div class="sidebar-field-val">${esc(kontakt.gewaehlte_kasse || '–')}</div></div>
+                ${editableField('Aktuelle Kasse', 'aktuelle_kasse', kontakt.aktuelle_kasse, kontakt.aktuelle_kasse)}
+                ${editableField('Gewählte Kasse', 'gewaehlte_kasse', kontakt.gewaehlte_kasse, kontakt.gewaehlte_kasse)}
             </div>
         </div>`;
     }
 
-    // Timeline
-    if (isKunde) {
-        const timelineItems = [];
-        for (const b of berechnungen) {
-            const d = new Date(b.created_at);
-            const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/Jahr` : '–';
-            timelineItems.push({
-                date: d,
-                html: `<div class="timeline-item calc">
-                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                    <div class="timeline-content"><strong>Berechnung</strong><br>
-                        ${esc(b.aktuelle_kasse || '–')} → ${esc(b.guenstigste_kasse || '–')}<br>
-                        <span style="color:var(--success);font-weight:700;">Ersparnis: ${spar}</span>
-                    </div>
-                </div>`
-            });
-        }
-        const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
-        for (const e of emails) {
-            const d = new Date(e.created_at);
-            timelineItems.push({
-                date: d,
-                html: `<div class="timeline-item email">
-                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                    <div class="timeline-content"><strong>E-Mail: ${esc(e.subject || 'Kein Betreff')}</strong><br>
-                        Status: ${emailLabels[e.status] || e.status}
-                    </div>
-                </div>`
-            });
-        }
-        timelineItems.sort((a, b) => b.date - a.date);
+    // Timeline (for all types)
+    const timelineItems = [];
 
-        html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
-            ${timelineItems.length > 0
-                ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
-                : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
-        </div>`;
+    for (const b of berechnungen) {
+        const d = new Date(b.created_at);
+        const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/Jahr` : '–';
+        timelineItems.push({
+            date: d,
+            html: `<div class="timeline-item calc">
+                <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                <div class="timeline-content"><strong>Berechnung</strong><br>
+                    ${esc(b.aktuelle_kasse || '–')} → ${esc(b.guenstigste_kasse || '–')}<br>
+                    <span style="color:var(--success);font-weight:700;">Ersparnis: ${spar}</span>
+                </div>
+            </div>`
+        });
     }
+
+    const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
+    for (const e of emails) {
+        const d = new Date(e.created_at);
+        timelineItems.push({
+            date: d,
+            html: `<div class="timeline-item email">
+                <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                <div class="timeline-content"><strong>E-Mail: ${esc(e.subject || 'Kein Betreff')}</strong><br>
+                    Status: ${emailLabels[e.status] || e.status}
+                </div>
+            </div>`
+        });
+    }
+
+    // Group aenderungen by timestamp (within 2 seconds)
+    const groups = groupChangesByTime(aenderungen);
+    for (const group of groups) {
+        const d = new Date(group[0].created_at);
+        const changedBy = group[0].geaendert_von
+            ? (() => { const b = allBerater.find(x => x.id === group[0].geaendert_von); return b ? `${b.vorname} ${b.nachname}` : 'Admin'; })()
+            : 'System';
+        const summary = group.map(a => feldLabels[a.feld] || a.feld).join(', ');
+        const details = group.map(a =>
+            `<div style="margin-bottom:4px;">${feldLabels[a.feld] || a.feld}: <span style="text-decoration:line-through;color:var(--g400);">${esc(a.alter_wert || '–')}</span> → <strong>${esc(a.neuer_wert || '–')}</strong></div>`
+        ).join('');
+
+        timelineItems.push({
+            date: d,
+            html: `<div class="timeline-item change">
+                <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                <div class="timeline-content">
+                    <strong class="timeline-change-toggle" onclick="this.classList.toggle('open');this.parentElement.querySelector('.timeline-change-details').classList.toggle('open')">Änderung: ${summary}</strong>
+                    <div style="font-size:.75rem;color:var(--g400);">von ${esc(changedBy)}</div>
+                    <div class="timeline-change-details">${details}</div>
+                </div>
+            </div>`
+        });
+    }
+
+    timelineItems.sort((a, b) => b.date - a.date);
+
+    html += `<div class="sidebar-section">
+        <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
+        ${timelineItems.length > 0
+            ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
+            : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
+    </div>`;
 
     // Notizen
     html += `<div class="sidebar-section">
@@ -1547,6 +1611,99 @@ async function openKontaktSidebar(type, id) {
 function closeSidebar() {
     document.getElementById('sidebarOverlay').classList.remove('active');
     document.getElementById('sidebarPanel').classList.remove('open');
+    sidebarKontakt = null;
+}
+
+function startFieldEdit(el) {
+    if (el.querySelector('input')) return;
+    const field = el.dataset.field;
+    const original = el.dataset.original || '';
+    const inputType = field === 'gehalt' ? 'number' : (field === 'email' ? 'email' : 'text');
+
+    el.classList.add('sidebar-field-editing');
+    el.innerHTML = `<input type="${inputType}" value="${esc(original)}" ${field === 'gehalt' ? 'step="any"' : ''}>`;
+    const input = el.querySelector('input');
+    input.focus();
+    input.addEventListener('blur', () => saveFieldEdit(el, input));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { cancelFieldEdit(el, original, field); }
+    });
+}
+
+function cancelFieldEdit(el, original, field) {
+    el.classList.remove('sidebar-field-editing');
+    const display = field === 'gehalt' && original ? Number(original).toLocaleString('de-DE') + ' €' : (original || '–');
+    el.innerHTML = esc(display);
+}
+
+async function saveFieldEdit(el, input) {
+    const field = el.dataset.field;
+    const original = el.dataset.original || '';
+    let newValue = input.value.trim();
+
+    // No change
+    if (newValue === original) {
+        cancelFieldEdit(el, original, field);
+        return;
+    }
+
+    const table = sidebarKontakt.type === 'kunde' ? 'kunden' : 'leads';
+    const updateVal = field === 'gehalt' ? (newValue ? parseFloat(newValue) : null) : (newValue || null);
+
+    // Save to DB
+    const { error } = await sb.from(table).update({ [field]: updateVal }).eq('id', sidebarKontakt.id);
+    if (error) {
+        alert('Fehler beim Speichern: ' + error.message);
+        cancelFieldEdit(el, original, field);
+        return;
+    }
+
+    // Log change
+    await sb.from('kontakt_aenderungen').insert({
+        kontakt_type: sidebarKontakt.type,
+        kontakt_id: sidebarKontakt.id,
+        feld: field,
+        alter_wert: original || null,
+        neuer_wert: newValue || null,
+        geaendert_von: adminRecord.id,
+    });
+
+    // Update in-memory data
+    sidebarKontakt.data[field] = updateVal;
+
+    // Update display
+    el.classList.remove('sidebar-field-editing');
+    el.dataset.original = newValue;
+    const display = field === 'gehalt' && newValue ? Number(newValue).toLocaleString('de-DE') + ' €' : (newValue || '–');
+    el.innerHTML = esc(display);
+
+    // Update title if name changed
+    if (field === 'vorname' || field === 'nachname') {
+        const title = document.getElementById('sidebarTitle');
+        const spans = title.querySelectorAll('.editable');
+        spans.forEach(s => {
+            if (s.dataset.field === field) {
+                s.dataset.original = newValue;
+                s.textContent = newValue;
+            }
+        });
+    }
+}
+
+function groupChangesByTime(changes) {
+    if (!changes.length) return [];
+    const groups = [[changes[0]]];
+    for (let i = 1; i < changes.length; i++) {
+        const prev = new Date(changes[i - 1].created_at).getTime();
+        const curr = new Date(changes[i].created_at).getTime();
+        if (Math.abs(prev - curr) < 2000) {
+            groups[groups.length - 1].push(changes[i]);
+        } else {
+            groups.push([changes[i]]);
+        }
+    }
+    return groups;
 }
 
 async function updateKontaktNotizen(table, id, notizen) {
