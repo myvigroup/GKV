@@ -1572,20 +1572,25 @@ async function applyCrop() {
 
     ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, size, size);
 
-    // Convert to blob
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
-    const path = `berater/${beraterRecord.id}/profil.jpg`;
+    // Convert to base64 and upload via API
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
-    const { error: upErr } = await sb.storage.from('kunden-dokumente').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-    if (upErr) { console.error(upErr); alert('Upload fehlgeschlagen'); btn.disabled = false; btn.textContent = 'Übernehmen'; return; }
-
-    const { data: urlData } = sb.storage.from('kunden-dokumente').getPublicUrl(path);
-    const bildUrl = urlData.publicUrl + '?t=' + Date.now();
-
-    await sb.from('berater').update({ bild_url: bildUrl }).eq('id', beraterRecord.id);
-    beraterRecord.bild_url = bildUrl;
+    try {
+        const uploadRes = await fetch('/api/upload-profil-bild', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ berater_id: beraterRecord.id, image_base64: dataUrl }),
+        });
+        const result = await uploadRes.json();
+        if (!uploadRes.ok) { throw new Error(result.error || 'Upload fehlgeschlagen'); }
+        beraterRecord.bild_url = result.bild_url;
+    } catch (e) {
+        console.error(e); alert('Upload fehlgeschlagen: ' + e.message);
+        btn.disabled = false; btn.textContent = 'Übernehmen'; return;
+    }
 
     // Update profil avatar
+    const bildUrl = beraterRecord.bild_url;
     const avatar = document.getElementById('profilAvatar');
     avatar.innerHTML = `<img src="${bildUrl}" style="width:100%;height:100%;object-fit:cover;">`;
     document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
