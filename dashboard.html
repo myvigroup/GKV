@@ -288,6 +288,52 @@
         .notizen-input:hover { background:var(--g50); border-color:var(--g200); }
         .notizen-input:focus { outline:none; background:#fff; border-color:var(--primary); box-shadow:0 0 0 2px rgba(0,66,131,.08); }
 
+        /* ===== VIEW TOGGLE ===== */
+        .view-toggle {
+            display:inline-flex; border:1px solid var(--g200); border-radius:var(--r-sm); overflow:hidden;
+        }
+        .view-toggle-btn {
+            padding:6px 14px; font-size:.78rem; font-weight:600; font-family:var(--font);
+            background:#fff; border:none; color:var(--g500); cursor:pointer; transition:var(--ease);
+            display:inline-flex; align-items:center; gap:5px;
+        }
+        .view-toggle-btn:not(:last-child) { border-right:1px solid var(--g200); }
+        .view-toggle-btn.active { background:var(--primary); color:#fff; }
+        .view-toggle-btn:hover:not(.active) { background:var(--g50); }
+        .view-toggle-btn svg { width:14px; height:14px; }
+
+        /* ===== PIPELINE (Kanban) ===== */
+        .pipeline-view { display:none; }
+        .pipeline-view.active { display:flex; gap:12px; overflow-x:auto; padding-bottom:12px; min-height:400px; }
+        .pipeline-col {
+            flex:0 0 220px; min-width:220px; background:var(--g50); border-radius:var(--r-md);
+            display:flex; flex-direction:column; max-height:calc(100vh - 300px);
+        }
+        .pipeline-col-header {
+            padding:12px 14px; font-size:.75rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.06em; color:var(--g500); border-bottom:2px solid var(--g200);
+            display:flex; justify-content:space-between; align-items:center;
+            position:sticky; top:0; background:var(--g50); border-radius:var(--r-md) var(--r-md) 0 0; z-index:1;
+        }
+        .pipeline-col-header .col-count {
+            background:var(--g200); color:var(--g600); font-size:.7rem; font-weight:700;
+            padding:2px 7px; border-radius:10px;
+        }
+        .pipeline-col-body {
+            flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:8px;
+        }
+        .pipeline-col-body.drag-over { background:var(--primary-light); }
+        .pipeline-card {
+            background:#fff; border-radius:var(--r-sm); padding:12px; border:1px solid var(--g100);
+            box-shadow:var(--shadow-sm); cursor:grab; transition:box-shadow .15s ease;
+        }
+        .pipeline-card:hover { box-shadow:var(--shadow-md); }
+        .pipeline-card.dragging { opacity:.5; }
+        .pipeline-card-name { font-size:.85rem; font-weight:700; color:var(--g900); margin-bottom:4px; }
+        .pipeline-card-email { font-size:.72rem; color:var(--g400); margin-bottom:6px; word-break:break-all; }
+        .pipeline-card-spar { font-size:.78rem; font-weight:700; color:var(--success); }
+        .pipeline-card-date { font-size:.65rem; color:var(--g400); margin-top:6px; }
+
         /* Loading & empty states */
         .loading-state, .empty-state { text-align:center; padding:48px 20px; color:var(--g400); }
         .empty-state svg { width:48px; height:48px; margin-bottom:12px; opacity:.4; }
@@ -575,6 +621,16 @@
                 Alle ohne Email
             </button>
             <div class="toolbar-spacer"></div>
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" data-view="table" onclick="switchView('table')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    Tabelle
+                </button>
+                <button class="view-toggle-btn" data-view="pipeline" onclick="switchView('pipeline')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    Pipeline
+                </button>
+            </div>
             <div class="search-box">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" placeholder="Suchen..." oninput="handleSearch(this.value)">
@@ -617,6 +673,9 @@
                 <p>Keine Kontakte gefunden</p>
             </div>
         </div>
+        <!-- Pipeline View -->
+        <div class="pipeline-view" id="pipelineView"></div>
+
     </div>
 </div>
 
@@ -739,6 +798,7 @@ let kundenEmails = {};
 let selectedKundenIds = new Set();
 let currentFilter = 'alle';
 let searchQuery = '';
+let currentView = 'table';
 let kontaktAnrufe = {};
 let beraterRecord = null;
 let openSidebarContact = null;
@@ -1239,12 +1299,125 @@ function filterByStatus(status) {
     document.querySelectorAll('.stat-card').forEach(card => {
         card.classList.toggle('active', card.dataset.stat === status);
     });
-    renderContacts();
+    renderCurrentView();
 }
 
 function handleSearch(query) {
     searchQuery = query.trim();
-    renderContacts();
+    renderCurrentView();
+}
+
+function renderCurrentView() {
+    if (currentView === 'pipeline') {
+        renderPipeline();
+    } else {
+        renderContacts();
+    }
+}
+
+/* ==================================================================
+   VIEW SWITCHING & PIPELINE
+   ================================================================== */
+function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+
+    const tableWrap = document.querySelector('.table-wrap');
+    const filtersEl = document.querySelector('.filters');
+    const pipelineEl = document.getElementById('pipelineView');
+
+    if (view === 'pipeline') {
+        tableWrap.style.display = 'none';
+        filtersEl.style.display = 'none';
+        pipelineEl.classList.add('active');
+        renderPipeline();
+    } else {
+        tableWrap.style.display = '';
+        filtersEl.style.display = '';
+        pipelineEl.classList.remove('active');
+        renderContacts();
+    }
+}
+
+const pipelineStatuses = [
+    { key: 'neu', label: 'Neu', color: '#4F46E5' },
+    { key: 'kontaktiert', label: 'Kontaktiert', color: '#0E7490' },
+    { key: 'berechnet', label: 'Berechnet', color: '#06BADD' },
+    { key: 'termin', label: 'Termin', color: '#0369A1' },
+    { key: 'abgeschlossen', label: 'Abgeschlossen', color: '#00B67A' },
+    { key: 'storniert', label: 'Storniert', color: '#E5243B' },
+];
+
+function renderPipeline() {
+    const pipeline = document.getElementById('pipelineView');
+    let contacts = allContacts;
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        contacts = contacts.filter(c =>
+            (c.vorname + ' ' + c.nachname).toLowerCase().includes(q) ||
+            (c.email || '').toLowerCase().includes(q)
+        );
+    }
+
+    pipeline.innerHTML = pipelineStatuses.map(col => {
+        const colContacts = contacts.filter(c => c.status === col.key);
+        const cards = colContacts.map(c => {
+            const uid = c.type + '-' + c.id;
+            let sparText = '';
+            if (c.berechnungen && c.berechnungen.length > 0 && c.berechnungen[0].sparpotenzial_jahr) {
+                sparText = c.berechnungen[0].sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/J';
+            } else if (c.sparpotenzial_jahr) {
+                sparText = c.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/J';
+            }
+            const dateStr = new Date(c.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+            return `<div class="pipeline-card" draggable="true" data-uid="${uid}" data-type="${c.type}" data-id="${c.id}"
+                        ondragstart="onDragStart(event)" onclick="openSidebar('${uid}')">
+                <div class="pipeline-card-name">${esc(c.vorname)} ${esc(c.nachname)}</div>
+                ${c.email ? `<div class="pipeline-card-email">${esc(c.email)}</div>` : ''}
+                ${sparText ? `<div class="pipeline-card-spar">${sparText}</div>` : ''}
+                <div class="pipeline-card-date">${dateStr}</div>
+            </div>`;
+        }).join('');
+
+        return `<div class="pipeline-col">
+            <div class="pipeline-col-header" style="border-bottom-color:${col.color};">
+                ${col.label}
+                <span class="col-count">${colContacts.length}</span>
+            </div>
+            <div class="pipeline-col-body" data-status="${col.key}"
+                 ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                ${cards || '<div style="text-align:center;padding:20px;font-size:.75rem;color:var(--g400);">Keine Kontakte</div>'}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function onDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.uid);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('dragging');
+}
+
+function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+async function onDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const uid = e.dataTransfer.getData('text/plain');
+    const newStatus = e.currentTarget.dataset.status;
+    const [type, ...idParts] = uid.split('-');
+    const id = idParts.join('-');
+
+    await updateContactStatus(type, id, newStatus);
+    renderPipeline();
 }
 
 /* ==================================================================
