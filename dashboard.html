@@ -329,6 +329,9 @@
         }
         .pipeline-card:hover { box-shadow:var(--shadow-md); }
         .pipeline-card.dragging { opacity:.5; }
+        .pipeline-card.selected { border-color:var(--primary); background:var(--primary-light); }
+        .pipeline-card-top { display:flex; justify-content:space-between; align-items:start; }
+        .pipeline-card-check { margin:0; cursor:pointer; accent-color:var(--primary); width:15px; height:15px; flex-shrink:0; }
         .pipeline-card-name { font-size:.85rem; font-weight:700; color:var(--g900); margin-bottom:4px; }
         .pipeline-card-email { font-size:.72rem; color:var(--g400); margin-bottom:6px; word-break:break-all; }
         .pipeline-card-spar { font-size:.78rem; font-weight:700; color:var(--success); }
@@ -1373,9 +1376,17 @@ function renderPipeline() {
                 sparText = c.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/J';
             }
             const dateStr = new Date(c.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
-            return `<div class="pipeline-card" draggable="true" data-uid="${uid}" data-type="${c.type}" data-id="${c.id}"
+            const checked = selectedKundenIds.has(c.id) ? 'checked' : '';
+            const selectedClass = selectedKundenIds.has(c.id) ? ' selected' : '';
+            const checkboxHtml = c.email
+                ? `<input type="checkbox" class="pipeline-card-check" ${checked} onclick="event.stopPropagation();togglePipelineSelect('${c.id}',this)" title="Für Email auswählen">`
+                : '';
+            return `<div class="pipeline-card${selectedClass}" draggable="true" data-uid="${uid}" data-type="${c.type}" data-id="${c.id}"
                         ondragstart="onDragStart(event)" onclick="openSidebar('${uid}')">
-                <div class="pipeline-card-name">${esc(c.vorname)} ${esc(c.nachname)}</div>
+                <div class="pipeline-card-top">
+                    <div class="pipeline-card-name">${esc(c.vorname)} ${esc(c.nachname)}</div>
+                    ${checkboxHtml}
+                </div>
                 ${c.email ? `<div class="pipeline-card-email">${esc(c.email)}</div>` : ''}
                 ${sparText ? `<div class="pipeline-card-spar">${sparText}</div>` : ''}
                 <div class="pipeline-card-date">${dateStr}</div>
@@ -1393,6 +1404,14 @@ function renderPipeline() {
             </div>
         </div>`;
     }).join('');
+}
+
+function togglePipelineSelect(id, checkbox) {
+    if (checkbox.checked) selectedKundenIds.add(id);
+    else selectedKundenIds.delete(id);
+    const card = checkbox.closest('.pipeline-card');
+    card.classList.toggle('selected', checkbox.checked);
+    updateEmailButton();
 }
 
 function onDragStart(e) {
