@@ -2007,18 +2007,10 @@ function renderSummary(guenstigste, teuerste, aktuelleKasse, eingaben) {
             </div>
         </div>`;
 
-    // Karte 4: Haushalt (nur wenn Partner vorhanden)
+    // Karte 4: Haushalt (nur wenn Partner eigenen Beitrag zahlt)
     let card4 = '';
-    if (eingaben.hatPartner) {
-        if (eingaben.partnerFamvers) {
-            card4 = `<div class="s-card" style="border:1px solid #BBF7D0;background:#F0FDF4;">
-                <div>
-                    <div class="s-label" style="color:#15803D;">Haushalt gesamt</div>
-                    <div class="s-val" style="color:#15803D;">${formatEuro(guenstigste.gesamtAN)}</div>
-                    <div class="s-sub" style="color:#15803D;">Partner beitragsfrei familienversichert</div>
-                </div>
-            </div>`;
-        } else if (guenstigste.haushaltHinweis === 'pkv') {
+    if (eingaben.hatPartner && !eingaben.partnerFamvers) {
+        if (guenstigste.haushaltHinweis === 'pkv') {
             card4 = `<div class="s-card" style="border:1px solid #FDE68A;background:#FFFBEB;">
                 <div>
                     <div class="s-label" style="color:#92400E;">Partner privat versichert</div>
