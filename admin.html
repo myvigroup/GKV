@@ -130,15 +130,23 @@
         }
         .sidebar-field-editing input:focus { box-shadow:0 0 0 3px rgba(6,186,221,.15); }
 
-        /* Email Chart */
-        .email-chart-card {
-            background:#fff; border:1px solid var(--g100); border-radius:var(--r-md);
-            padding:20px 24px; margin-bottom:24px;
+        /* Charts */
+        .charts-row {
+            display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:16px;
         }
-        .email-chart-header {
+        @media (max-width:900px) { .charts-row { grid-template-columns:1fr; } }
+        .chart-card {
+            background:#fff; border:1px solid var(--g100); border-radius:var(--r-md);
+            padding:20px 24px;
+        }
+        .chart-header {
             display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;
         }
-        .email-chart-header h3 { font-size:.9rem; font-weight:700; color:var(--g800); }
+        .chart-header h3 { font-size:.9rem; font-weight:700; color:var(--g800); }
+        .chart-legend { font-size:.72rem; color:var(--g500); display:flex; align-items:center; gap:4px; }
+        .legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+        /* Email Chart */
         .email-chart-total { font-size:.82rem; color:var(--g400); }
         .email-chart-total strong { color:var(--primary); font-weight:700; }
         .email-chart {
@@ -159,6 +167,39 @@
             font-size:.6rem; color:var(--g400); text-align:center; margin-top:2px;
             white-space:nowrap;
         }
+
+        /* Kontakte Chart */
+        .kontakte-chart { display:flex; align-items:flex-end; gap:3px; height:120px; }
+        .kontakte-chart-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:0; }
+        .kontakte-chart-stack { width:100%; display:flex; flex-direction:column-reverse; }
+        .kontakte-chart-bar-lead { background:var(--primary); border-radius:3px 3px 0 0; min-height:0; transition:height .3s ease; }
+        .kontakte-chart-bar-kunde { background:var(--accent); min-height:0; transition:height .3s ease; }
+        .kontakte-chart-label { font-size:.55rem; color:var(--g400); margin-top:4px; white-space:nowrap; }
+        .kontakte-chart-count { font-size:.6rem; font-weight:700; color:var(--g500); line-height:1; margin-bottom:2px; }
+
+        /* Status Chart */
+        .status-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .status-row-label { font-size:.78rem; font-weight:600; color:var(--g700); width:100px; flex-shrink:0; }
+        .status-row-bar-bg { flex:1; height:24px; background:var(--g100); border-radius:6px; overflow:hidden; position:relative; }
+        .status-row-bar { height:100%; border-radius:6px; transition:width .5s ease; min-width:2px; }
+        .status-row-val { font-size:.75rem; font-weight:700; color:var(--g600); width:36px; text-align:right; flex-shrink:0; }
+
+        /* Berater Ranking */
+        .ranking-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--g100); }
+        .ranking-row:last-child { border-bottom:none; }
+        .ranking-pos { font-size:.82rem; font-weight:800; color:var(--g400); width:20px; text-align:center; }
+        .ranking-pos.gold { color:#F59E0B; }
+        .ranking-pos.silver { color:var(--g400); }
+        .ranking-pos.bronze { color:#CD7F32; }
+        .ranking-name { font-size:.85rem; font-weight:600; color:var(--g800); flex:1; }
+        .ranking-stat { font-size:.78rem; color:var(--g500); }
+        .ranking-stat strong { color:var(--primary); font-weight:700; }
+        .ranking-bar-bg { width:80px; height:6px; background:var(--g100); border-radius:3px; overflow:hidden; }
+        .ranking-bar { height:100%; background:var(--primary); border-radius:3px; transition:width .5s ease; }
+
+        /* Stat card trend */
+        .stat-trend-up { color:var(--success); }
+        .stat-trend-down { color:var(--danger); }
 
         /* Tabs */
         .tabs { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--g200); }
@@ -383,32 +424,80 @@
 
     <div class="dash-body">
         <!-- Global Stats -->
+        <!-- KPI Cards Row 1 -->
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-label">Berater</div>
                 <div class="stat-val" id="statBerater">–</div>
+                <div class="stat-sub" id="statBeraterOnline"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Kontakte gesamt</div>
                 <div class="stat-val" id="statKontakte">–</div>
+                <div class="stat-sub" id="statKontakteSub"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Diesen Monat</div>
                 <div class="stat-val" id="statMonat">–</div>
+                <div class="stat-sub" id="statMonatTrend"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Abschlüsse</div>
                 <div class="stat-val" id="statAbschluesse">–</div>
+                <div class="stat-sub" id="statConversion"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ø Sparpotenzial</div>
+                <div class="stat-val" id="statSpar">–</div>
+                <div class="stat-sub" id="statSparGesamt"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">E-Mails gesendet</div>
+                <div class="stat-val" id="statEmails">–</div>
+                <div class="stat-sub" id="statEmailsSub"></div>
             </div>
         </div>
 
-        <!-- Email Chart -->
-        <div class="email-chart-card" id="emailChartCard" style="display:none;">
-            <div class="email-chart-header">
-                <h3>Versendete E-Mails (letzte 14 Tage)</h3>
-                <div class="email-chart-total">Gesamt: <strong id="emailChartTotal">0</strong></div>
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <!-- Kontakte-Verlauf (30 Tage) -->
+            <div class="chart-card chart-card-wide">
+                <div class="chart-header">
+                    <h3>Neue Kontakte (letzte 30 Tage)</h3>
+                    <div class="chart-legend">
+                        <span class="legend-dot" style="background:var(--primary);"></span> Leads
+                        <span class="legend-dot" style="background:var(--accent);margin-left:12px;"></span> Kunden
+                    </div>
+                </div>
+                <div class="kontakte-chart" id="kontakteChart"></div>
             </div>
-            <div class="email-chart" id="emailChart"></div>
+
+            <!-- Status-Verteilung -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Pipeline-Status</h3>
+                </div>
+                <div id="statusChart"></div>
+            </div>
+        </div>
+
+        <!-- Row 2: Email Chart + Berater Ranking -->
+        <div class="charts-row">
+            <div class="chart-card chart-card-wide" id="emailChartCard">
+                <div class="chart-header">
+                    <h3>Versendete E-Mails (letzte 14 Tage)</h3>
+                    <div class="email-chart-total">Gesamt: <strong id="emailChartTotal">0</strong></div>
+                </div>
+                <div class="email-chart" id="emailChart"></div>
+            </div>
+
+            <!-- Berater Ranking -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Berater-Ranking</h3>
+                </div>
+                <div id="beraterRanking"></div>
+            </div>
         </div>
 
         <!-- Tabs -->
@@ -727,7 +816,10 @@ async function loadAllData() {
     // Berater-Filter befüllen
     populateBeraterFilters();
     updateGlobalStats();
+    renderKontakteChart();
+    renderStatusChart();
     renderEmailChart();
+    renderBeraterRanking();
     renderBeraterGrid();
     renderAlleKontakte();
 }
@@ -746,15 +838,55 @@ function populateBeraterFilters() {
 function updateGlobalStats() {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
     const totalKontakte = allKunden.length + allLeads.length;
-    const monatKontakte = allLeads.filter(l => l.created_at >= monthStart).length +
-        allKunden.filter(k => k.created_at >= monthStart).length;
+    const monatLeads = allLeads.filter(l => l.created_at >= monthStart).length;
+    const monatKunden = allKunden.filter(k => k.created_at >= monthStart).length;
+    const monatKontakte = monatLeads + monatKunden;
 
+    // Letzter Monat für Trend
+    const letzterMonatKontakte = allLeads.filter(l => l.created_at >= lastMonthStart && l.created_at < monthStart).length +
+        allKunden.filter(k => k.created_at >= lastMonthStart && k.created_at < monthStart).length;
+
+    const abschluesse = allLeads.filter(l => l.status === 'abgeschlossen').length;
+    const conversionRate = totalKontakte > 0 ? ((abschluesse / totalKontakte) * 100).toFixed(1) : '0';
+
+    // Sparpotenzial berechnen
+    const allContacts = [...allLeads, ...allKunden];
+    const sparWerte = allContacts.filter(c => c.sparpotenzial_jahr > 0).map(c => +c.sparpotenzial_jahr);
+    const avgSpar = sparWerte.length > 0 ? Math.round(sparWerte.reduce((a, b) => a + b, 0) / sparWerte.length) : 0;
+    const totalSpar = sparWerte.reduce((a, b) => a + b, 0);
+
+    // Berater online (aktiv in letzten 6 Minuten)
+    const sixMinAgo = new Date(now - 6 * 60 * 1000).toISOString();
+    const onlineBerater = allBerater.filter(b => b.last_active_at && b.last_active_at > sixMinAgo).length;
+
+    // KPI Cards
     document.getElementById('statBerater').textContent = allBerater.length;
+    document.getElementById('statBeraterOnline').innerHTML = `<span style="color:var(--success);">● ${onlineBerater} online</span>`;
+
     document.getElementById('statKontakte').textContent = totalKontakte;
+    document.getElementById('statKontakteSub').textContent = `${allLeads.length} Leads · ${allKunden.length} Kunden`;
+
     document.getElementById('statMonat').textContent = monatKontakte;
-    document.getElementById('statAbschluesse').textContent =
-        allLeads.filter(l => l.status === 'abgeschlossen').length;
+    if (letzterMonatKontakte > 0) {
+        const trendPct = Math.round(((monatKontakte - letzterMonatKontakte) / letzterMonatKontakte) * 100);
+        const trendClass = trendPct >= 0 ? 'stat-trend-up' : 'stat-trend-down';
+        const arrow = trendPct >= 0 ? '↑' : '↓';
+        document.getElementById('statMonatTrend').innerHTML = `<span class="${trendClass}">${arrow} ${Math.abs(trendPct)}% vs. Vormonat</span>`;
+    } else {
+        document.getElementById('statMonatTrend').textContent = `${monatLeads} Leads · ${monatKunden} Kunden`;
+    }
+
+    document.getElementById('statAbschluesse').textContent = abschluesse;
+    document.getElementById('statConversion').textContent = `${conversionRate}% Conversion`;
+
+    document.getElementById('statSpar').textContent = `${avgSpar.toLocaleString('de-DE')} €`;
+    document.getElementById('statSparGesamt').textContent = `Gesamt: ${Math.round(totalSpar).toLocaleString('de-DE')} €/Jahr`;
+
+    document.getElementById('statEmails').textContent = allEmailsList.length;
+    const emailsThisMonth = allEmailsList.filter(e => (e.created_at || '') >= monthStart).length;
+    document.getElementById('statEmailsSub').textContent = `${emailsThisMonth} diesen Monat`;
 }
 
 function renderEmailChart() {
@@ -776,7 +908,6 @@ function renderEmailChart() {
     const total = days.reduce((s, d) => s + d.count, 0);
     const max = Math.max(...days.map(d => d.count), 1);
 
-    document.getElementById('emailChartCard').style.display = 'block';
     document.getElementById('emailChartTotal').textContent = total;
 
     document.getElementById('emailChart').innerHTML = days.map(d => `
@@ -786,6 +917,93 @@ function renderEmailChart() {
             <span class="email-chart-label">${d.label}</span>
         </div>
     `).join('');
+}
+
+function renderKontakteChart() {
+    const days = [];
+    const now = new Date();
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        days.push({ key, label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), leads: 0, kunden: 0 });
+    }
+
+    allLeads.forEach(l => {
+        const day = (l.created_at || '').slice(0, 10);
+        const entry = days.find(d => d.key === day);
+        if (entry) entry.leads++;
+    });
+    allKunden.forEach(k => {
+        const day = (k.created_at || '').slice(0, 10);
+        const entry = days.find(d => d.key === day);
+        if (entry) entry.kunden++;
+    });
+
+    const max = Math.max(...days.map(d => d.leads + d.kunden), 1);
+
+    document.getElementById('kontakteChart').innerHTML = days.map((d, i) => {
+        const total = d.leads + d.kunden;
+        const leadH = Math.max(d.leads / max * 100, d.leads > 0 ? 3 : 0);
+        const kundeH = Math.max(d.kunden / max * 100, d.kunden > 0 ? 3 : 0);
+        const showLabel = i % 3 === 0;
+        return `
+        <div class="kontakte-chart-bar-wrap" title="${d.label}: ${d.leads} Leads, ${d.kunden} Kunden">
+            <span class="kontakte-chart-count">${total || ''}</span>
+            <div class="kontakte-chart-stack">
+                <div class="kontakte-chart-bar-lead" style="height:${leadH}px;"></div>
+                <div class="kontakte-chart-bar-kunde" style="height:${kundeH}px;${d.kunden > 0 ? 'border-radius:3px 3px 0 0;' : ''}"></div>
+            </div>
+            ${showLabel ? `<span class="kontakte-chart-label">${d.label}</span>` : '<span class="kontakte-chart-label"></span>'}
+        </div>`;
+    }).join('');
+}
+
+function renderStatusChart() {
+    const statusConfig = [
+        { key: 'neu', label: 'Neu', color: 'var(--accent)' },
+        { key: 'kontaktiert', label: 'Kontaktiert', color: 'var(--primary)' },
+        { key: 'termin', label: 'Termin', color: 'var(--warning)' },
+        { key: 'abgeschlossen', label: 'Abgeschlossen', color: 'var(--success)' },
+        { key: 'storniert', label: 'Storniert', color: 'var(--danger)' },
+    ];
+
+    const total = allLeads.length || 1;
+
+    document.getElementById('statusChart').innerHTML = statusConfig.map(s => {
+        const count = allLeads.filter(l => l.status === s.key).length;
+        const pct = (count / total * 100).toFixed(0);
+        return `
+        <div class="status-row">
+            <div class="status-row-label">${s.label}</div>
+            <div class="status-row-bar-bg">
+                <div class="status-row-bar" style="width:${pct}%;background:${s.color};"></div>
+            </div>
+            <div class="status-row-val">${count}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderBeraterRanking() {
+    const ranking = allBerater.map(b => {
+        const leads = allLeads.filter(l => l.berater_id === b.id).length;
+        const kunden = allKunden.filter(k => k.berater_id === b.id).length;
+        const abschluesse = allLeads.filter(l => l.berater_id === b.id && l.status === 'abgeschlossen').length;
+        return { name: `${b.vorname} ${b.nachname}`, total: leads + kunden, leads, kunden, abschluesse };
+    }).sort((a, b) => b.total - a.total);
+
+    const maxTotal = Math.max(...ranking.map(r => r.total), 1);
+
+    document.getElementById('beraterRanking').innerHTML = ranking.slice(0, 8).map((r, i) => {
+        const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        return `
+        <div class="ranking-row">
+            <div class="ranking-pos ${posClass}">${i + 1}</div>
+            <div class="ranking-name">${esc(r.name)}</div>
+            <div class="ranking-stat"><strong>${r.total}</strong> Kontakte · ${r.abschluesse} Abschl.</div>
+            <div class="ranking-bar-bg"><div class="ranking-bar" style="width:${(r.total / maxTotal * 100).toFixed(0)}%;"></div></div>
+        </div>`;
+    }).join('') || '<div style="font-size:.82rem;color:var(--g400);">Keine Berater vorhanden</div>';
 }
 
 /* ==================================================================
