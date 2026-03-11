@@ -1926,30 +1926,63 @@ function zeigeDetail(name) {
     const e = ergebnisse.find(x => x.name === name);
     if (!e) return;
 
-    const msg = [
-        `📋 ${e.name}`,
-        `──────────────────────────`,
-        `Beitragssatz:        ${(e.beitragssatz * 100).toFixed(2)} %`,
-        `  davon Zusatzbeitrag: ${(e.zusatzbeitrag * 100).toFixed(2)} %`,
-        ``,
-        `Beitragspfl. Einkommen: ${formatEuro(e.beitragspflichtig)}`,
-        ``,
-        `GKV Arbeitnehmer:    ${formatEuro(e.gkvAN)}`,
-        `GKV Arbeitgeber:     ${formatEuro(e.gkvAG)}`,
-        `GKV Gesamt:          ${formatEuro(e.gkvGesamt)}`,
-        ``,
-        `PV Arbeitnehmer:     ${formatEuro(e.pvAN)}`,
-        `PV Arbeitgeber:      ${formatEuro(e.pvAG)}`,
-        `PV Gesamt:           ${formatEuro(e.pvGesamt)}`,
-        ``,
-        `═══════════════════════`,
-        `AN-Beitrag / Monat:  ${formatEuro(e.gesamtAN)}`,
-        `AG-Beitrag / Monat:  ${formatEuro(e.gesamtAG)}`,
-        `Gesamt / Monat:      ${formatEuro(e.gesamt)}`,
-        `Gesamt / Jahr:       ${formatEuro(e.jahresGesamt)}`,
-    ].join('\n');
+    const eingaben = leseEingaben();
+    const aktuelleKasseName = document.getElementById('aktuelleKasse').value;
+    const aktuelleKasse = aktuelleKasseName ? ergebnisse.find(x => x.name === aktuelleKasseName) : null;
+    const diffMonat = aktuelleKasse ? (aktuelleKasse.gesamtAN - e.gesamtAN) : null;
+    const diffJahr = diffMonat ? diffMonat * 12 : null;
 
-    alert(msg);
+    const modal = document.getElementById('detailModal');
+    modal.querySelector('.detail-kasse-name').textContent = e.name;
+    const typLabel = { aok: 'AOK', bkk: 'Betriebskrankenkasse', ikk: 'Innungskrankenkasse', ek: 'Ersatzkasse', knappschaft: 'Knappschaft' };
+    modal.querySelector('.detail-kasse-typ').textContent = typLabel[e.typ] || '';
+
+    const row = (label, value, bold, color) =>
+        `<tr><td style="padding:6px 0;color:#64748B;font-size:.85rem;width:55%;">${label}</td>
+         <td style="padding:6px 0;font-size:.85rem;text-align:right;${bold ? 'font-weight:700;' : ''}${color ? 'color:' + color + ';' : ''}">${value}</td></tr>`;
+
+    let html = `
+        <table style="width:100%;border-collapse:collapse;">
+            <tr><td colspan="2" style="padding:8px 0 4px;font-weight:700;font-size:.8rem;color:#004283;text-transform:uppercase;letter-spacing:.5px;">Beitragssatz</td></tr>
+            ${row('Gesamtbeitragssatz', (e.beitragssatz * 100).toFixed(2) + ' %')}
+            ${row('davon Zusatzbeitrag', (e.zusatzbeitrag * 100).toFixed(2) + ' %')}
+            ${row('Beitragspfl. Einkommen', formatEuro(e.beitragspflichtig))}
+
+            <tr><td colspan="2" style="padding:16px 0 4px;font-weight:700;font-size:.8rem;color:#004283;text-transform:uppercase;letter-spacing:.5px;">Krankenversicherung (GKV)</td></tr>
+            ${row('Arbeitnehmeranteil', formatEuro(e.gkvAN))}
+            ${row('Arbeitgeberanteil', formatEuro(e.gkvAG))}
+            ${row('Gesamt GKV', formatEuro(e.gkvGesamt), true)}
+
+            <tr><td colspan="2" style="padding:16px 0 4px;font-weight:700;font-size:.8rem;color:#004283;text-transform:uppercase;letter-spacing:.5px;">Pflegeversicherung (PV)</td></tr>
+            ${row('Arbeitnehmeranteil', formatEuro(e.pvAN))}
+            ${row('Arbeitgeberanteil', formatEuro(e.pvAG))}
+            ${row('Gesamt PV', formatEuro(e.pvGesamt), true)}
+        </table>
+
+        <div style="margin-top:16px;padding:14px;background:#F0F9FF;border-radius:10px;border:1px solid #BAE6FD;">
+            <table style="width:100%;border-collapse:collapse;">
+                ${row('Dein Beitrag / Monat', formatEuro(e.gesamtAN), true, '#004283')}
+                ${row('AG-Beitrag / Monat', formatEuro(e.gesamtAG))}
+                ${row('Gesamt / Monat', formatEuro(e.gesamt), true)}
+                ${row('Gesamt / Jahr', formatEuro(e.jahresGesamt), true)}
+            </table>
+        </div>`;
+
+    if (diffMonat && diffMonat > 0) {
+        html += `
+        <div style="margin-top:12px;padding:14px;background:#F0FDF4;border-radius:10px;border:1px solid #BBF7D0;text-align:center;">
+            <div style="font-size:.8rem;color:#15803D;font-weight:600;margin-bottom:4px;">Dein Sparpotenzial vs. ${aktuelleKasseName}</div>
+            <div style="font-size:1.3rem;font-weight:800;color:#00B67A;">${formatEuro(diffJahr)} / Jahr</div>
+            <div style="font-size:.8rem;color:#64748B;margin-top:2px;">(${formatEuro(diffMonat)} / Monat)</div>
+        </div>`;
+    }
+
+    modal.querySelector('.detail-body').innerHTML = html;
+    modal.classList.remove('hidden');
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.add('hidden');
 }
 
 /** CTA Handler – öffnet Lead-Modal */
@@ -2027,15 +2060,11 @@ async function submitLead(event) {
         return;
     }
 
-    const { data: insertedLead, error } = await sb.from('leads').insert({
+    const formData = {
         vorname: document.getElementById('leadVorname').value.trim(),
         nachname: document.getElementById('leadNachname').value.trim(),
         email: document.getElementById('leadEmail').value.trim(),
         telefon: document.getElementById('leadTelefon').value.trim() || null,
-        berater_id: beraterId,
-        berater_slug: AffiliateTracker.getSlug(),
-        kampagne: AffiliateTracker.getTrackingData().kampagne,
-        ref_source: AffiliateTracker.getTrackingData().ref,
         gewaehlte_kasse: kasse,
         aktuelle_kasse: aktuelleKasseName || null,
         gehalt: eingaben.gehalt || null,
@@ -2043,21 +2072,53 @@ async function submitLead(event) {
         familienstand: eingaben.familienstand,
         kinder: eingaben.kinder,
         sparpotenzial_jahr: sparpotenzial,
-        session_id: AffiliateTracker.getTrackingData().sessionId,
-    }).select('id').single();
+    };
 
-    if (error) {
-        console.error('[Lead] Fehler:', error);
-        errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
-        errorEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Beratung anfordern';
-        return;
+    const existingKunde = LeadAPI.getKunde();
+    let recordId = null;
+
+    if (existingKunde) {
+        // Bestehenden Kunden aktualisieren statt neuen Lead anzulegen
+        const { error } = await sb.from('kunden')
+            .update(formData)
+            .eq('id', existingKunde.id);
+
+        if (error) {
+            console.error('[Lead] Update-Fehler:', error);
+            errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Beratung anfordern';
+            return;
+        }
+        recordId = existingKunde.id;
+        console.log('[Lead] Bestehender Kunde aktualisiert:', recordId);
+    } else {
+        // Neuen Lead anlegen
+        const { error } = await sb.from('leads').insert({
+            ...formData,
+            berater_id: beraterId,
+            berater_slug: AffiliateTracker.getSlug(),
+            kampagne: AffiliateTracker.getTrackingData().kampagne,
+            ref_source: AffiliateTracker.getTrackingData().ref,
+            session_id: AffiliateTracker.getTrackingData().sessionId,
+        });
+
+        if (error) {
+            console.error('[Lead] Fehler:', error);
+            errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Beratung anfordern';
+            return;
+        }
+        console.log('[Lead] Neuer Lead angelegt');
     }
 
     // Erfolg
     AffiliateTracker.trackEvent('lead_submitted', { kasse });
-    document.getElementById('leadModal')._leadId = insertedLead?.id || null;
+    document.getElementById('leadModal')._leadId = recordId;
+    document.getElementById('leadModal')._isKunde = !!existingKunde;
     document.getElementById('leadForm').classList.add('hidden');
     document.getElementById('leadSuccess').classList.remove('hidden');
 
@@ -2079,12 +2140,14 @@ async function submitLead(event) {
 async function bookAfterLead() {
     AffiliateTracker.trackEvent('booking_after_lead', { position: 'lead_modal' });
 
-    // Termin-Buchung auf dem Lead speichern
-    const leadId = document.getElementById('leadModal')._leadId;
-    if (leadId) {
+    // Termin-Buchung speichern (auf Kunde oder Lead)
+    const recordId = document.getElementById('leadModal')._leadId;
+    const isKunde = document.getElementById('leadModal')._isKunde;
+    if (recordId) {
         const sb = getSupabase();
         if (sb) {
-            sb.from('leads').update({ termin_gebucht_at: new Date().toISOString(), status: 'termin' }).eq('id', leadId).then(() => {});
+            const table = isKunde ? 'kunden' : 'leads';
+            sb.from(table).update({ termin_gebucht_at: new Date().toISOString(), status: 'termin' }).eq('id', recordId).then(() => {});
         }
     }
 
@@ -2261,6 +2324,23 @@ function syncKinderlosField() {
 <!-- ================================================================
      LEAD-MODAL (wird per JS eingeblendet bei CTA-Klick)
      ================================================================ -->
+<!-- Detail-Modal -->
+<div class="modal-overlay hidden" id="detailModal" onclick="if(event.target===this)closeDetailModal()">
+    <div class="modal-card" style="max-width:440px;">
+        <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="width:40px;height:40px;background:#E0F2FE;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#004283" stroke-width="2"><path d="M9 12h6M12 9v6"/><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div>
+                <h3 class="detail-kasse-name" style="margin:0;font-size:1.05rem;"></h3>
+                <p class="detail-kasse-typ" style="margin:0;font-size:.78rem;color:#64748B;"></p>
+            </div>
+        </div>
+        <div class="detail-body" style="max-height:60vh;overflow-y:auto;"></div>
+    </div>
+</div>
+
 <div class="modal-overlay hidden" id="leadModal">
     <div class="modal-card">
         <button class="modal-close" onclick="closeLeadModal()">&times;</button>
