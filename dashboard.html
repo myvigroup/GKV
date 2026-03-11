@@ -1064,7 +1064,11 @@ function buildUnifiedContacts() {
         allContacts.push({
             type: 'kunde', id: kunde.id, vorname: kunde.vorname, nachname: kunde.nachname,
             email: kunde.email, telefon: kunde.telefon || null, status, created_at: kunde.created_at,
-            code: kunde.code, link, berechnungen, emails, anrufe, dokumente, notizen: kunde.notizen || '', _raw: kunde,
+            code: kunde.code, link, berechnungen, emails, anrufe, dokumente, notizen: kunde.notizen || '',
+            gehalt: kunde.gehalt, beschaeftigung: kunde.beschaeftigung, familienstand: kunde.familienstand,
+            kinder: kunde.kinder, aktuelle_kasse: kunde.aktuelle_kasse,
+            gewaehlte_kasse: kunde.gewaehlte_kasse, sparpotenzial_jahr: kunde.sparpotenzial_jahr,
+            _raw: kunde,
         });
     }
 
@@ -1077,7 +1081,8 @@ function buildUnifiedContacts() {
         allContacts.push({
             type: 'lead', id: lead.id, vorname: lead.vorname, nachname: lead.nachname,
             email: lead.email, telefon: lead.telefon || null, status, created_at: lead.created_at, anrufe,
-            gehalt: lead.gehalt, aktuelle_kasse: lead.aktuelle_kasse,
+            gehalt: lead.gehalt, beschaeftigung: lead.beschaeftigung, familienstand: lead.familienstand,
+            kinder: lead.kinder, aktuelle_kasse: lead.aktuelle_kasse,
             gewaehlte_kasse: lead.gewaehlte_kasse, sparpotenzial_jahr: lead.sparpotenzial_jahr,
             link: leadLink, notizen: lead.notizen || '', _raw: lead,
         });
@@ -1297,14 +1302,19 @@ function openSidebar(uid) {
     </div>`;
 
     // Versicherungsdaten
-    if (contact.gehalt || contact.sparpotenzial_jahr || contact.aktuelle_kasse || contact.gewaehlte_kasse) {
+    if (contact.gehalt || contact.sparpotenzial_jahr || contact.aktuelle_kasse || contact.gewaehlte_kasse || contact.beschaeftigung || contact.familienstand) {
+        const beschLabels = { angestellt: 'Angestellt', selbststaendig: 'Selbstständig', beamter: 'Beamter', rentner: 'Rentner', student: 'Student' };
+        const famLabels = { ledig: 'Ledig', verheiratet: 'Verheiratet', geschieden: 'Geschieden', verwitwet: 'Verwitwet' };
         html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Versicherungsdaten</div>
+            <div class="sidebar-section-title">Eckdaten</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
-                <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt (brutto)</div><div class="sidebar-field-val">${contact.gehalt ? contact.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Beschäftigung</div><div class="sidebar-field-val">${esc(beschLabels[contact.beschaeftigung] || contact.beschaeftigung || '–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Familienstand</div><div class="sidebar-field-val">${esc(famLabels[contact.familienstand] || contact.familienstand || '–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Kinder</div><div class="sidebar-field-val">${contact.kinder != null ? contact.kinder : '–'}</div></div>
                 <div class="sidebar-field"><div class="sidebar-field-label">Aktuelle Kasse</div><div class="sidebar-field-val">${esc(contact.aktuelle_kasse || '–')}</div></div>
                 <div class="sidebar-field"><div class="sidebar-field-label">Gewählte Kasse</div><div class="sidebar-field-val">${esc(contact.gewaehlte_kasse || '–')}</div></div>
+                <div class="sidebar-field" style="grid-column:span 2;"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;font-size:1rem;">${contact.sparpotenzial_jahr ? contact.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
             </div>
         </div>`;
     }

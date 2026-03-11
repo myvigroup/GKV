@@ -1727,15 +1727,20 @@ async function openKontaktSidebar(type, id) {
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(kontakt.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
-    // Versicherungsdaten
-    if (kontakt.gehalt || kontakt.sparpotenzial_jahr || kontakt.aktuelle_kasse || kontakt.gewaehlte_kasse) {
+    // Eckdaten
+    if (kontakt.gehalt || kontakt.sparpotenzial_jahr || kontakt.aktuelle_kasse || kontakt.gewaehlte_kasse || kontakt.beschaeftigung || kontakt.familienstand) {
+        const beschLabels = { angestellt: 'Angestellt', selbststaendig: 'Selbstständig', beamter: 'Beamter', rentner: 'Rentner', student: 'Student' };
+        const famLabels = { ledig: 'Ledig', verheiratet: 'Verheiratet', geschieden: 'Geschieden', verwitwet: 'Verwitwet' };
         html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Versicherungsdaten</div>
+            <div class="sidebar-section-title">Eckdaten</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                ${editableField('Gehalt', 'gehalt', kontakt.gehalt, kontakt.gehalt ? kontakt.gehalt.toLocaleString('de-DE') + ' €' : '')}
-                <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${kontakt.sparpotenzial_jahr ? kontakt.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
+                ${editableField('Gehalt (brutto)', 'gehalt', kontakt.gehalt, kontakt.gehalt ? kontakt.gehalt.toLocaleString('de-DE') + ' €' : '')}
+                <div class="sidebar-field"><div class="sidebar-field-label">Beschäftigung</div><div class="sidebar-field-val">${esc(beschLabels[kontakt.beschaeftigung] || kontakt.beschaeftigung || '–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Familienstand</div><div class="sidebar-field-val">${esc(famLabels[kontakt.familienstand] || kontakt.familienstand || '–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Kinder</div><div class="sidebar-field-val">${kontakt.kinder != null ? kontakt.kinder : '–'}</div></div>
                 ${editableField('Aktuelle Kasse', 'aktuelle_kasse', kontakt.aktuelle_kasse, kontakt.aktuelle_kasse)}
                 ${editableField('Gewählte Kasse', 'gewaehlte_kasse', kontakt.gewaehlte_kasse, kontakt.gewaehlte_kasse)}
+                <div class="sidebar-field" style="grid-column:span 2;"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;font-size:1rem;">${kontakt.sparpotenzial_jahr ? kontakt.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
             </div>
         </div>`;
     }
