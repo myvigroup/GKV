@@ -67,6 +67,54 @@
         .stat-val { font-size:1.6rem; font-weight:800; color:var(--g900); }
         .stat-sub { font-size:.78rem; color:var(--g500); margin-top:2px; }
 
+        /* Sidebar */
+        .sidebar-overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,.3);
+            z-index:200; opacity:0; transition:opacity .25s ease;
+        }
+        .sidebar-overlay.active { display:block; opacity:1; }
+        .sidebar {
+            position:fixed; top:0; right:-480px; width:480px; max-width:90vw; height:100vh;
+            background:#fff; z-index:201; transition:right .3s cubic-bezier(.4,0,.2,1);
+            display:flex; flex-direction:column; box-shadow:-8px 0 32px rgba(0,0,0,.12);
+        }
+        .sidebar.open { right:0; }
+        .sidebar-header {
+            padding:20px 24px; border-bottom:1px solid var(--g100);
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .sidebar-header h3 { font-size:1rem; font-weight:700; color:var(--g900); }
+        .sidebar-close {
+            width:32px; height:32px; border-radius:8px; border:none; background:var(--g50);
+            cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--g500); transition:var(--ease);
+        }
+        .sidebar-close:hover { background:var(--g200); color:var(--g800); }
+        .sidebar-body { flex:1; overflow-y:auto; padding:20px 24px; }
+        .sidebar-section { margin-bottom:20px; }
+        .sidebar-section-title {
+            font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+            color:var(--g400); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--g100);
+        }
+        .sidebar-field { margin-bottom:10px; }
+        .sidebar-field-label { font-size:.72rem; color:var(--g400); font-weight:600; }
+        .sidebar-field-val { font-size:.88rem; color:var(--g800); font-weight:500; }
+        .sidebar-timeline { position:relative; padding-left:20px; }
+        .sidebar-timeline::before {
+            content:''; position:absolute; left:3px; top:4px; bottom:4px;
+            width:2px; background:var(--g200);
+        }
+        .timeline-item { position:relative; margin-bottom:16px; }
+        .timeline-item::before {
+            content:''; position:absolute; left:-20px; top:4px;
+            width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid #fff;
+            box-shadow:0 0 0 2px var(--g200);
+        }
+        .timeline-item.email::before { background:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
+        .timeline-item.calc::before { background:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
+        .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
+        .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
+        .timeline-content strong { color:var(--g800); }
+
         /* Email Chart */
         .email-chart-card {
             background:#fff; border:1px solid var(--g100); border-radius:var(--r-md);
@@ -536,6 +584,18 @@
     </div>
 </div>
 
+<!-- Kontakt Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebarPanel">
+    <div class="sidebar-header">
+        <h3 id="sidebarTitle">Kontakt-Details</h3>
+        <button class="sidebar-close" onclick="closeSidebar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="sidebar-body" id="sidebarBody"></div>
+</div>
+
 <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <!-- SheetJS for Excel parsing -->
@@ -838,14 +898,14 @@ function renderAlleKontakte() {
             `<option value="${b.id}" ${b.id === k.berater_id ? 'selected' : ''}>${esc(b.vorname)} ${esc(b.nachname)}</option>`
         ).join('');
 
-        return `<tr>
+        return `<tr onclick="openKontaktSidebar('${k._type}','${k.id}')" style="cursor:pointer;">
             <td style="font-size:.82rem;">${dateStr}</td>
             <td style="font-weight:600;">${esc(k.vorname)} ${esc(k.nachname)}</td>
             <td>
                 <div style="font-size:.78rem;">${esc(k.email || '\u2013')}</div>
                 ${k.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(k.telefon)}</div>` : ''}
             </td>
-            <td>
+            <td onclick="event.stopPropagation();">
                 <select class="berater-select" onchange="reassignKontakt('${table}','${k.id}',this.value)">
                     ${beraterOptions}
                 </select>
@@ -968,7 +1028,7 @@ function renderDetailKontakte() {
             : '\u2013';
         const statusLabel = k._type === 'kunde' ? 'Kunde' : k.status;
         const statusClass = k._type === 'kunde' ? 'status-abgeschlossen' : `status-${k.status}`;
-        return `<tr>
+        return `<tr onclick="openKontaktSidebar('${k._type}','${k.id}')" style="cursor:pointer;">
             <td style="font-size:.82rem;">${dateStr}</td>
             <td style="font-weight:600;">${esc(k.vorname)} ${esc(k.nachname)}</td>
             <td>
@@ -1373,6 +1433,124 @@ function esc(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+/* ==================================================================
+   KONTAKT SIDEBAR
+   ================================================================== */
+async function openKontaktSidebar(type, id) {
+    // Find kontakt in loaded data
+    let kontakt;
+    if (type === 'lead') {
+        kontakt = allLeads.find(l => l.id === id);
+    } else {
+        kontakt = allKunden.find(k => k.id === id);
+    }
+    if (!kontakt) return;
+
+    const isKunde = type === 'kunde';
+    document.getElementById('sidebarTitle').textContent = `${kontakt.vorname} ${kontakt.nachname}`;
+
+    // Load emails + berechnungen for this kontakt
+    let emails = [], berechnungen = [];
+    if (isKunde) {
+        const [emailRes, berechRes] = await Promise.all([
+            sb.from('kunden_emails').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
+            sb.from('kunden_berechnungen').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
+        ]);
+        emails = emailRes.data || [];
+        berechnungen = berechRes.data || [];
+    }
+
+    // Berater name
+    const berater = allBerater.find(b => b.id === kontakt.berater_id);
+    const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
+
+    let html = '';
+
+    // Info section
+    html += `<div class="sidebar-section">
+        <div class="sidebar-section-title">Kontaktdaten</div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Typ</div><div class="sidebar-field-val">${isKunde ? 'Kunde' : 'Lead'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${kontakt.email ? `<a href="mailto:${esc(kontakt.email)}" style="color:var(--primary);text-decoration:none;">${esc(kontakt.email)}</a>` : '–'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${kontakt.telefon ? `<a href="tel:${esc(kontakt.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(kontakt.telefon)}</a>` : '–'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Berater</div><div class="sidebar-field-val">${esc(beraterName)}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(kontakt.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
+    </div>`;
+
+    // Lead-specific data
+    if (!isKunde && (kontakt.gehalt || kontakt.sparpotenzial_jahr || kontakt.aktuelle_kasse || kontakt.gewaehlte_kasse)) {
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Lead-Daten</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="sidebar-field"><div class="sidebar-field-label">Gehalt</div><div class="sidebar-field-val">${kontakt.gehalt ? kontakt.gehalt.toLocaleString('de-DE') + ' €' : '–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Sparpotenzial</div><div class="sidebar-field-val" style="color:var(--success);font-weight:700;">${kontakt.sparpotenzial_jahr ? kontakt.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr' : '–'}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Aktuelle Kasse</div><div class="sidebar-field-val">${esc(kontakt.aktuelle_kasse || '–')}</div></div>
+                <div class="sidebar-field"><div class="sidebar-field-label">Gewählte Kasse</div><div class="sidebar-field-val">${esc(kontakt.gewaehlte_kasse || '–')}</div></div>
+            </div>
+        </div>`;
+    }
+
+    // Timeline
+    if (isKunde) {
+        const timelineItems = [];
+        for (const b of berechnungen) {
+            const d = new Date(b.created_at);
+            const spar = b.sparpotenzial_jahr ? `${b.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €/Jahr` : '–';
+            timelineItems.push({
+                date: d,
+                html: `<div class="timeline-item calc">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong>Berechnung</strong><br>
+                        ${esc(b.aktuelle_kasse || '–')} → ${esc(b.guenstigste_kasse || '–')}<br>
+                        <span style="color:var(--success);font-weight:700;">Ersparnis: ${spar}</span>
+                    </div>
+                </div>`
+            });
+        }
+        const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehlgeschlagen' };
+        for (const e of emails) {
+            const d = new Date(e.created_at);
+            timelineItems.push({
+                date: d,
+                html: `<div class="timeline-item email">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong>E-Mail: ${esc(e.subject || 'Kein Betreff')}</strong><br>
+                        Status: ${emailLabels[e.status] || e.status}
+                    </div>
+                </div>`
+            });
+        }
+        timelineItems.sort((a, b) => b.date - a.date);
+
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Timeline (${timelineItems.length} Ereignisse)</div>
+            ${timelineItems.length > 0
+                ? `<div class="sidebar-timeline">${timelineItems.map(t => t.html).join('')}</div>`
+                : '<p style="font-size:.82rem;color:var(--g400);">Noch keine Aktivität</p>'}
+        </div>`;
+    }
+
+    // Notizen
+    html += `<div class="sidebar-section">
+        <div class="sidebar-section-title">Notizen</div>
+        <textarea style="width:100%;min-height:80px;padding:10px;font-size:.85rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);background:var(--g50);resize:vertical;"
+            placeholder="Notizen hinzufügen..."
+            onblur="updateKontaktNotizen('${type === 'kunde' ? 'kunden' : 'leads'}','${id}',this.value)">${esc(kontakt.notizen || '')}</textarea>
+    </div>`;
+
+    document.getElementById('sidebarBody').innerHTML = html;
+    document.getElementById('sidebarOverlay').classList.add('active');
+    document.getElementById('sidebarPanel').classList.add('open');
+}
+
+function closeSidebar() {
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.getElementById('sidebarPanel').classList.remove('open');
+}
+
+async function updateKontaktNotizen(table, id, notizen) {
+    await sb.from(table).update({ notizen }).eq('id', id);
 }
 
 /* ==================================================================
