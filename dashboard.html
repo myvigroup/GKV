@@ -541,6 +541,7 @@
         <div class="user-info">
             <div class="user-avatar" id="userAvatar">LJ</div>
             <span class="user-name" id="userName">Berater</span>
+            <button class="btn-profil" onclick="openProfil()" style="padding:6px 14px;font-size:.8rem;font-weight:600;border:1px solid var(--g200);border-radius:var(--r-sm);background:#fff;cursor:pointer;color:var(--g700);font-family:var(--font);transition:var(--ease);" onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--g200)';this.style.color='var(--g700)'">Profil</button>
             <button class="btn-logout" onclick="handleLogout()">Abmelden</button>
         </div>
     </div>
@@ -780,6 +781,67 @@
     </div>
 </div>
 
+<!-- Profil-Modal -->
+<div class="modal-overlay hidden" id="profilModal" onclick="if(event.target===this)closeProfil()">
+    <div style="background:#fff;border-radius:16px;max-width:480px;width:90%;margin:auto;padding:28px;position:relative;box-shadow:var(--shadow-lg);">
+        <button onclick="closeProfil()" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.5rem;color:var(--g400);cursor:pointer;">&times;</button>
+        <h3 style="margin:0 0 20px;font-size:1.1rem;font-weight:700;color:var(--g900);">Mein Profil</h3>
+
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+            <div id="profilAvatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0;overflow:hidden;"></div>
+            <div>
+                <label style="display:inline-block;padding:6px 14px;font-size:.78rem;font-weight:600;border:1px solid var(--g200);border-radius:var(--r-sm);cursor:pointer;color:var(--primary);background:#fff;">
+                    Bild ändern
+                    <input type="file" id="profilBildInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleProfilBild(this)">
+                </label>
+                <button onclick="removeProfilBild()" id="profilBildRemoveBtn" class="hidden" style="margin-left:6px;padding:6px 10px;font-size:.75rem;border:1px solid var(--danger-light);border-radius:var(--r-sm);background:#fff;color:var(--danger);cursor:pointer;font-family:var(--font);">Entfernen</button>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="profil-field">
+                <label>Vorname</label>
+                <input type="text" id="profilVorname" readonly style="background:var(--g50);color:var(--g500);">
+            </div>
+            <div class="profil-field">
+                <label>Nachname</label>
+                <input type="text" id="profilNachname" readonly style="background:var(--g50);color:var(--g500);">
+            </div>
+        </div>
+        <div class="profil-field">
+            <label>E-Mail</label>
+            <input type="email" id="profilEmail">
+        </div>
+        <div class="profil-field">
+            <label>Telefon</label>
+            <input type="tel" id="profilTelefon" placeholder="+49 ...">
+        </div>
+        <div class="profil-field">
+            <label>Calendly / Buchungs-Link</label>
+            <input type="url" id="profilCalendly" placeholder="https://calendly.com/...">
+        </div>
+        <div class="profil-field">
+            <label>Titel (optional)</label>
+            <input type="text" id="profilTitel" placeholder="z.B. Dipl.-Kfm.">
+        </div>
+
+        <div id="profilMsg" class="hidden" style="margin-top:12px;padding:10px;border-radius:8px;font-size:.84rem;text-align:center;"></div>
+
+        <button onclick="saveProfil()" id="profilSaveBtn" style="margin-top:16px;width:100%;padding:12px;font-size:.9rem;font-weight:700;font-family:var(--font);color:#fff;background:var(--primary);border:none;border-radius:var(--r-sm);cursor:pointer;transition:var(--ease);">
+            Speichern
+        </button>
+    </div>
+</div>
+
+<style>
+    .profil-field { margin-bottom:12px; }
+    .profil-field label { display:block;font-size:.75rem;font-weight:600;color:var(--g500);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px; }
+    .profil-field input { width:100%;padding:10px 12px;font-size:.88rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);color:var(--g800);box-sizing:border-box;transition:var(--ease); }
+    .profil-field input:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(0,66,131,.08); }
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px); }
+    .modal-overlay.hidden { display:none; }
+</style>
+
 <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <!-- SheetJS for Excel parsing -->
@@ -876,7 +938,12 @@ async function showDashboard(user) {
 
     if (berater) {
         document.getElementById('userName').textContent = `${berater.vorname} ${berater.nachname}`;
-        document.getElementById('userAvatar').textContent = (berater.vorname[0] + berater.nachname[0]).toUpperCase();
+        const headerAvatar = document.getElementById('userAvatar');
+        if (berater.bild_url) {
+            headerAvatar.innerHTML = `<img src="${berater.bild_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else {
+            headerAvatar.textContent = (berater.vorname[0] + berater.nachname[0]).toUpperCase();
+        }
         const baseUrl = window.location.origin;
         document.getElementById('affiliateLink').value = `${baseUrl}/?berater=${berater.slug}`;
 
@@ -1338,6 +1405,107 @@ function openSidebar(uid) {
     document.getElementById('sidebarBody').innerHTML = html;
     document.getElementById('sidebarOverlay').classList.add('active');
     document.getElementById('sidebarPanel').classList.add('open');
+}
+
+/* ── Profil ── */
+function openProfil() {
+    if (!beraterRecord) return;
+    const b = beraterRecord;
+    document.getElementById('profilVorname').value = b.vorname || '';
+    document.getElementById('profilNachname').value = b.nachname || '';
+    document.getElementById('profilEmail').value = b.email || '';
+    document.getElementById('profilTelefon').value = b.telefon || '';
+    document.getElementById('profilCalendly').value = b.calendly_url || '';
+    document.getElementById('profilTitel').value = b.titel || '';
+
+    const avatar = document.getElementById('profilAvatar');
+    if (b.bild_url) {
+        avatar.innerHTML = `<img src="${b.bild_url}" style="width:100%;height:100%;object-fit:cover;">`;
+        document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
+    } else {
+        avatar.textContent = (b.vorname?.[0] || '') + (b.nachname?.[0] || '');
+        avatar.querySelector('img')?.remove();
+        document.getElementById('profilBildRemoveBtn').classList.add('hidden');
+    }
+
+    document.getElementById('profilMsg').classList.add('hidden');
+    document.getElementById('profilModal').classList.remove('hidden');
+}
+
+function closeProfil() {
+    document.getElementById('profilModal').classList.add('hidden');
+}
+
+async function handleProfilBild(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Bild max. 5 MB'); return; }
+    const ext = file.name.split('.').pop();
+    const path = `berater/${beraterRecord.id}/profil.${ext}`;
+
+    // Upload to storage
+    const { error: upErr } = await sb.storage.from('kunden-dokumente').upload(path, file, { contentType: file.type, upsert: true });
+    if (upErr) { console.error(upErr); alert('Upload fehlgeschlagen'); return; }
+
+    // Get public URL
+    const { data: urlData } = sb.storage.from('kunden-dokumente').getPublicUrl(path);
+    const bildUrl = urlData.publicUrl + '?t=' + Date.now();
+
+    // Update berater record
+    await sb.from('berater').update({ bild_url: bildUrl }).eq('id', beraterRecord.id);
+    beraterRecord.bild_url = bildUrl;
+
+    // Update avatar
+    const avatar = document.getElementById('profilAvatar');
+    avatar.innerHTML = `<img src="${bildUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    document.getElementById('profilBildRemoveBtn').classList.remove('hidden');
+
+    // Update header avatar
+    const headerAvatar = document.getElementById('userAvatar');
+    headerAvatar.innerHTML = `<img src="${bildUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+}
+
+async function removeProfilBild() {
+    await sb.from('berater').update({ bild_url: null }).eq('id', beraterRecord.id);
+    beraterRecord.bild_url = null;
+
+    const avatar = document.getElementById('profilAvatar');
+    avatar.innerHTML = '';
+    avatar.textContent = (beraterRecord.vorname?.[0] || '') + (beraterRecord.nachname?.[0] || '');
+    document.getElementById('profilBildRemoveBtn').classList.add('hidden');
+
+    const headerAvatar = document.getElementById('userAvatar');
+    headerAvatar.innerHTML = '';
+    headerAvatar.textContent = (beraterRecord.vorname?.[0] || '') + (beraterRecord.nachname?.[0] || '');
+}
+
+async function saveProfil() {
+    const btn = document.getElementById('profilSaveBtn');
+    const msgEl = document.getElementById('profilMsg');
+    btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+
+    const updates = {
+        email: document.getElementById('profilEmail').value.trim(),
+        telefon: document.getElementById('profilTelefon').value.trim() || null,
+        calendly_url: document.getElementById('profilCalendly').value.trim() || null,
+        titel: document.getElementById('profilTitel').value.trim() || null,
+    };
+
+    const { error } = await sb.from('berater').update(updates).eq('id', beraterRecord.id);
+
+    if (error) {
+        msgEl.textContent = 'Fehler beim Speichern: ' + error.message;
+        msgEl.style.background = 'var(--danger-light)'; msgEl.style.color = 'var(--danger)';
+        msgEl.classList.remove('hidden');
+    } else {
+        Object.assign(beraterRecord, updates);
+        msgEl.textContent = 'Profil gespeichert!';
+        msgEl.style.background = 'var(--success-light)'; msgEl.style.color = 'var(--success)';
+        msgEl.classList.remove('hidden');
+        setTimeout(() => closeProfil(), 1200);
+    }
+
+    btn.disabled = false; btn.textContent = 'Speichern';
 }
 
 function closeSidebar() {

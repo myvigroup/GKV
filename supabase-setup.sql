@@ -1,8 +1,13 @@
 -- ============================================================
 -- GKV-RECHNER: Supabase Datenbank-Setup
 -- ============================================================
--- Dieses SQL im Supabase SQL Editor ausführen (Dashboard → SQL Editor)
+-- Bestehende Tabellen werden gelöscht und neu erstellt.
 -- ============================================================
+
+-- Alte Tabellen entfernen (falls vorhanden)
+DROP FUNCTION IF EXISTS update_updated_at() CASCADE;
+DROP TABLE IF EXISTS leads CASCADE;
+DROP TABLE IF EXISTS berater CASCADE;
 
 -- 1. BERATER-TABELLE
 CREATE TABLE berater (
@@ -92,6 +97,10 @@ CREATE POLICY "berater_update_leads" ON leads
 -- Aktive Berater sind öffentlich lesbar (für Rechner-Slug-Lookup)
 CREATE POLICY "public_read_active_berater" ON berater
     FOR SELECT USING (aktiv = true);
+
+-- Berater können ihr eigenes Profil updaten
+CREATE POLICY "berater_update_own" ON berater
+    FOR UPDATE USING (auth_user_id = auth.uid());
 
 -- 5. INITIALE BERATER-DATEN (aus dem bestehenden Code)
 INSERT INTO berater (slug, vorname, nachname, email, telefon, calendly_url, team) VALUES
