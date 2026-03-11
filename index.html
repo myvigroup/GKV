@@ -2885,13 +2885,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="font-size:1.5rem;font-weight:800;color:#00B67A;" id="leadSparBetrag"></div>
                 <div style="font-size:.78rem;color:#64748B;margin-top:2px;" id="leadSparMonat"></div>
             </div>
-            <div class="book-after-lead hidden" id="leadBookWrap" style="margin-top:20px;padding:16px;background:#EFF6FF;border:1px solid #BAE6FD;border-radius:12px;text-align:center;">
-                <p style="margin:0 0 10px;font-size:.85rem;color:#004283;font-weight:600;">Du möchtest nicht warten?</p>
-                <button class="btn-submit" id="leadBookBtn" onclick="bookAfterLead()" style="background:#004283;padding:14px 24px;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:10px;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="16" r="1.5" fill="#fff" stroke="none"/></svg>
-                    <span id="leadBookLabel">Jetzt Termin buchen</span>
-                </button>
-                <p style="margin:8px 0 0;font-size:.75rem;color:#6B7280;">Kostenlos & unverbindlich</p>
+            <div class="book-after-lead hidden" id="leadBookWrap" style="margin-top:16px;padding:0;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#004283,#06BADD);box-shadow:0 4px 16px rgba(0,66,131,.25);">
+                <div style="padding:20px 20px 16px;text-align:center;">
+                    <p style="margin:0 0 14px;font-size:.82rem;color:rgba(255,255,255,.75);font-weight:500;">Du möchtest nicht warten?</p>
+                    <button class="btn-submit" id="leadBookBtn" onclick="bookAfterLead()" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.4);backdrop-filter:blur(4px);padding:14px 28px;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="16" r="1.5" fill="#fff" stroke="none"/></svg>
+                        <span id="leadBookLabel" style="color:#fff;font-weight:700;letter-spacing:-.2px;">Jetzt Termin buchen</span>
+                    </button>
+                    <p style="margin:10px 0 0;font-size:.72rem;color:rgba(255,255,255,.5);">Kostenlos & unverbindlich</p>
+                </div>
             </div>
         </div>
     </div>
