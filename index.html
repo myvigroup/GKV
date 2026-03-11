@@ -1511,9 +1511,10 @@ const LeadAPI = (() => {
         return cb && cb.checked;
     }
 
-    /** Berechnung direkt in Supabase speichern */
+    /** Berechnung direkt in Supabase speichern (nur mit Consent) */
     async function sendeBerechnung(eingaben, ergebnisseData) {
         if (!_aktiv || !_kundeRecord) return;
+        if (!hatConsent()) { console.log('[LeadAPI] Berechnung nicht gespeichert – kein Consent'); return; }
 
         const sb = getSupabase();
         if (!sb) return;
