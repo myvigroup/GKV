@@ -304,38 +304,42 @@
 
         /* ===== PIPELINE (Kanban) ===== */
         .pipeline-view { display:none; }
-        .pipeline-view.active { display:flex; gap:12px; overflow-x:auto; padding-bottom:12px; min-height:400px; }
+        .pipeline-view.active { display:flex; gap:10px; overflow-x:auto; padding-bottom:12px; min-height:400px; }
         .pipeline-col {
-            flex:0 0 220px; min-width:220px; background:var(--g50); border-radius:var(--r-md);
+            flex:1 1 0; min-width:200px; background:var(--g50); border-radius:var(--r-md);
             display:flex; flex-direction:column; max-height:calc(100vh - 300px);
         }
         .pipeline-col-header {
-            padding:12px 14px; font-size:.75rem; font-weight:700; text-transform:uppercase;
-            letter-spacing:.06em; color:var(--g500); border-bottom:2px solid var(--g200);
+            padding:12px 14px; font-size:.72rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.06em; color:#fff; border-bottom:none;
             display:flex; justify-content:space-between; align-items:center;
-            position:sticky; top:0; background:var(--g50); border-radius:var(--r-md) var(--r-md) 0 0; z-index:1;
+            position:sticky; top:0; border-radius:var(--r-md) var(--r-md) 0 0; z-index:1;
         }
         .pipeline-col-header .col-count {
-            background:var(--g200); color:var(--g600); font-size:.7rem; font-weight:700;
-            padding:2px 7px; border-radius:10px;
+            background:rgba(255,255,255,.25); color:#fff; font-size:.7rem; font-weight:700;
+            padding:2px 8px; border-radius:10px;
         }
         .pipeline-col-body {
             flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:8px;
+            transition:background .15s ease;
         }
-        .pipeline-col-body.drag-over { background:var(--primary-light); }
+        .pipeline-col-body.drag-over { background:rgba(0,66,131,.06); border-radius:0 0 var(--r-md) var(--r-md); }
         .pipeline-card {
             background:#fff; border-radius:var(--r-sm); padding:12px; border:1px solid var(--g100);
-            box-shadow:var(--shadow-sm); cursor:grab; transition:box-shadow .15s ease;
+            box-shadow:var(--shadow-sm); cursor:grab; transition:box-shadow .15s ease, transform .15s ease, opacity .15s ease;
         }
-        .pipeline-card:hover { box-shadow:var(--shadow-md); }
-        .pipeline-card.dragging { opacity:.5; }
+        .pipeline-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
+        .pipeline-card.dragging { opacity:.4; transform:rotate(2deg); }
         .pipeline-card.selected { border-color:var(--primary); background:var(--primary-light); }
         .pipeline-card-top { display:flex; justify-content:space-between; align-items:start; }
         .pipeline-card-check { margin:0; cursor:pointer; accent-color:var(--primary); width:15px; height:15px; flex-shrink:0; }
-        .pipeline-card-name { font-size:.85rem; font-weight:700; color:var(--g900); margin-bottom:4px; }
-        .pipeline-card-email { font-size:.72rem; color:var(--g400); margin-bottom:6px; word-break:break-all; }
-        .pipeline-card-spar { font-size:.78rem; font-weight:700; color:var(--success); }
-        .pipeline-card-date { font-size:.65rem; color:var(--g400); margin-top:6px; }
+        .pipeline-card-name { font-size:.85rem; font-weight:700; color:var(--g900); margin-bottom:2px; }
+        .pipeline-card-email { font-size:.72rem; color:var(--g400); margin-bottom:4px; word-break:break-all; }
+        .pipeline-card-detail { font-size:.72rem; color:var(--g500); margin-bottom:2px; }
+        .pipeline-card-spar { font-size:.82rem; font-weight:700; color:var(--success); }
+        .pipeline-card-date { font-size:.65rem; color:var(--g400); margin-top:6px; display:flex; justify-content:space-between; align-items:center; }
+        .pipeline-card-badge { font-size:.6rem; padding:1px 5px; border-radius:3px; font-weight:600; }
+        .pipeline-empty { text-align:center; padding:24px 8px; font-size:.75rem; color:var(--g400); font-style:italic; }
 
         /* Loading & empty states */
         .loading-state, .empty-state { text-align:center; padding:48px 20px; color:var(--g400); }
@@ -1344,6 +1348,19 @@ function openSidebar(uid) {
         </div>`;
     }
 
+    // Termin-Info (wenn gebucht)
+    if (contact._raw?.termin_datum) {
+        const td = new Date(contact._raw.termin_datum);
+        const istVergangen = td < new Date();
+        html += `<div class="sidebar-section">
+            <div style="background:${istVergangen ? '#F0F9FF' : '#F0FDF4'};border:1px solid ${istVergangen ? '#BAE6FD' : '#BBF7D0'};border-radius:8px;padding:14px;">
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:${istVergangen ? '#0369A1' : '#15803D'};margin-bottom:4px;">${istVergangen ? 'Termin war am' : 'Nächster Termin'}</div>
+                <div style="font-size:1rem;font-weight:700;color:#0F172A;">${td.toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</div>
+                <div style="font-size:.85rem;color:#475569;">${td.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })} Uhr</div>
+            </div>
+        </div>`;
+    }
+
     // Dokumente Section (nur bei abgeschlossen)
     if (contact.status === 'abgeschlossen') {
         html += `<div class="sidebar-section">
@@ -1422,12 +1439,16 @@ function openSidebar(uid) {
         const terminAt = contact._raw?.termin_gebucht_at;
         if (terminAt) {
             const d = new Date(terminAt);
+            const terminDatum = contact._raw?.termin_datum;
+            const terminInfo = terminDatum
+                ? `Termin am <strong>${new Date(terminDatum).toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</strong> um <strong>${new Date(terminDatum).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })} Uhr</strong>`
+                : 'Kunde hat einen Beratungstermin vereinbart';
             timelineItems.push({
                 date: d,
                 html: `<div class="timeline-item termin">
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
                     <div class="timeline-content"><strong>Termin gebucht</strong><br>
-                        Kunde hat einen Beratungstermin vereinbart
+                        ${terminInfo}
                     </div>
                 </div>`
             });
@@ -1860,7 +1881,7 @@ const pipelineStatuses = [
 
 function renderPipeline() {
     const pipeline = document.getElementById('pipelineView');
-    let contacts = allContacts;
+    let contacts = allContacts.filter(c => !c.archiviert);
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
         contacts = contacts.filter(c =>
@@ -1879,12 +1900,29 @@ function renderPipeline() {
             } else if (c.sparpotenzial_jahr) {
                 sparText = c.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/J';
             }
-            const dateStr = new Date(c.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+            const dateStr = new Date(c.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit' });
             const checked = selectedKontaktIds.has(c.id) ? 'checked' : '';
             const selectedClass = selectedKontaktIds.has(c.id) ? ' selected' : '';
-            const checkboxHtml = c.email
+            const canEmail = c.email && !c.email_abgemeldet;
+            const checkboxHtml = canEmail
                 ? `<input type="checkbox" class="pipeline-card-check" ${checked} onclick="event.stopPropagation();togglePipelineSelect('${c.id}',this)" title="Für Email auswählen">`
                 : '';
+
+            // Badges
+            let badges = '';
+            if (c.email_abgemeldet) badges += `<span class="pipeline-card-badge" style="background:#FEE2E2;color:#DC2626;">Abgemeldet</span> `;
+
+            // Email-Status
+            let emailInfo = '';
+            if (c.emails && c.emails.length > 0) {
+                const last = c.emails[0];
+                const emailLabels = { sent:'Gesendet', delivered:'Zugestellt', opened:'Geöffnet', clicked:'Geklickt', bounced:'Fehler' };
+                emailInfo = `<div class="pipeline-card-detail"><span class="dot ${last.status}" style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;"></span>${emailLabels[last.status] || last.status}</div>`;
+            }
+
+            // Kasse
+            const kasseInfo = c.gewaehlte_kasse ? `<div class="pipeline-card-detail">${esc(c.gewaehlte_kasse)}</div>` : '';
+
             return `<div class="pipeline-card${selectedClass}" draggable="true" data-uid="${uid}" data-id="${c.id}"
                         ondragstart="onDragStart(event)" onclick="openSidebar('${uid}')">
                 <div class="pipeline-card-top">
@@ -1892,19 +1930,22 @@ function renderPipeline() {
                     ${checkboxHtml}
                 </div>
                 ${c.email ? `<div class="pipeline-card-email">${esc(c.email)}</div>` : ''}
+                ${kasseInfo}${emailInfo}
                 ${sparText ? `<div class="pipeline-card-spar">${sparText}</div>` : ''}
-                <div class="pipeline-card-date">${dateStr}</div>
+                <div class="pipeline-card-date"><span>${dateStr}</span>${badges}</div>
             </div>`;
         }).join('');
 
+        const emptyHtml = colContacts.length === 0 ? '<div class="pipeline-empty">Keine Kontakte</div>' : '';
+
         return `<div class="pipeline-col">
-            <div class="pipeline-col-header" style="border-bottom-color:${col.color};">
+            <div class="pipeline-col-header" style="background:${col.color};">
                 ${col.label}
                 <span class="col-count">${colContacts.length}</span>
             </div>
             <div class="pipeline-col-body" data-status="${col.key}"
                  ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-                ${cards || '<div style="text-align:center;padding:20px;font-size:.75rem;color:var(--g400);">Keine Kontakte</div>'}
+                ${cards}${emptyHtml}
             </div>
         </div>`;
     }).join('');
