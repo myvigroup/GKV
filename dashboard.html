@@ -671,6 +671,7 @@
                         <th>Status</th>
                         <th>Sparpotenzial</th>
                         <th style="cursor:pointer;user-select:none;" onclick="sortByBerechnung()" id="thBerechnung">Letzte Berechnung <span id="sortArrow" style="font-size:.7rem;">⇅</span></th>
+                        <th>Termin</th>
                         <th>Aktivität</th>
                         <th>Link</th>
                         <th>Notizen</th>
@@ -1298,6 +1299,7 @@ function renderContacts() {
             <td>${statusSelect}</td>
             <td>${sparHtml}</td>
             <td style="font-size:.78rem;color:var(--g600);white-space:nowrap;">${contact.letzte_berechnung ? new Date(contact.letzte_berechnung).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '<span style="color:var(--g400);">–</span>'}</td>
+            <td style="font-size:.78rem;white-space:nowrap;">${contact._raw?.termin_datum ? `<span style="color:#0369A1;font-weight:600;">${new Date(contact._raw.termin_datum).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</span>` : '<span style="color:var(--g400);">–</span>'}</td>
             <td>${activityHtml}</td>
             <td>${linkHtml}</td>
             <td>${notizenHtml}</td>

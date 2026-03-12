@@ -2470,8 +2470,21 @@ async function submitLead(event) {
         sparpotenzial_jahr: sparpotenzial,
     };
 
-    const existingKunde = LeadAPI.getKunde();
+    let existingKunde = LeadAPI.getKunde();
     let recordId = null;
+
+    // Dubletten-Check: existierenden Kontakt per E-Mail suchen (gleicher Berater)
+    if (!existingKunde && formData.email && beraterId) {
+        const { data: existing } = await sb.from('kontakte')
+            .select('id')
+            .eq('email', formData.email)
+            .eq('berater_id', beraterId)
+            .order('created_at', { ascending: false })
+            .limit(1);
+        if (existing && existing.length > 0) {
+            existingKunde = existing[0];
+        }
+    }
 
     if (existingKunde) {
         // Bestehenden Kontakt aktualisieren
