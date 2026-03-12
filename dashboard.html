@@ -653,6 +653,7 @@
             <button class="filter-btn" data-filter="termin" onclick="filterByStatus('termin')">Termin</button>
             <button class="filter-btn" data-filter="abgeschlossen" onclick="filterByStatus('abgeschlossen')">Abgeschlossen</button>
             <button class="filter-btn" data-filter="storniert" onclick="filterByStatus('storniert')">Storniert</button>
+            <button class="filter-btn" data-filter="archiv" onclick="filterByStatus('archiv')" style="margin-left:auto;opacity:.7;">Archiv</button>
         </div>
 
         <!-- Table -->
@@ -1079,7 +1080,7 @@ function buildUnifiedContacts() {
         const lb = berechnungen[0] || {};
         allContacts.push({
             id: k.id, vorname: k.vorname, nachname: k.nachname,
-            email: k.email, telefon: k.telefon || null, status, created_at: k.created_at, email_abgemeldet: k.email_abgemeldet || false,
+            email: k.email, telefon: k.telefon || null, status, created_at: k.created_at, email_abgemeldet: k.email_abgemeldet || false, archiviert: k.archiviert || false,
             code: k.code, link, berechnungen, emails, anrufe, dokumente, notizen: k.notizen || '',
             gehalt: k.gehalt || lb.gehalt || null,
             beschaeftigung: k.beschaeftigung || lb.beschaeftigung || null,
@@ -1097,10 +1098,11 @@ function buildUnifiedContacts() {
 }
 
 function updateStats() {
-    document.getElementById('statTotal').textContent = allContacts.length;
-    document.getElementById('statNeu').textContent = allContacts.filter(c => c.status === 'neu').length;
-    document.getElementById('statBerechnet').textContent = allContacts.filter(c => c.status === 'berechnet').length;
-    document.getElementById('statDone').textContent = allContacts.filter(c => c.status === 'abgeschlossen').length;
+    const active = allContacts.filter(c => !c.archiviert);
+    document.getElementById('statTotal').textContent = active.length;
+    document.getElementById('statNeu').textContent = active.filter(c => c.status === 'neu').length;
+    document.getElementById('statBerechnet').textContent = active.filter(c => c.status === 'berechnet').length;
+    document.getElementById('statDone').textContent = active.filter(c => c.status === 'abgeschlossen').length;
 
     document.querySelectorAll('.stat-card').forEach(card => {
         card.classList.toggle('active', card.dataset.stat === currentFilter);
@@ -1161,9 +1163,11 @@ function renderEmailChart() {
 }
 
 function getFilteredContacts() {
-    let filtered = currentFilter === 'alle'
-        ? allContacts
-        : allContacts.filter(c => c.status === currentFilter);
+    let filtered = currentFilter === 'archiv'
+        ? allContacts.filter(c => c.archiviert)
+        : currentFilter === 'alle'
+            ? allContacts.filter(c => !c.archiviert)
+            : allContacts.filter(c => c.status === currentFilter && !c.archiviert);
 
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -1471,6 +1475,15 @@ function openSidebar(uid) {
         <div class="sidebar-section-title">Notizen</div>
         <textarea class="notizen-input" style="min-height:80px;background:var(--g50);border-color:var(--g200);" placeholder="Notizen hinzufügen..."
             onblur="updateContactNotizen('${contact.id}',this.value)">${esc(contact.notizen)}</textarea>
+    </div>`;
+
+    // Archivieren / Löschen
+    html += `<div class="sidebar-section" style="border-top:1px solid var(--g200);padding-top:16px;margin-top:8px;">
+        ${contact._raw?.archiviert
+            ? `<button onclick="archiveContact('${contact.id}', false)" style="width:100%;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:#0369A1;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:var(--r-sm);cursor:pointer;margin-bottom:8px;">Wiederherstellen</button>`
+            : `<button onclick="archiveContact('${contact.id}', true)" style="width:100%;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--r-sm);cursor:pointer;margin-bottom:8px;">Archivieren</button>`
+        }
+        <button onclick="deleteContact('${contact.id}')" style="width:100%;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:#DC2626;background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r-sm);cursor:pointer;">Endgültig löschen</button>
     </div>`;
 
     document.getElementById('sidebarBody').innerHTML = html;
@@ -1935,6 +1948,27 @@ async function onDrop(e) {
 /* ==================================================================
    STATUS & NOTIZEN UPDATES
    ================================================================== */
+async function archiveContact(id, archive) {
+    if (archive && !confirm('Kontakt archivieren? Er wird aus der Liste ausgeblendet.')) return;
+
+    await sb.from('kontakte').update({ archiviert: archive, archiviert_at: archive ? new Date().toISOString() : null }).eq('id', id);
+
+    closeSidebar();
+    await loadAllData();
+}
+
+async function deleteContact(id) {
+    const contact = allContacts.find(c => c.id === id);
+    const name = contact ? `${contact.vorname} ${contact.nachname}` : '';
+    if (!confirm(`"${name}" endgültig löschen? Alle Berechnungen, Emails und Dokumente werden unwiderruflich gelöscht.`)) return;
+    if (!confirm('Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+
+    await sb.from('kontakte').delete().eq('id', id);
+
+    closeSidebar();
+    await loadAllData();
+}
+
 async function updateContactStatus(id, newStatus) {
     await sb.from('kontakte').update({ status: newStatus }).eq('id', id);
 
