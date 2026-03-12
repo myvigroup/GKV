@@ -85,17 +85,29 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: 'Keine berechtigten Empfänger gefunden' });
     }
 
-    // Empfänger ohne Email rausfiltern
-    const kontakteMitEmail = empfaenger.filter(k => k.email);
+    // Empfänger ohne Email und abgemeldete rausfiltern
+    const kontakteMitEmail = empfaenger.filter(k => k.email && !k.email_abgemeldet);
+    const abgemeldet = empfaenger.filter(k => k.email_abgemeldet).length;
 
     if (kontakteMitEmail.length === 0) {
-        return res.status(400).json({ error: 'Keine Kontakte mit E-Mail-Adresse' });
+        const msg = abgemeldet > 0
+            ? `Alle ${abgemeldet} Empfänger haben sich von E-Mails abgemeldet`
+            : 'Keine Kontakte mit E-Mail-Adresse';
+        return res.status(400).json({ error: msg });
     }
 
     const results = [];
     const baseUrl = req.headers.origin || 'https://gkv-rechner.de';
+    const apiBase = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
+
+    // HMAC-Secret für Unsubscribe-Token
+    const crypto = await import('crypto');
+    const unsubSecret = SUPABASE_SERVICE_KEY.slice(0, 32);
 
     for (const kontakt of kontakteMitEmail) {
+        // Unsubscribe-Token generieren
+        const unsubToken = crypto.createHmac('sha256', unsubSecret).update(kontakt.id).digest('hex').slice(0, 16);
+        const unsubscribeUrl = `${apiBase}/api/unsubscribe?id=${kontakt.id}&t=${unsubToken}`;
         // Individuellen Link erstellen (Kontakte mit code bekommen personalisierten Link)
         const kontaktLink = kontakt.code
             ? `${baseUrl}/?berater=${berater.slug}&kunde=${kontakt.code}`
@@ -121,8 +133,13 @@ export default async function handler(req, res) {
         let finalHtml;
         if (htmlContent) {
             finalHtml = replacePlaceholders(htmlContent);
+            // Unsubscribe-Link vor </body> einfügen
+            if (unsubscribeUrl) {
+                const unsubFooter = `<div style="text-align:center;padding:12px;font-size:11px;"><a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:underline;">Von E-Mails abmelden</a></div>`;
+                finalHtml = finalHtml.replace('</body>', unsubFooter + '</body>');
+            }
         } else {
-            finalHtml = wrapTextInHtml(finalText, kontaktLink, berater, finalSubject);
+            finalHtml = wrapTextInHtml(finalText, kontaktLink, berater, finalSubject, unsubscribeUrl);
         }
 
         try {
@@ -214,7 +231,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ sent, errors, results });
 }
 
-function wrapTextInHtml(text, link, berater, subject) {
+function wrapTextInHtml(text, link, berater, subject, unsubscribeUrl) {
     const paragraphs = text.split(/\n\n+/).map(p => {
         if (p.includes(link)) {
             const beforeLink = p.replace(link, '').trim();
@@ -236,7 +253,8 @@ function wrapTextInHtml(text, link, berater, subject) {
         ${paragraphs}
     </div>
     <div style="background:#f8fafc;padding:16px 28px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-        <p style="margin:0;font-size:12px;color:#94a3b8;">Diese E-Mail wurde über den mitNORM GKV-Vergleichsrechner versendet.</p>
+        <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;">Diese E-Mail wurde über den mitNORM GKV-Vergleichsrechner versendet.</p>
+        ${unsubscribeUrl ? `<p style="margin:0;font-size:11px;"><a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:underline;">Von E-Mails abmelden</a></p>` : ''}
     </div>
 </body></html>`;
 }

@@ -1073,7 +1073,7 @@ function buildUnifiedContacts() {
         const lb = berechnungen[0] || {};
         allContacts.push({
             id: k.id, vorname: k.vorname, nachname: k.nachname,
-            email: k.email, telefon: k.telefon || null, status, created_at: k.created_at,
+            email: k.email, telefon: k.telefon || null, status, created_at: k.created_at, email_abgemeldet: k.email_abgemeldet || false,
             code: k.code, link, berechnungen, emails, anrufe, dokumente, notizen: k.notizen || '',
             gehalt: k.gehalt || lb.gehalt || null,
             beschaeftigung: k.beschaeftigung || lb.beschaeftigung || null,
@@ -1292,7 +1292,7 @@ function openSidebar(uid) {
     // Info section
     html += `<div class="sidebar-section">
         <div class="sidebar-section-title">Kontaktdaten</div>
-        <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${contact.email ? `<a href="mailto:${esc(contact.email)}" style="color:var(--primary);text-decoration:none;">${esc(contact.email)}</a>` : '–'}</div></div>
+        <div class="sidebar-field"><div class="sidebar-field-label">E-Mail</div><div class="sidebar-field-val">${contact.email ? `<a href="mailto:${esc(contact.email)}" style="color:var(--primary);text-decoration:none;">${esc(contact.email)}</a>` : '–'}${contact.email_abgemeldet ? ' <span style="font-size:.7rem;background:#FEE2E2;color:#DC2626;padding:1px 6px;border-radius:4px;font-weight:600;">Abgemeldet</span>' : ''}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Telefon</div><div class="sidebar-field-val">${contact.telefon ? `<a href="tel:${esc(contact.telefon)}" style="color:var(--primary);text-decoration:none;">${esc(contact.telefon)}</a>` : '–'}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">finfire ID</div><div class="sidebar-field-val">${esc(contact._raw?.finfire_id || '–')}</div></div>
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
