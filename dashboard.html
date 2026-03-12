@@ -665,6 +665,7 @@
                         <th>Kontakt</th>
                         <th>Status</th>
                         <th>Sparpotenzial</th>
+                        <th style="cursor:pointer;user-select:none;" onclick="sortByBerechnung()" id="thBerechnung">Letzte Berechnung <span id="sortArrow" style="font-size:.7rem;">⇅</span></th>
                         <th>Aktivität</th>
                         <th>Link</th>
                         <th>Notizen</th>
@@ -884,6 +885,7 @@ let selectedKontaktIds = new Set();
 let currentFilter = 'alle';
 let searchQuery = '';
 let currentView = 'table';
+let berechnungSortDir = 0; // 0=default, 1=newest first, -1=oldest first
 let kontaktAnrufe = {};
 let beraterRecord = null;
 let openSidebarContact = null;
@@ -1082,6 +1084,7 @@ function buildUnifiedContacts() {
             aktuelle_kasse: k.aktuelle_kasse || lb.aktuelle_kasse || null,
             gewaehlte_kasse: k.gewaehlte_kasse || lb.guenstigste_kasse || null,
             sparpotenzial_jahr: k.sparpotenzial_jahr || lb.sparpotenzial_jahr || null,
+            letzte_berechnung: berechnungen.length > 0 ? berechnungen[0].created_at : null,
             _raw: k,
         });
     }
@@ -1166,7 +1169,22 @@ function getFilteredContacts() {
         );
     }
 
+    if (berechnungSortDir !== 0) {
+        filtered = [...filtered].sort((a, b) => {
+            const aDate = a.letzte_berechnung ? new Date(a.letzte_berechnung).getTime() : 0;
+            const bDate = b.letzte_berechnung ? new Date(b.letzte_berechnung).getTime() : 0;
+            return berechnungSortDir === 1 ? bDate - aDate : aDate - bDate;
+        });
+    }
+
     return filtered;
+}
+
+function sortByBerechnung() {
+    berechnungSortDir = berechnungSortDir === 0 ? 1 : berechnungSortDir === 1 ? -1 : 0;
+    const arrows = { 0: '⇅', 1: '↓', '-1': '↑' };
+    document.getElementById('sortArrow').textContent = arrows[berechnungSortDir];
+    renderContacts();
 }
 
 /* ==================================================================
@@ -1267,6 +1285,7 @@ function renderContacts() {
             <td>${emailHtml}${telHtml}</td>
             <td>${statusSelect}</td>
             <td>${sparHtml}</td>
+            <td style="font-size:.78rem;color:var(--g600);white-space:nowrap;">${contact.letzte_berechnung ? new Date(contact.letzte_berechnung).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '<span style="color:var(--g400);">–</span>'}</td>
             <td>${activityHtml}</td>
             <td>${linkHtml}</td>
             <td>${notizenHtml}</td>
