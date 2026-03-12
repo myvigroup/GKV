@@ -2553,12 +2553,13 @@ async function submitLead(event) {
     if (berater) {
         document.getElementById('leadSuccessText').textContent =
             `${berater.vorname} ${berater.nachname} wird sich in Kürze bei dir melden.`;
-
-        // Show booking section (always – default booking URL as fallback)
-        bookWrap.classList.remove('hidden');
         document.getElementById('leadBookLabel').textContent =
             `Termin bei ${berater.vorname} buchen`;
+    } else {
+        document.getElementById('leadBookLabel').textContent = 'Jetzt Termin buchen';
     }
+    // Show booking section always (default booking URL as fallback)
+    bookWrap.classList.remove('hidden');
 }
 
 /** Termin buchen nach Lead-Abgabe */
