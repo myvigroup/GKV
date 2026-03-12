@@ -70,6 +70,12 @@ export default async function handler(req, res) {
         if (!startTime) {
             return res.status(400).json({ error: 'startTime erforderlich für created/updated' });
         }
+
+        // Bei Umbuchung: alten Termin merken
+        if (kontakt.termin_datum && eventAction === 'updated') {
+            updateData.termin_vorher = kontakt.termin_datum;
+        }
+
         updateData.termin_datum = startTime;
         updateData.termin_gebucht_at = new Date().toISOString();
         updateData.termin_storniert_at = null;

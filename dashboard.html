@@ -1441,19 +1441,33 @@ function openSidebar(uid) {
             });
         }
 
-        // Termin gebucht
+        // Termin gebucht / umgebucht
         const terminAt = contact._raw?.termin_gebucht_at;
         if (terminAt) {
             const d = new Date(terminAt);
             const terminDatum = contact._raw?.termin_datum;
-            const terminInfo = terminDatum
-                ? `Termin am <strong>${new Date(terminDatum).toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</strong> um <strong>${new Date(terminDatum).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })} Uhr</strong>`
-                : 'Kunde hat einen Beratungstermin vereinbart';
+            const terminVorher = contact._raw?.termin_vorher;
+            const istUmgebucht = !!terminVorher;
+
+            let terminInfo = '';
+            if (istUmgebucht) {
+                const vorher = new Date(terminVorher);
+                const nachher = terminDatum ? new Date(terminDatum) : null;
+                terminInfo = `<span style="color:#DC2626;text-decoration:line-through;">${vorher.toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'short' })} ${vorher.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })}</span> → `;
+                if (nachher) {
+                    terminInfo += `<strong>${nachher.toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</strong> um <strong>${nachher.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })} Uhr</strong>`;
+                }
+            } else if (terminDatum) {
+                terminInfo = `Termin am <strong>${new Date(terminDatum).toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</strong> um <strong>${new Date(terminDatum).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })} Uhr</strong>`;
+            } else {
+                terminInfo = 'Kunde hat einen Beratungstermin vereinbart';
+            }
+
             timelineItems.push({
                 date: d,
                 html: `<div class="timeline-item termin">
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
-                    <div class="timeline-content"><strong>Termin gebucht</strong><br>
+                    <div class="timeline-content"><strong>${istUmgebucht ? 'Termin umgebucht' : 'Termin gebucht'}</strong><br>
                         ${terminInfo}
                     </div>
                 </div>`
