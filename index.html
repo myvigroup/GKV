@@ -2503,9 +2503,16 @@ async function submitLead(event) {
         recordId = existingKunde.id;
         console.log('[Lead] Bestehender Kunde aktualisiert:', recordId);
     } else {
-        // Neuen Kontakt anlegen
+        // Neuen Kontakt anlegen – mit individuellem Code für Rechner-Link
+        const slug = (formData.vorname + '-' + formData.nachname)
+            .toLowerCase()
+            .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss')
+            .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+        const code = slug + '-' + Math.random().toString(36).substr(2, 6);
+
         const { error } = await sb.from('kontakte').insert({
             ...formData,
+            code,
             berater_id: beraterId,
             berater_slug: AffiliateTracker.getSlug(),
             kampagne: AffiliateTracker.getTrackingData().kampagne,
