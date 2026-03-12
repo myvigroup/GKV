@@ -1296,7 +1296,7 @@ function renderContacts() {
             <td>${emailHtml}${telHtml}</td>
             <td>${statusSelect}</td>
             <td>${sparHtml}</td>
-            <td style="font-size:.78rem;white-space:nowrap;">${contact._raw?.termin_datum ? `<span style="color:#0369A1;font-weight:600;">${new Date(contact._raw.termin_datum).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</span>` : '<span style="color:var(--g400);">–</span>'}</td>
+            <td style="font-size:.78rem;white-space:nowrap;">${contact._raw?.termin_datum ? `<span style="color:#0369A1;font-weight:600;">${new Date(contact._raw.termin_datum).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</span>` : contact._raw?.termin_storniert_at ? '<span style="color:#DC2626;font-weight:600;">Storniert</span>' : '<span style="color:var(--g400);">–</span>'}</td>
             <td>${linkHtml}</td>
             <td>${notizenHtml}</td>
         </tr>`;
@@ -1346,7 +1346,7 @@ function openSidebar(uid) {
         </div>`;
     }
 
-    // Termin-Info (wenn gebucht)
+    // Termin-Info (wenn gebucht oder storniert)
     if (contact._raw?.termin_datum) {
         const td = new Date(contact._raw.termin_datum);
         const istVergangen = td < new Date();
@@ -1355,6 +1355,14 @@ function openSidebar(uid) {
                 <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:${istVergangen ? '#0369A1' : '#15803D'};margin-bottom:4px;">${istVergangen ? 'Termin war am' : 'Nächster Termin'}</div>
                 <div style="font-size:1rem;font-weight:700;color:#0F172A;">${td.toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</div>
                 <div style="font-size:.85rem;color:#475569;">${td.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' })} Uhr</div>
+            </div>
+        </div>`;
+    } else if (contact._raw?.termin_storniert_at) {
+        const ts = new Date(contact._raw.termin_storniert_at);
+        html += `<div class="sidebar-section">
+            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:14px;">
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#DC2626;margin-bottom:4px;">Termin storniert</div>
+                <div style="font-size:.85rem;color:#475569;">Storniert am ${ts.toLocaleDateString('de-DE', { day:'2-digit', month:'long', year:'numeric' })}</div>
             </div>
         </div>`;
     }
@@ -1447,6 +1455,21 @@ function openSidebar(uid) {
                     <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
                     <div class="timeline-content"><strong>Termin gebucht</strong><br>
                         ${terminInfo}
+                    </div>
+                </div>`
+            });
+        }
+
+        // Termin storniert
+        const terminStorniertAt = contact._raw?.termin_storniert_at;
+        if (terminStorniertAt) {
+            const d = new Date(terminStorniertAt);
+            timelineItems.push({
+                date: d,
+                html: `<div class="timeline-item email">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong style="color:#DC2626;">Termin storniert</strong><br>
+                        Kunde hat den Termin abgesagt
                     </div>
                 </div>`
             });

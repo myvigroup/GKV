@@ -1,5 +1,6 @@
 // Vercel Serverless Function: Microsoft Bookings Webhook (via Power Automate)
 // Empfängt Termin-Daten und verknüpft sie mit dem Kontakt in Supabase.
+// Unterstützt: created, updated, cancelled
 // ENV vars needed: SUPABASE_URL, SUPABASE_SERVICE_KEY, BOOKING_WEBHOOK_SECRET (optional)
 
 export default async function handler(req, res) {
@@ -27,10 +28,10 @@ export default async function handler(req, res) {
         }
     }
 
-    const { customerEmail, customerName, startTime, endTime, serviceName, staffName } = req.body;
+    const { customerEmail, customerName, startTime, endTime, serviceName, staffName, action } = req.body;
 
-    if (!customerEmail || !startTime) {
-        return res.status(400).json({ error: 'customerEmail und startTime erforderlich' });
+    if (!customerEmail) {
+        return res.status(400).json({ error: 'customerEmail erforderlich' });
     }
 
     const headers = {
@@ -47,24 +48,36 @@ export default async function handler(req, res) {
     const kontakte = await searchRes.json();
 
     if (!kontakte || kontakte.length === 0) {
-        // Kein Kontakt gefunden – trotzdem loggen
         console.warn(`[Booking-Webhook] Kein Kontakt gefunden für E-Mail: ${customerEmail}`);
         return res.status(200).json({ received: true, matched: false, message: 'Kein Kontakt mit dieser E-Mail gefunden' });
     }
 
     const kontakt = kontakte[0];
+    const eventAction = (action || 'created').toLowerCase();
 
-    // Kontakt aktualisieren: Termin-Daten + Status auf "termin"
-    const updateData = {
-        termin_datum: startTime,
-        termin_gebucht_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    };
+    let updateData = { updated_at: new Date().toISOString() };
 
-    // Status nur auf "termin" setzen, wenn noch nicht weiter fortgeschritten
-    const advancedStatuses = ['abgeschlossen'];
-    if (!advancedStatuses.includes(kontakt.status)) {
-        updateData.status = 'termin';
+    if (eventAction === 'cancelled') {
+        // Termin storniert
+        updateData.termin_datum = null;
+        updateData.termin_storniert_at = new Date().toISOString();
+        // Status zurücksetzen (nur wenn aktuell "termin")
+        if (kontakt.status === 'termin') {
+            updateData.status = kontakt.sparpotenzial_jahr ? 'berechnet' : 'kontaktiert';
+        }
+    } else {
+        // Termin erstellt oder umgebucht
+        if (!startTime) {
+            return res.status(400).json({ error: 'startTime erforderlich für created/updated' });
+        }
+        updateData.termin_datum = startTime;
+        updateData.termin_gebucht_at = new Date().toISOString();
+        updateData.termin_storniert_at = null;
+
+        // Status auf "termin" setzen (außer wenn schon abgeschlossen)
+        if (kontakt.status !== 'abgeschlossen') {
+            updateData.status = 'termin';
+        }
     }
 
     await fetch(
@@ -79,7 +92,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
         received: true,
         matched: true,
+        action: eventAction,
         kontakt_id: kontakt.id,
-        termin_datum: startTime,
+        termin_datum: eventAction === 'cancelled' ? null : startTime,
     });
 }
