@@ -9,7 +9,11 @@ import fs from 'fs';
 export const config = { api: { bodyParser: true }, maxDuration: 15 };
 
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const allowedOrigins = ['https://krankenversicherung.mitnorm.de', 'https://gkv-phi.vercel.app'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -35,6 +39,18 @@ export default async function handler(req, res) {
         headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_SERVICE_KEY }
     });
     if (!userRes.ok) return res.status(401).json({ error: 'Token ungültig' });
+    const user = await userRes.json();
+
+    // Berater laden für Ownership-Check
+    const callerRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/berater?auth_user_id=eq.${user.id}&select=id,is_admin`,
+        { headers }
+    );
+    const callerData = await callerRes.json();
+    if (!callerData || callerData.length === 0) {
+        return res.status(403).json({ error: 'Kein Berater-Account' });
+    }
+    const caller = callerData[0];
 
     const { kontakt_id } = req.body;
     if (!kontakt_id) {
@@ -52,6 +68,11 @@ export default async function handler(req, res) {
             return res.status(404).json({ error: 'Kontakt nicht gefunden' });
         }
         const kontakt = kontakte[0];
+
+        // Ownership prüfen: nur eigene Kontakte oder Admin
+        if (kontakt.berater_id !== caller.id && !caller.is_admin) {
+            return res.status(403).json({ error: 'Keine Berechtigung für diesen Kontakt' });
+        }
 
         // Berater laden
         let berater = null;
@@ -136,7 +157,7 @@ export default async function handler(req, res) {
 
     } catch (err) {
         console.error('PDF-Generierung fehlgeschlagen:', err);
-        return res.status(500).json({ error: 'PDF-Generierung fehlgeschlagen', detail: err.message });
+        return res.status(500).json({ error: 'PDF-Generierung fehlgeschlagen' });
     }
 }
 

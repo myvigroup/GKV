@@ -1691,9 +1691,13 @@ async function applyCrop() {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
     try {
+        const { data: { session: uploadSession } } = await sb.auth.getSession();
         const uploadRes = await fetch('/api/upload-profil-bild', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${uploadSession.access_token}`,
+            },
             body: JSON.stringify({ berater_id: beraterRecord.id, image_base64: dataUrl }),
         });
         const result = await uploadRes.json();

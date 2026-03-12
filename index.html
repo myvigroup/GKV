@@ -1470,14 +1470,10 @@ const LeadAPI = (() => {
             const sb = getSupabase();
             if (sb) {
                 try {
-                    const { data } = await sb
-                        .from('kontakte')
-                        .select('*')
-                        .eq('code', _kundeCode)
-                        .single();
-                    if (data) {
-                        _kundeRecord = data;
-                        console.log('[LeadAPI] Kunde geladen:', data.vorname, data.nachname);
+                    const { data } = await sb.rpc('lookup_kontakt_by_code', { lookup_code: _kundeCode });
+                    if (data && data.length > 0) {
+                        _kundeRecord = data[0];
+                        console.log('[LeadAPI] Kunde geladen:', data[0].vorname, data[0].nachname);
                     }
                 } catch (err) {
                     console.warn('[LeadAPI] Kunde nicht gefunden:', _kundeCode);
