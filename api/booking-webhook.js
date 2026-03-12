@@ -30,8 +30,8 @@ export default async function handler(req, res) {
 
     const { customerEmail, customerName, startTime, endTime, serviceName, staffName, action } = req.body;
 
-    if (!customerEmail) {
-        return res.status(400).json({ error: 'customerEmail erforderlich' });
+    if (!customerEmail && !customerName) {
+        return res.status(400).json({ error: 'customerEmail oder customerName erforderlich' });
     }
 
     const headers = {
@@ -40,16 +40,34 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
     };
 
-    // Kontakt per E-Mail suchen
-    const searchRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/kontakte?email=eq.${encodeURIComponent(customerEmail)}&order=created_at.desc&limit=1`,
-        { headers }
-    );
-    const kontakte = await searchRes.json();
+    let kontakte = [];
+
+    // Zuerst per E-Mail suchen
+    if (customerEmail) {
+        const searchRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/kontakte?email=eq.${encodeURIComponent(customerEmail)}&order=created_at.desc&limit=1`,
+            { headers }
+        );
+        kontakte = await searchRes.json();
+    }
+
+    // Fallback: per Name suchen (z.B. bei Stornierung ohne E-Mail)
+    if ((!kontakte || kontakte.length === 0) && customerName) {
+        const nameParts = customerName.trim().split(/\s+/);
+        if (nameParts.length >= 2) {
+            const vorname = nameParts[0];
+            const nachname = nameParts.slice(1).join(' ');
+            const nameSearchRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/kontakte?vorname=eq.${encodeURIComponent(vorname)}&nachname=eq.${encodeURIComponent(nachname)}&order=created_at.desc&limit=1`,
+                { headers }
+            );
+            kontakte = await nameSearchRes.json();
+        }
+    }
 
     if (!kontakte || kontakte.length === 0) {
-        console.warn(`[Booking-Webhook] Kein Kontakt gefunden für E-Mail: ${customerEmail}`);
-        return res.status(200).json({ received: true, matched: false, message: 'Kein Kontakt mit dieser E-Mail gefunden' });
+        console.warn(`[Booking-Webhook] Kein Kontakt gefunden für: ${customerEmail || customerName}`);
+        return res.status(200).json({ received: true, matched: false, message: 'Kein Kontakt gefunden' });
     }
 
     const kontakt = kontakte[0];
