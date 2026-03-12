@@ -1240,7 +1240,7 @@ const BERATER_DATEN = {
         titel: "",
         email: "beratung@beispiel.de",
         telefon: "+49 123 456 7800",
-        calendlyUrl: "https://calendly.com/team/gkv-beratung",
+        calendlyUrl: "https://outlook.office.com/book/Jahresupdate1@mitNORM.com/s/PG-fTiHc80Wef4t-vpbc9Q2",
         bild: "",
         team: "Zentrale",
     },
@@ -1344,10 +1344,12 @@ const AffiliateTracker = (() => {
      * Hängt automatisch Tracking-Parameter an die URL an.
      * Funktioniert mit beliebigen Booking-Systemen (vorhandene Query-Params bleiben erhalten).
      */
-    function getBookingUrl(kassenName) {
-        if (!_berater) return null;
+    const DEFAULT_BOOKING_URL = 'https://outlook.office.com/book/Jahresupdate1@mitNORM.com/s/PG-fTiHc80Wef4t-vpbc9Q2';
 
-        const url = new URL(_berater.calendlyUrl);
+    function getBookingUrl(kassenName) {
+        if (!_berater) return DEFAULT_BOOKING_URL;
+
+        const url = new URL(_berater.calendlyUrl || DEFAULT_BOOKING_URL);
 
         // UTM/Tracking-Parameter an Calendly-URL anhängen
         if (_beraterSlug)  url.searchParams.set('utm_source', 'gkv-rechner');
@@ -2552,12 +2554,10 @@ async function submitLead(event) {
         document.getElementById('leadSuccessText').textContent =
             `${berater.vorname} ${berater.nachname} wird sich in Kürze bei dir melden.`;
 
-        // Show booking section if berater has a booking link
-        if (berater.calendlyUrl) {
-            bookWrap.classList.remove('hidden');
-            document.getElementById('leadBookLabel').textContent =
-                `Termin bei ${berater.vorname} buchen`;
-        }
+        // Show booking section (always – default booking URL as fallback)
+        bookWrap.classList.remove('hidden');
+        document.getElementById('leadBookLabel').textContent =
+            `Termin bei ${berater.vorname} buchen`;
     }
 }
 
