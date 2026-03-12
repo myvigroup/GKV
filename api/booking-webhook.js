@@ -76,29 +76,6 @@ export default async function handler(req, res) {
         }
     );
 
-    // Notiz zum Kontakt hinzufügen (in kunden_emails als Event-Log)
-    const notiz = [
-        `Termin gebucht: ${new Date(startTime).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}`,
-        endTime ? `bis ${new Date(endTime).toLocaleString('de-DE', { timeStyle: 'short' })}` : '',
-        serviceName ? `Service: ${serviceName}` : '',
-        staffName ? `Berater: ${staffName}` : '',
-    ].filter(Boolean).join(' | ');
-
-    // Existierende Notizen ergänzen
-    const existingNotizen = kontakt.notizen || '';
-    const newNotizen = existingNotizen
-        ? `${existingNotizen}\n[${new Date().toLocaleDateString('de-DE')}] ${notiz}`
-        : `[${new Date().toLocaleDateString('de-DE')}] ${notiz}`;
-
-    await fetch(
-        `${SUPABASE_URL}/rest/v1/kontakte?id=eq.${kontakt.id}`,
-        {
-            method: 'PATCH',
-            headers: { ...headers, Prefer: 'return=minimal' },
-            body: JSON.stringify({ notizen: newNotizen }),
-        }
-    );
-
     return res.status(200).json({
         received: true,
         matched: true,
