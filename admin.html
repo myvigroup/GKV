@@ -667,9 +667,8 @@
             <label>Buchungs-Link</label>
             <input type="text" id="bmCalendly">
         </div>
-        <div class="fg" id="bmPasswordRow">
-            <label>Passwort *</label>
-            <input type="text" id="bmPassword" placeholder="Initiales Passwort für den Login">
+        <div id="bmPasswordRow" style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <p style="margin:0;font-size:.82rem;color:#0369A1;font-weight:600;">Der Berater erhält eine E-Mail mit einem Link, um sein eigenes Passwort zu setzen.</p>
         </div>
         <div class="btn-row">
             <button class="btn-secondary" onclick="closeBeraterModal()">Abbrechen</button>
@@ -1308,7 +1307,6 @@ function openBeraterModal(beraterId) {
         document.getElementById('bmTelefon').value = '';
         document.getElementById('bmTeam').value = '';
         document.getElementById('bmCalendly').value = '';
-        document.getElementById('bmPassword').value = '';
         document.getElementById('bmDeleteRow').style.display = 'none';
         document.getElementById('bmPasswordRow').style.display = 'block';
     }
@@ -1331,22 +1329,8 @@ async function saveBerater() {
     const errorEl = document.getElementById('bmError');
     errorEl.style.display = 'none';
 
-    const password = document.getElementById('bmPassword').value.trim();
-
     if (!vorname || !nachname || !email) {
         errorEl.textContent = 'Vorname, Nachname und E-Mail sind Pflichtfelder.';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    if (!id && !password) {
-        errorEl.textContent = 'Bitte ein Passwort für den neuen Berater setzen.';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    if (!id && password.length < 6) {
-        errorEl.textContent = 'Das Passwort muss mindestens 6 Zeichen haben.';
         errorEl.style.display = 'block';
         return;
     }
@@ -1373,13 +1357,13 @@ async function saveBerater() {
         return;
     }
 
-    // Auth-User erstellen und Willkommens-Mail senden
+    // Auth-User erstellen und Einladung senden
     if (!id && newBerater) {
         const { data: { session } } = await sb.auth.getSession();
         const token = session?.access_token;
 
         if (token) {
-            const authRes = await fetch('/api/create-berater-auth', {
+            const authRes = await fetch('/api/invite-berater', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1387,26 +1371,14 @@ async function saveBerater() {
                 },
                 body: JSON.stringify({
                     email,
-                    password,
                     berater_id: newBerater.id
                 })
             });
             const authData = await authRes.json();
             if (!authRes.ok) {
-                alert('Berater angelegt, aber Login konnte nicht erstellt werden: ' + (authData.error || 'Unbekannter Fehler'));
+                alert('Berater angelegt, aber Einladung konnte nicht gesendet werden: ' + (authData.error || 'Unbekannter Fehler'));
             }
         }
-
-        // Willkommens-Mail mit Zugangsdaten
-        fetch('/api/notify-berater', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                event: 'berater_welcome',
-                berater_id: newBerater.id,
-                data: { password }
-            })
-        }).catch(() => {});
     }
 
     closeBeraterModal();

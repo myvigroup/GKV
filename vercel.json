@@ -23,6 +23,8 @@
         { "source": "/api/create-berater-auth", "destination": "/api/create-berater-auth" },
         { "source": "/api/placetel-webhook", "destination": "/api/placetel-webhook" },
         { "source": "/api/upload-profil-bild", "destination": "/api/upload-profil-bild" },
-        { "source": "/api/generate-protokoll", "destination": "/api/generate-protokoll" }
+        { "source": "/api/generate-protokoll", "destination": "/api/generate-protokoll" },
+        { "source": "/api/invite-berater", "destination": "/api/invite-berater" },
+        { "source": "/api/unsubscribe", "destination": "/api/unsubscribe" }
     ]
 }
