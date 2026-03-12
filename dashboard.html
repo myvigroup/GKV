@@ -1376,6 +1376,21 @@ function openSidebar(uid) {
             });
         }
 
+        // Email-Abmeldung
+        const abgemeldetAt = contact._raw?.email_abgemeldet_at;
+        if (abgemeldetAt) {
+            const d = new Date(abgemeldetAt);
+            timelineItems.push({
+                date: d,
+                html: `<div class="timeline-item email">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong style="color:#DC2626;">Von E-Mails abgemeldet</strong><br>
+                        Kontakt hat sich über den Abmelde-Link abgemeldet
+                    </div>
+                </div>`
+            });
+        }
+
         // Termin gebucht
         const terminAt = contact._raw?.termin_gebucht_at;
         if (terminAt) {
