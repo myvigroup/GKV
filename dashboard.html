@@ -764,6 +764,10 @@
             <button type="button" class="vorlage-chip active" data-vorlage="jahresupdate" onclick="setVorlage('jahresupdate')">Jahresupdate</button>
             <button type="button" class="vorlage-chip" data-vorlage="erstansprache" onclick="setVorlage('erstansprache')">Erstansprache</button>
             <button type="button" class="vorlage-chip" data-vorlage="erinnerung" onclick="setVorlage('erinnerung')">Erinnerung</button>
+            <button type="button" class="vorlage-chip" data-vorlage="termin" onclick="setVorlage('termin')">Termin-Einladung</button>
+            <button type="button" class="vorlage-chip" data-vorlage="willkommen" onclick="setVorlage('willkommen')">Willkommen</button>
+            <button type="button" class="vorlage-chip" data-vorlage="nachfass" onclick="setVorlage('nachfass')">Nachfass</button>
+            <button type="button" class="vorlage-chip" data-vorlage="abschluss" onclick="setVorlage('abschluss')">Abschluss</button>
             <button type="button" class="vorlage-chip" data-vorlage="eigene" onclick="setVorlage('eigene')">Eigene Nachricht</button>
         </div>
 
@@ -2377,6 +2381,134 @@ Falls nicht – hier nochmal dein persönlicher Link:
 Der Vergleich dauert nur 30 Sekunden. Viele meiner Kunden waren überrascht, wie viel sie sparen können.
 
 Bei Fragen melde dich gerne bei mir.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    termin: {
+        sie: {
+            subject: 'Lassen Sie uns Ihren Kassenwechsel besprechen, {{vorname}}',
+            text: `Hallo {{vorname}},
+
+basierend auf Ihrem GKV-Vergleich gibt es ein interessantes Sparpotenzial für Sie. Ich würde das gerne in einem kurzen Gespräch mit Ihnen durchgehen.
+
+Buchen Sie sich hier einen kostenlosen Beratungstermin – ganz unverbindlich:
+{{link}}
+
+Das Gespräch dauert ca. 15 Minuten und ich erkläre Ihnen genau, wie ein Wechsel abläuft und was Sie beachten müssen.
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: 'Lass uns deinen Kassenwechsel besprechen, {{vorname}}',
+            text: `Hallo {{vorname}},
+
+basierend auf deinem GKV-Vergleich gibt es ein interessantes Sparpotenzial für dich. Ich würde das gerne in einem kurzen Gespräch mit dir durchgehen.
+
+Buch dir hier einen kostenlosen Beratungstermin – ganz unverbindlich:
+{{link}}
+
+Das Gespräch dauert ca. 15 Minuten und ich erkläre dir genau, wie ein Wechsel abläuft und was du beachten musst.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    willkommen: {
+        sie: {
+            subject: 'Willkommen bei mitNORM, {{vorname}}!',
+            text: `Hallo {{vorname}},
+
+schön, dass Sie sich für einen GKV-Vergleich über mitNORM entschieden haben! Ich bin {{berater_vorname}} {{berater_nachname}} und Ihr persönlicher Ansprechpartner.
+
+Mit Ihrem persönlichen Vergleichsrechner können Sie jederzeit prüfen, ob ein Kassenwechsel für Sie sinnvoll ist:
+{{link}}
+
+Bei Fragen stehe ich Ihnen gerne zur Verfügung – einfach auf diese E-Mail antworten.
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: 'Willkommen bei mitNORM, {{vorname}}!',
+            text: `Hallo {{vorname}},
+
+schön, dass du dich für einen GKV-Vergleich über mitNORM entschieden hast! Ich bin {{berater_vorname}} und dein persönlicher Ansprechpartner.
+
+Mit deinem persönlichen Vergleichsrechner kannst du jederzeit prüfen, ob ein Kassenwechsel für dich sinnvoll ist:
+{{link}}
+
+Bei Fragen melde dich einfach – antworte einfach auf diese E-Mail.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    nachfass: {
+        sie: {
+            subject: '{{vorname}}, Sie könnten bei Ihrer Krankenkasse sparen',
+            text: `Hallo {{vorname}},
+
+Sie haben kürzlich einen GKV-Vergleich durchgeführt und es zeigt sich ein Sparpotenzial für Sie. Sollen wir den Wechsel gemeinsam angehen?
+
+Der Kassenwechsel ist unkompliziert – ich übernehme die gesamte Abwicklung für Sie, kostenlos und unverbindlich.
+
+Hier können Sie Ihren Vergleich nochmal ansehen:
+{{link}}
+
+Antworten Sie einfach auf diese E-Mail oder rufen Sie mich an – ich freue mich auf Ihre Rückmeldung.
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: '{{vorname}}, du könntest bei deiner Krankenkasse sparen',
+            text: `Hallo {{vorname}},
+
+du hast kürzlich einen GKV-Vergleich durchgeführt und es zeigt sich ein Sparpotenzial für dich. Sollen wir den Wechsel gemeinsam angehen?
+
+Der Kassenwechsel ist unkompliziert – ich übernehme die gesamte Abwicklung für dich, kostenlos und unverbindlich.
+
+Hier kannst du deinen Vergleich nochmal ansehen:
+{{link}}
+
+Antworte einfach auf diese E-Mail oder ruf mich an – ich freu mich auf deine Rückmeldung.
+
+Viele Grüße,
+{{berater_vorname}}`
+        }
+    },
+    abschluss: {
+        sie: {
+            subject: 'Ihr Kassenwechsel ist abgeschlossen, {{vorname}}!',
+            text: `Hallo {{vorname}},
+
+tolle Neuigkeiten – Ihr Kassenwechsel wurde erfolgreich abgeschlossen! Ab dem nächsten Monat profitieren Sie von den günstigeren Beiträgen.
+
+Was passiert jetzt?
+- Ihre neue Krankenkasse schickt Ihnen alle Unterlagen per Post zu
+- Ihre alte Kasse wird automatisch gekündigt – Sie müssen nichts weiter tun
+- Bei Fragen bin ich jederzeit für Sie erreichbar
+
+Vielen Dank für Ihr Vertrauen!
+
+Mit freundlichen Grüßen,
+{{berater_vorname}} {{berater_nachname}}`
+        },
+        du: {
+            subject: 'Dein Kassenwechsel ist abgeschlossen, {{vorname}}!',
+            text: `Hallo {{vorname}},
+
+tolle Neuigkeiten – dein Kassenwechsel wurde erfolgreich abgeschlossen! Ab dem nächsten Monat profitierst du von den günstigeren Beiträgen.
+
+Was passiert jetzt?
+- Deine neue Krankenkasse schickt dir alle Unterlagen per Post zu
+- Deine alte Kasse wird automatisch gekündigt – du musst nichts weiter tun
+- Bei Fragen bin ich jederzeit für dich erreichbar
+
+Vielen Dank für dein Vertrauen!
 
 Viele Grüße,
 {{berater_vorname}}`
