@@ -1352,9 +1352,15 @@ const AffiliateTracker = (() => {
     function getBookingUrl(kassenName) {
         if (!_berater) return DEFAULT_BOOKING_URL;
 
-        const url = new URL(_berater.calendlyUrl || DEFAULT_BOOKING_URL);
+        const bookingUrl = _berater.calendlyUrl || DEFAULT_BOOKING_URL;
 
-        // UTM/Tracking-Parameter an Calendly-URL anhängen
+        // Outlook Bookings verträgt keine zusätzlichen Parameter – URL unverändert zurückgeben
+        if (bookingUrl.includes('outlook.office.com/book')) {
+            return bookingUrl;
+        }
+
+        // Für andere Booking-Systeme (Calendly etc.): Tracking-Parameter anhängen
+        const url = new URL(bookingUrl);
         if (_beraterSlug)  url.searchParams.set('utm_source', 'gkv-rechner');
         if (_kampagne)     url.searchParams.set('utm_campaign', _kampagne);
         if (_ref)          url.searchParams.set('utm_medium', _ref);
