@@ -1192,15 +1192,16 @@ function renderContacts() {
         const dateStr = date.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
 
         // Checkbox
-        const canEmail = contact.email;
+        const canEmail = contact.email && !contact.email_abgemeldet;
         const checked = selectedKontaktIds.has(contact.id) ? 'checked' : '';
         const checkboxHtml = canEmail
             ? `<input type="checkbox" class="kunde-checkbox" value="${contact.id}" ${checked} onchange="toggleKontaktSelection(this)" onclick="event.stopPropagation()">`
             : '';
 
         // Contact info
+        const unsubBadge = contact.email_abgemeldet ? ' <span style="font-size:.65rem;background:#FEE2E2;color:#DC2626;padding:1px 5px;border-radius:3px;font-weight:600;vertical-align:middle;">Abgemeldet</span>' : '';
         const emailHtml = contact.email
-            ? `<a href="mailto:${esc(contact.email)}" class="contact-email" onclick="event.stopPropagation()">${esc(contact.email)}</a>`
+            ? `<a href="mailto:${esc(contact.email)}" class="contact-email" onclick="event.stopPropagation()">${esc(contact.email)}</a>${unsubBadge}`
             : '<span style="font-size:.78rem;color:var(--g400);">–</span>';
         const telHtml = contact.telefon
             ? `<div><a href="tel:${esc(contact.telefon)}" style="font-size:.75rem;color:var(--g500);text-decoration:none;" onclick="event.stopPropagation()">${esc(contact.telefon)}</a></div>`
