@@ -108,14 +108,26 @@ export default async function handler(req, res) {
     const crypto = await import('crypto');
     const unsubSecret = SUPABASE_SERVICE_KEY.slice(0, 32);
 
+    // Alle Berater laden (für zugeordneten Absender)
+    const alleBeraterRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/berater?select=*`,
+        { headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` } }
+    );
+    const alleBerater = await alleBeraterRes.json();
+    const beraterMap = {};
+    for (const b of alleBerater) beraterMap[b.id] = b;
+
     for (const kontakt of kontakteMitEmail) {
+        // Absender = zugeordneter Berater des Kontakts (Fallback: eingeloggter Berater)
+        const absender = (kontakt.berater_id && beraterMap[kontakt.berater_id]) || berater;
+
         // Unsubscribe-Token generieren
         const unsubToken = crypto.createHmac('sha256', unsubSecret).update(kontakt.id).digest('hex').slice(0, 16);
         const unsubscribeUrl = `${apiBase}/api/unsubscribe?id=${kontakt.id}&t=${unsubToken}`;
         // Individuellen Link erstellen (Kontakte mit code bekommen personalisierten Link)
         const kontaktLink = kontakt.code
-            ? `${baseUrl}/?berater=${berater.slug}&kunde=${kontakt.code}`
-            : `${baseUrl}/?berater=${berater.slug}`;
+            ? `${baseUrl}/?berater=${absender.slug}&kunde=${kontakt.code}`
+            : `${baseUrl}/?berater=${absender.slug}`;
 
         // Platzhalter ersetzen
         function replacePlaceholders(str) {
@@ -123,8 +135,8 @@ export default async function handler(req, res) {
                 .replace(/\{\{vorname\}\}/g, kontakt.vorname)
                 .replace(/\{\{nachname\}\}/g, kontakt.nachname)
                 .replace(/\{\{link\}\}/g, kontaktLink)
-                .replace(/\{\{berater_vorname\}\}/g, berater.vorname)
-                .replace(/\{\{berater_nachname\}\}/g, berater.nachname);
+                .replace(/\{\{berater_vorname\}\}/g, absender.vorname)
+                .replace(/\{\{berater_nachname\}\}/g, absender.nachname);
         }
 
         const finalSubject = replacePlaceholders(subject || 'Ihr persönlicher GKV-Vergleich');
@@ -143,7 +155,7 @@ export default async function handler(req, res) {
                 finalHtml = finalHtml.replace('</body>', unsubFooter + '</body>');
             }
         } else {
-            finalHtml = wrapTextInHtml(finalText, kontaktLink, berater, finalSubject, unsubscribeUrl);
+            finalHtml = wrapTextInHtml(finalText, kontaktLink, absender, finalSubject, unsubscribeUrl);
         }
 
         try {
@@ -157,12 +169,12 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                     sender: {
-                        name: `${berater.vorname} ${berater.nachname} – mitNORM`,
+                        name: `${absender.vorname} ${absender.nachname} – mitNORM`,
                         email: 'service@mitnorm.com',
                     },
                     replyTo: {
-                        name: `${berater.vorname} ${berater.nachname}`,
-                        email: berater.email,
+                        name: `${absender.vorname} ${absender.nachname}`,
+                        email: absender.email,
                     },
                     to: [{ email: kontakt.email, name: `${kontakt.vorname} ${kontakt.nachname}` }],
                     subject: finalSubject,
