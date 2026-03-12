@@ -48,3 +48,23 @@ BEGIN
     RETURN json_build_object('success', true, 'id', v_kontakt.id);
 END;
 $$;
+
+-- RPC-Funktion: Kontakt per E-Mail + Berater suchen (Dubletten-Check)
+CREATE OR REPLACE FUNCTION lookup_kontakt_by_email(
+    p_email TEXT,
+    p_berater_id UUID
+)
+RETURNS TABLE (id UUID, code TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT k.id, k.code
+    FROM kontakte k
+    WHERE k.email = p_email
+      AND k.berater_id = p_berater_id
+    ORDER BY k.created_at DESC
+    LIMIT 1;
+END;
+$$;

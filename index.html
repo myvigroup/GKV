@@ -2496,17 +2496,29 @@ async function submitLead(event) {
     let existingKunde = LeadAPI.getKunde();
     let recordId = null;
 
-    // Dubletten-Check: existierenden Kontakt per E-Mail suchen (gleicher Berater)
+    // Fallback: Wenn kunde-Code in URL aber LeadAPI.getKunde() null ist,
+    // trotzdem per RPC den Code auflösen
+    const kundeParam = new URLSearchParams(window.location.search).get('kunde');
+    if (!existingKunde && kundeParam) {
+        try {
+            const { data } = await sb.rpc('lookup_kontakt_by_code', { lookup_code: kundeParam });
+            if (data && data.length > 0) {
+                existingKunde = data[0];
+            }
+        } catch (e) { console.warn('[Lead] Code-Lookup fehlgeschlagen:', e); }
+    }
+
+    // Dubletten-Check per E-Mail (via RPC, da anon kein SELECT hat)
     if (!existingKunde && formData.email && beraterId) {
-        const { data: existing } = await sb.from('kontakte')
-            .select('id')
-            .eq('email', formData.email)
-            .eq('berater_id', beraterId)
-            .order('created_at', { ascending: false })
-            .limit(1);
-        if (existing && existing.length > 0) {
-            existingKunde = existing[0];
-        }
+        try {
+            const { data } = await sb.rpc('lookup_kontakt_by_email', {
+                p_email: formData.email,
+                p_berater_id: beraterId
+            });
+            if (data && data.length > 0) {
+                existingKunde = data[0];
+            }
+        } catch (e) { console.warn('[Lead] E-Mail-Lookup fehlgeschlagen:', e); }
     }
 
     if (existingKunde) {
