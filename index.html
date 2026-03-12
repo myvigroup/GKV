@@ -1999,13 +1999,13 @@ function renderSummary(guenstigste, teuerste, aktuelleKasse, eingaben) {
                 </div>
            </div>`;
 
-    // Karte 2: Spanne – "Du hast die Wahl"
+    // Karte 2: Dein Sparpotenzial pro Monat
     const card2 = `
         <div class="s-card">
             <div>
-                <div class="s-label">Beitragsspanne</div>
-                <div class="s-val" style="font-size:1.15rem;">${formatEuro(guenstigste.gesamtAN)} – ${formatEuro(teuerste.gesamtAN)}</div>
-                <div class="s-sub">Du hast die Wahl aus ${ergebnisse.length} Kassen</div>
+                <div class="s-label">Dein Sparpotenzial</div>
+                <div class="s-val" style="font-size:1.4rem;">bis zu ${formatEuro(sparpotenzialMonat)} / Monat</div>
+                <div class="s-sub">${aktuelleKasse ? 'bei Wechsel zur günstigsten Kasse' : 'Differenz günstigste vs. teuerste Kasse'}</div>
             </div>
         </div>`;
 
