@@ -1813,9 +1813,34 @@ async function openKontaktSidebar(id) {
             onblur="updateKontaktNotizen('${id}',this.value)">${esc(kontakt.notizen || '')}</textarea>
     </div>`;
 
+    // Aktionen: Archivieren / Löschen
+    html += `<div class="sidebar-section" style="border-top:1px solid var(--g200);padding-top:16px;display:flex;gap:8px;">
+        <button onclick="archiveKontakt('${id}', ${!kontakt.archiviert})" style="flex:1;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:${kontakt.archiviert ? '#15803D' : '#92400E'};background:${kontakt.archiviert ? '#F0FDF4' : '#FFFBEB'};border:1px solid ${kontakt.archiviert ? '#BBF7D0' : '#FDE68A'};border-radius:var(--r-sm);cursor:pointer;">
+            ${kontakt.archiviert ? 'Wiederherstellen' : 'Archivieren'}
+        </button>
+        <button onclick="deleteKontakt('${id}', '${esc(kontakt.vorname)} ${esc(kontakt.nachname)}')" style="flex:1;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:#DC2626;background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r-sm);cursor:pointer;">
+            Löschen
+        </button>
+    </div>`;
+
     document.getElementById('sidebarBody').innerHTML = html;
     document.getElementById('sidebarOverlay').classList.add('active');
     document.getElementById('sidebarPanel').classList.add('open');
+}
+
+async function archiveKontakt(id, archive) {
+    if (archive && !confirm('Kontakt archivieren?')) return;
+    await sb.from('kontakte').update({ archiviert: archive, archiviert_at: archive ? new Date().toISOString() : null }).eq('id', id);
+    closeSidebar();
+    await loadAllData();
+}
+
+async function deleteKontakt(id, name) {
+    if (!confirm(`"${name}" endgültig löschen?`)) return;
+    if (!confirm('Bist du sicher? Das kann nicht rückgängig gemacht werden.')) return;
+    await sb.from('kontakte').delete().eq('id', id);
+    closeSidebar();
+    await loadAllData();
 }
 
 function closeSidebar() {
