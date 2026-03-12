@@ -1084,7 +1084,7 @@ function buildUnifiedContacts() {
             aktuelle_kasse: k.aktuelle_kasse || lb.aktuelle_kasse || null,
             gewaehlte_kasse: k.gewaehlte_kasse || lb.guenstigste_kasse || null,
             sparpotenzial_jahr: k.sparpotenzial_jahr || lb.sparpotenzial_jahr || null,
-            letzte_berechnung: berechnungen.length > 0 ? berechnungen[0].created_at : null,
+            letzte_berechnung: berechnungen.length > 0 ? berechnungen[0].created_at : (k.sparpotenzial_jahr ? (k.updated_at || k.created_at) : null),
             _raw: k,
         });
     }
