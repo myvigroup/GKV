@@ -2504,18 +2504,42 @@ async function submitLead(event) {
     }
 
     if (existingKunde) {
-        // Bestehenden Kontakt aktualisieren
-        const { error } = await sb.from('kontakte')
-            .update(formData)
-            .eq('id', existingKunde.id);
-
-        if (error) {
-            console.error('[Lead] Update-Fehler:', error);
-            errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = 'Beratung anfordern';
-            return;
+        // Bestehenden Kontakt aktualisieren (via RPC, da anon keinen direkten UPDATE hat)
+        const kundeCode = existingKunde.code || LeadAPI.getKunde()?.code;
+        if (kundeCode) {
+            const { data: rpcResult, error } = await sb.rpc('update_kontakt_by_code', {
+                kontakt_code: kundeCode,
+                p_vorname: formData.vorname,
+                p_nachname: formData.nachname,
+                p_email: formData.email,
+                p_telefon: formData.telefon,
+                p_gewaehlte_kasse: formData.gewaehlte_kasse,
+                p_aktuelle_kasse: formData.aktuelle_kasse,
+                p_gehalt: formData.gehalt,
+                p_beschaeftigung: formData.beschaeftigung,
+                p_familienstand: formData.familienstand,
+                p_kinder: formData.kinder,
+                p_sparpotenzial_jahr: formData.sparpotenzial_jahr,
+            });
+            if (error || (rpcResult && !rpcResult.success)) {
+                console.error('[Lead] Update-Fehler:', error || rpcResult?.error);
+                errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Beratung anfordern';
+                return;
+            }
+        } else {
+            // Fallback: direkter Update (für eingeloggte Berater)
+            const { error } = await sb.from('kontakte').update(formData).eq('id', existingKunde.id);
+            if (error) {
+                console.error('[Lead] Update-Fehler:', error);
+                errorEl.textContent = 'Leider ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Beratung anfordern';
+                return;
+            }
         }
         recordId = existingKunde.id;
         console.log('[Lead] Bestehender Kunde aktualisiert:', recordId);
