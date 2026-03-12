@@ -52,77 +52,61 @@ export default async function handler(req, res) {
     }
 
     const berater = beraterData[0];
-    const { kundeIds, leadIds, subject, htmlContent, textContent } = req.body;
 
-    // Support both: kundeIds only (legacy) or kundeIds + leadIds (new)
-    const hasKunden = kundeIds && Array.isArray(kundeIds) && kundeIds.length > 0;
-    const hasLeads = leadIds && Array.isArray(leadIds) && leadIds.length > 0;
+    // Support both: new kontaktIds or legacy kundeIds/leadIds
+    const { kontaktIds, kundeIds, leadIds, subject, htmlContent, textContent } = req.body;
 
-    if (!hasKunden && !hasLeads) {
-        return res.status(400).json({ error: 'Keine Empfänger ausgewählt (kundeIds oder leadIds fehlt)' });
+    // Merge all IDs into one list
+    const allIds = [];
+    if (kontaktIds && Array.isArray(kontaktIds)) allIds.push(...kontaktIds);
+    if (kundeIds && Array.isArray(kundeIds)) allIds.push(...kundeIds);
+    if (leadIds && Array.isArray(leadIds)) allIds.push(...leadIds);
+
+    if (allIds.length === 0) {
+        return res.status(400).json({ error: 'Keine Empfänger ausgewählt' });
     }
 
     const isAdmin = berater.is_admin === true;
-    let empfaenger = [];
 
-    // Kunden laden
-    if (hasKunden) {
-        const kundenRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/kunden?id=in.(${kundeIds.join(',')})&select=*`,
-            {
-                headers: {
-                    apikey: SUPABASE_SERVICE_KEY,
-                    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                }
+    // Kontakte laden (eine Query)
+    const kontakteRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/kontakte?id=in.(${allIds.join(',')})&select=*`,
+        {
+            headers: {
+                apikey: SUPABASE_SERVICE_KEY,
+                Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
             }
-        );
-        const kunden = await kundenRes.json();
-        const erlaubt = isAdmin ? kunden : kunden.filter(k => k.berater_id === berater.id);
-        empfaenger.push(...erlaubt.map(k => ({ ...k, _type: 'kunde' })));
-    }
-
-    // Leads laden
-    if (hasLeads) {
-        const leadsRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/leads?id=in.(${leadIds.join(',')})&select=*`,
-            {
-                headers: {
-                    apikey: SUPABASE_SERVICE_KEY,
-                    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                }
-            }
-        );
-        const leads = await leadsRes.json();
-        const erlaubt = isAdmin ? leads : leads.filter(l => l.berater_id === berater.id);
-        empfaenger.push(...erlaubt.map(l => ({ ...l, _type: 'lead' })));
-    }
+        }
+    );
+    const kontakte = await kontakteRes.json();
+    const empfaenger = isAdmin ? kontakte : kontakte.filter(k => k.berater_id === berater.id);
 
     if (empfaenger.length === 0) {
         return res.status(403).json({ error: 'Keine berechtigten Empfänger gefunden' });
     }
 
     // Empfänger ohne Email rausfiltern
-    const kundenMitEmail = empfaenger.filter(k => k.email);
+    const kontakteMitEmail = empfaenger.filter(k => k.email);
 
-    if (kundenMitEmail.length === 0) {
-        return res.status(400).json({ error: 'Keine Kunden mit E-Mail-Adresse' });
+    if (kontakteMitEmail.length === 0) {
+        return res.status(400).json({ error: 'Keine Kontakte mit E-Mail-Adresse' });
     }
 
     const results = [];
     const baseUrl = req.headers.origin || 'https://gkv-rechner.de';
 
-    for (const kunde of kundenMitEmail) {
-        // Individuellen Link erstellen (Kunden haben code, Leads nicht)
-        const kundeLink = kunde.code
-            ? `${baseUrl}/?berater=${berater.slug}&kunde=${kunde.code}`
+    for (const kontakt of kontakteMitEmail) {
+        // Individuellen Link erstellen (Kontakte mit code bekommen personalisierten Link)
+        const kontaktLink = kontakt.code
+            ? `${baseUrl}/?berater=${berater.slug}&kunde=${kontakt.code}`
             : `${baseUrl}/?berater=${berater.slug}`;
 
         // Platzhalter ersetzen
         function replacePlaceholders(str) {
             return str
-                .replace(/\{\{vorname\}\}/g, kunde.vorname)
-                .replace(/\{\{nachname\}\}/g, kunde.nachname)
-                .replace(/\{\{link\}\}/g, kundeLink)
+                .replace(/\{\{vorname\}\}/g, kontakt.vorname)
+                .replace(/\{\{nachname\}\}/g, kontakt.nachname)
+                .replace(/\{\{link\}\}/g, kontaktLink)
                 .replace(/\{\{berater_vorname\}\}/g, berater.vorname)
                 .replace(/\{\{berater_nachname\}\}/g, berater.nachname);
         }
@@ -138,8 +122,7 @@ export default async function handler(req, res) {
         if (htmlContent) {
             finalHtml = replacePlaceholders(htmlContent);
         } else {
-            // Text in ein HTML-Template mit Tracking-fähigem Link wrappen
-            finalHtml = wrapTextInHtml(finalText, kundeLink, berater, finalSubject);
+            finalHtml = wrapTextInHtml(finalText, kontaktLink, berater, finalSubject);
         }
 
         try {
@@ -160,12 +143,12 @@ export default async function handler(req, res) {
                         name: `${berater.vorname} ${berater.nachname}`,
                         email: berater.email,
                     },
-                    to: [{ email: kunde.email, name: `${kunde.vorname} ${kunde.nachname}` }],
+                    to: [{ email: kontakt.email, name: `${kontakt.vorname} ${kontakt.nachname}` }],
                     subject: finalSubject,
                     htmlContent: finalHtml,
                     textContent: finalText,
                     headers: {
-                        'X-Kunde-Id': kunde.id,
+                        'X-Kontakt-Id': kontakt.id,
                         'X-Berater-Id': berater.id,
                     },
                 }),
@@ -174,43 +157,41 @@ export default async function handler(req, res) {
             const brevoData = await brevoRes.json();
 
             if (brevoRes.ok) {
-                // Email-Tracking in DB speichern (nur für Kunden, nicht Leads)
-                if (kunde._type === 'kunde') {
-                    await fetch(`${SUPABASE_URL}/rest/v1/kunden_emails`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            apikey: SUPABASE_SERVICE_KEY,
-                            Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                            Prefer: 'return=minimal',
-                        },
-                        body: JSON.stringify({
-                            kunde_id: kunde.id,
-                            berater_id: berater.id,
-                            brevo_message_id: brevoData.messageId || null,
-                            subject: finalSubject,
-                            status: 'sent',
-                        }),
-                    });
-                }
+                // Email-Tracking in DB speichern
+                await fetch(`${SUPABASE_URL}/rest/v1/kunden_emails`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        apikey: SUPABASE_SERVICE_KEY,
+                        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        Prefer: 'return=minimal',
+                    },
+                    body: JSON.stringify({
+                        kontakt_id: kontakt.id,
+                        berater_id: berater.id,
+                        brevo_message_id: brevoData.messageId || null,
+                        subject: finalSubject,
+                        status: 'sent',
+                    }),
+                });
 
-                results.push({ id: kunde.id, type: kunde._type, status: 'sent', email: kunde.email });
+                results.push({ id: kontakt.id, status: 'sent', email: kontakt.email });
             } else {
-                results.push({ id: kunde.id, type: kunde._type, status: 'error', error: brevoData.message || JSON.stringify(brevoData) });
+                results.push({ id: kontakt.id, status: 'error', error: brevoData.message || 'Brevo-Fehler' });
             }
         } catch (err) {
-            results.push({ id: kunde.id, type: kunde._type, status: 'error', error: err.message });
+            results.push({ id: kontakt.id, status: 'error', error: err.message });
         }
     }
 
     const sent = results.filter(r => r.status === 'sent').length;
     const errors = results.filter(r => r.status === 'error').length;
 
-    // Berater benachrichtigen (fire-and-forget, nicht blockierend)
+    // Berater benachrichtigen (fire-and-forget)
     if (sent > 0) {
         const sentResults = results.filter(r => r.status === 'sent');
         for (const r of sentResults) {
-            const kontakt = kundenMitEmail.find(k => k.id === r.id);
+            const kontakt = kontakteMitEmail.find(k => k.id === r.id);
             if (kontakt) {
                 fetch(`${req.headers.origin || 'https://gkv-phi.vercel.app'}/api/notify-berater`, {
                     method: 'POST',
@@ -234,9 +215,7 @@ export default async function handler(req, res) {
 }
 
 function wrapTextInHtml(text, link, berater, subject) {
-    // Text in Absätze aufteilen und {{link}} durch einen klickbaren Button ersetzen
     const paragraphs = text.split(/\n\n+/).map(p => {
-        // Wenn der Absatz den Link enthält, einen Button daraus machen
         if (p.includes(link)) {
             const beforeLink = p.replace(link, '').trim();
             return (beforeLink ? `<p style="margin:0 0 8px;line-height:1.6;">${escHtml(beforeLink)}</p>` : '') +

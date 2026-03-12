@@ -1471,7 +1471,7 @@ const LeadAPI = (() => {
             if (sb) {
                 try {
                     const { data } = await sb
-                        .from('kunden')
+                        .from('kontakte')
                         .select('*')
                         .eq('code', _kundeCode)
                         .single();
@@ -1522,7 +1522,7 @@ const LeadAPI = (() => {
         try {
             const berater = AffiliateTracker.getBerater();
             await sb.from('kunden_berechnungen').insert({
-                kunde_id: _kundeRecord.id,
+                kontakt_id: _kundeRecord.id,
                 berater_id: _kundeRecord.berater_id,
                 gehalt: eingaben.gehalt,
                 beschaeftigung: eingaben.beschaeftigung || eingaben.employment,
@@ -1591,7 +1591,7 @@ const LeadAPI = (() => {
             const { data } = await sb
                 .from('kunden_dokumente')
                 .select('*')
-                .eq('kunde_id', _kundeRecord.id)
+                .eq('kontakt_id', _kundeRecord.id)
                 .order('created_at', { ascending: false });
 
             const liste = document.getElementById('dokListe');
@@ -1644,7 +1644,7 @@ const LeadAPI = (() => {
 
         // 2. Metadaten in DB speichern
         const { error: dbError } = await sb.from('kunden_dokumente').insert({
-            kunde_id: _kundeRecord.id,
+            kontakt_id: _kundeRecord.id,
             berater_id: _kundeRecord.berater_id,
             dateiname: safeName,
             original_name: file.name,
@@ -2476,8 +2476,8 @@ async function submitLead(event) {
     let recordId = null;
 
     if (existingKunde) {
-        // Bestehenden Kunden aktualisieren statt neuen Lead anzulegen
-        const { error } = await sb.from('kunden')
+        // Bestehenden Kontakt aktualisieren
+        const { error } = await sb.from('kontakte')
             .update(formData)
             .eq('id', existingKunde.id);
 
@@ -2492,8 +2492,8 @@ async function submitLead(event) {
         recordId = existingKunde.id;
         console.log('[Lead] Bestehender Kunde aktualisiert:', recordId);
     } else {
-        // Neuen Lead anlegen
-        const { error } = await sb.from('leads').insert({
+        // Neuen Kontakt anlegen
+        const { error } = await sb.from('kontakte').insert({
             ...formData,
             berater_id: beraterId,
             berater_slug: AffiliateTracker.getSlug(),
@@ -2569,14 +2569,12 @@ async function submitLead(event) {
 async function bookAfterLead() {
     AffiliateTracker.trackEvent('booking_after_lead', { position: 'lead_modal' });
 
-    // Termin-Buchung speichern (auf Kunde oder Lead)
+    // Termin-Buchung speichern
     const recordId = document.getElementById('leadModal')._leadId;
-    const isKunde = document.getElementById('leadModal')._isKunde;
     if (recordId) {
         const sb = getSupabase();
         if (sb) {
-            const table = isKunde ? 'kunden' : 'leads';
-            sb.from(table).update({ termin_gebucht_at: new Date().toISOString(), status: 'termin' }).eq('id', recordId).then(() => {});
+            sb.from('kontakte').update({ status: 'termin' }).eq('id', recordId).then(() => {});
         }
     }
 

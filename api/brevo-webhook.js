@@ -50,20 +50,20 @@ export default async function handler(req, res) {
         let records = await findRes.json();
 
         // Kein bestehender Eintrag? → Brevo-Kampagne/Automation
-        // Kunde über E-Mail-Adresse suchen und Eintrag erstellen
+        // Kontakt über E-Mail-Adresse suchen und Eintrag erstellen
         if ((!records || records.length === 0) && recipientEmail) {
-            const kundeRes = await fetch(
-                `${SUPABASE_URL}/rest/v1/kunden?email=eq.${encodeURIComponent(recipientEmail)}&select=id,berater_id&limit=1`,
+            const kontaktRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/kontakte?email=eq.${encodeURIComponent(recipientEmail)}&select=id,berater_id&limit=1`,
                 { headers }
             );
-            const kunden = await kundeRes.json();
+            const kontakte = await kontaktRes.json();
 
-            if (kunden && kunden.length > 0) {
-                const kunde = kunden[0];
+            if (kontakte && kontakte.length > 0) {
+                const kontakt = kontakte[0];
                 const now = new Date().toISOString();
                 const insertData = {
-                    kunde_id: kunde.id,
-                    berater_id: kunde.berater_id,
+                    kontakt_id: kontakt.id,
+                    berater_id: kontakt.berater_id,
                     brevo_message_id: messageId,
                     subject: subject,
                     status: newStatus === 'bounced' ? 'bounced' : 'sent',
@@ -78,32 +78,7 @@ export default async function handler(req, res) {
                     headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=representation' },
                     body: JSON.stringify(insertData),
                 });
-                continue; // Eintrag wurde bereits mit richtigem Status erstellt
-            }
-
-            // Auch in leads suchen
-            const leadRes = await fetch(
-                `${SUPABASE_URL}/rest/v1/leads?email=eq.${encodeURIComponent(recipientEmail)}&select=id,berater_id&limit=1`,
-                { headers }
-            );
-            const leads = await leadRes.json();
-
-            if (leads && leads.length > 0) {
-                // Lead gefunden – als Kontaktverlauf in kontakt_aenderungen loggen
-                const lead = leads[0];
-                const now = new Date().toISOString();
-                await fetch(`${SUPABASE_URL}/rest/v1/kontakt_aenderungen`, {
-                    method: 'POST',
-                    headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-                    body: JSON.stringify({
-                        kontakt_type: 'lead',
-                        kontakt_id: lead.id,
-                        feld: 'brevo_email',
-                        alter_wert: null,
-                        neuer_wert: `${subject || 'E-Mail'} (${newStatus})`,
-                        geaendert_von: 'brevo',
-                    }),
-                });
+                continue;
             }
             continue;
         }

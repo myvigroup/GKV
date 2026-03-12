@@ -36,16 +36,15 @@ export default async function handler(req, res) {
     });
     if (!userRes.ok) return res.status(401).json({ error: 'Token ungültig' });
 
-    const { kontakt_type, kontakt_id } = req.body;
-    if (!kontakt_type || !kontakt_id) {
-        return res.status(400).json({ error: 'kontakt_type und kontakt_id erforderlich' });
+    const { kontakt_id } = req.body;
+    if (!kontakt_id) {
+        return res.status(400).json({ error: 'kontakt_id erforderlich' });
     }
 
     try {
         // Kontakt laden
-        const table = kontakt_type === 'kunde' ? 'kunden' : 'leads';
         const kontaktRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/${table}?id=eq.${kontakt_id}&select=*`,
+            `${SUPABASE_URL}/rest/v1/kontakte?id=eq.${kontakt_id}&select=*`,
             { headers }
         );
         const kontakte = await kontaktRes.json();
@@ -65,22 +64,20 @@ export default async function handler(req, res) {
             if (beraterData && beraterData.length > 0) berater = beraterData[0];
         }
 
-        // Berechnungen laden (nur für Kunden)
+        // Berechnungen laden
         let berechnungen = [];
-        if (kontakt_type === 'kunde') {
-            const berechnungenRes = await fetch(
-                `${SUPABASE_URL}/rest/v1/kunden_berechnungen?kunde_id=eq.${kontakt_id}&select=*&order=created_at.desc`,
-                { headers }
-            );
-            berechnungen = await berechnungenRes.json() || [];
-        }
+        const berechnungenRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/kunden_berechnungen?kontakt_id=eq.${kontakt_id}&select=*&order=created_at.desc`,
+            { headers }
+        );
+        berechnungen = await berechnungenRes.json() || [];
 
         // PDF generieren
-        const pdfBuffer = await generatePDF(kontakt, berater, berechnungen, kontakt_type);
+        const pdfBuffer = await generatePDF(kontakt, berater, berechnungen);
         const filename = `Beratungsprotokoll_${kontakt.nachname}_${kontakt.vorname}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
         // PDF im Supabase Storage speichern
-        const storagePath = `protokolle/${kontakt_type}/${kontakt_id}/${filename}`;
+        const storagePath = `protokolle/${kontakt_id}/${filename}`;
         const uploadRes = await fetch(
             `${SUPABASE_URL}/storage/v1/object/kunden-dokumente/${storagePath}`,
             {
@@ -111,7 +108,6 @@ export default async function handler(req, res) {
 
         // Dokument-Eintrag in DB speichern
         const dokEintrag = {
-            kontakt_type: kontakt_type,
             kontakt_id: kontakt_id,
             berater_id: kontakt.berater_id || null,
             typ: 'beratungsprotokoll',
@@ -144,7 +140,7 @@ export default async function handler(req, res) {
     }
 }
 
-function generatePDF(kontakt, berater, berechnungen, kontaktType) {
+function generatePDF(kontakt, berater, berechnungen) {
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({
             size: 'A4',
@@ -209,7 +205,7 @@ function generatePDF(kontakt, berater, berechnungen, kontaktType) {
 
         const vorgangData = [
             ['Vorgangsnummer', kontakt.id ? kontakt.id.slice(0, 8).toUpperCase() : '–'],
-            ['Typ', kontaktType === 'kunde' ? 'Kunde' : 'Lead'],
+            ['Typ', kontakt.code ? 'Kunde' : 'Kontakt'],
             ['Status', 'Abgeschlossen'],
             ['Erstellt am', kontakt.created_at ? formatDate(new Date(kontakt.created_at)) : '–'],
             ['Abgeschlossen am', formatDate(new Date())],

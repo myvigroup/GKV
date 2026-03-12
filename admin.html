@@ -710,9 +710,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // State
 let adminRecord = null;
 let allBerater = [];
-let allKunden = [];
-let allLeads = [];
-let kundenBerechnungenCount = {};
+let allKontakte = [];
+let kontakteBerechnungenCount = {};
 let allEmailsList = [];
 
 /* ==================================================================
@@ -778,27 +777,25 @@ async function handleLogout() {
    DATA LOADING
    ================================================================== */
 async function loadAllData() {
-    const [beraterRes, kundenRes, leadsRes] = await Promise.all([
+    const [beraterRes, kontakteRes] = await Promise.all([
         sb.from('berater').select('*').order('vorname'),
-        sb.from('kunden').select('*').order('created_at', { ascending: false }),
-        sb.from('leads').select('*').order('created_at', { ascending: false }),
+        sb.from('kontakte').select('*').order('created_at', { ascending: false }),
     ]);
 
     allBerater = beraterRes.data || [];
-    allKunden = kundenRes.data || [];
-    allLeads = leadsRes.data || [];
+    allKontakte = kontakteRes.data || [];
 
-    // Berechnungen zählen pro Kunde
-    if (allKunden.length > 0) {
-        const kundenIds = allKunden.map(k => k.id);
+    // Berechnungen zählen pro Kontakt
+    if (allKontakte.length > 0) {
+        const kontaktIds = allKontakte.map(k => k.id);
         const { data: berechnungen } = await sb
             .from('kunden_berechnungen')
-            .select('kunde_id')
-            .in('kunde_id', kundenIds);
+            .select('kontakt_id')
+            .in('kontakt_id', kontaktIds);
 
-        kundenBerechnungenCount = {};
+        kontakteBerechnungenCount = {};
         (berechnungen || []).forEach(b => {
-            kundenBerechnungenCount[b.kunde_id] = (kundenBerechnungenCount[b.kunde_id] || 0) + 1;
+            kontakteBerechnungenCount[b.kontakt_id] = (kontakteBerechnungenCount[b.kontakt_id] || 0) + 1;
         });
     }
 
@@ -835,21 +832,17 @@ function updateGlobalStats() {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-    const totalKontakte = allKunden.length + allLeads.length;
-    const monatLeads = allLeads.filter(l => l.created_at >= monthStart).length;
-    const monatKunden = allKunden.filter(k => k.created_at >= monthStart).length;
-    const monatKontakte = monatLeads + monatKunden;
+    const totalKontakte = allKontakte.length;
+    const monatKontakte = allKontakte.filter(k => k.created_at >= monthStart).length;
 
     // Letzter Monat für Trend
-    const letzterMonatKontakte = allLeads.filter(l => l.created_at >= lastMonthStart && l.created_at < monthStart).length +
-        allKunden.filter(k => k.created_at >= lastMonthStart && k.created_at < monthStart).length;
+    const letzterMonatKontakte = allKontakte.filter(k => k.created_at >= lastMonthStart && k.created_at < monthStart).length;
 
-    const abschluesse = allLeads.filter(l => l.status === 'abgeschlossen').length;
+    const abschluesse = allKontakte.filter(k => k.status === 'abgeschlossen').length;
     const conversionRate = totalKontakte > 0 ? ((abschluesse / totalKontakte) * 100).toFixed(1) : '0';
 
     // Sparpotenzial berechnen
-    const allContacts = [...allLeads, ...allKunden];
-    const sparWerte = allContacts.filter(c => c.sparpotenzial_jahr > 0).map(c => +c.sparpotenzial_jahr);
+    const sparWerte = allKontakte.filter(c => c.sparpotenzial_jahr > 0).map(c => +c.sparpotenzial_jahr);
     const avgSpar = sparWerte.length > 0 ? Math.round(sparWerte.reduce((a, b) => a + b, 0) / sparWerte.length) : 0;
     const totalSpar = sparWerte.reduce((a, b) => a + b, 0);
 
@@ -862,7 +855,7 @@ function updateGlobalStats() {
     document.getElementById('statBeraterOnline').innerHTML = `<span style="color:var(--success);">● ${onlineBerater} online</span>`;
 
     document.getElementById('statKontakte').textContent = totalKontakte;
-    const neuCount = allLeads.filter(l => l.status === 'neu').length;
+    const neuCount = allKontakte.filter(k => k.status === 'neu').length;
     document.getElementById('statKontakteSub').textContent = `${neuCount} neu · ${abschluesse} abgeschlossen`;
 
     document.getElementById('statMonat').textContent = monatKontakte;
@@ -926,12 +919,7 @@ function renderKontakteChart() {
         days.push({ key, label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), count: 0 });
     }
 
-    allLeads.forEach(l => {
-        const day = (l.created_at || '').slice(0, 10);
-        const entry = days.find(d => d.key === day);
-        if (entry) entry.count++;
-    });
-    allKunden.forEach(k => {
+    allKontakte.forEach(k => {
         const day = (k.created_at || '').slice(0, 10);
         const entry = days.find(d => d.key === day);
         if (entry) entry.count++;
@@ -960,10 +948,10 @@ function renderStatusChart() {
         { key: 'storniert', label: 'Storniert', color: 'var(--danger)' },
     ];
 
-    const total = allLeads.length || 1;
+    const total = allKontakte.length || 1;
 
     document.getElementById('statusChart').innerHTML = statusConfig.map(s => {
-        const count = allLeads.filter(l => l.status === s.key).length;
+        const count = allKontakte.filter(k => k.status === s.key).length;
         const pct = (count / total * 100).toFixed(0);
         return `
         <div class="status-row">
@@ -978,10 +966,9 @@ function renderStatusChart() {
 
 function renderBeraterRanking() {
     const ranking = allBerater.map(b => {
-        const leads = allLeads.filter(l => l.berater_id === b.id).length;
-        const kunden = allKunden.filter(k => k.berater_id === b.id).length;
-        const abschluesse = allLeads.filter(l => l.berater_id === b.id && l.status === 'abgeschlossen').length;
-        return { name: `${b.vorname} ${b.nachname}`, total: leads + kunden, leads, kunden, abschluesse };
+        const kontakte = allKontakte.filter(k => k.berater_id === b.id);
+        const abschluesse = kontakte.filter(k => k.status === 'abgeschlossen').length;
+        return { name: `${b.vorname} ${b.nachname}`, total: kontakte.length, abschluesse };
     }).sort((a, b) => b.total - a.total);
 
     const maxTotal = Math.max(...ranking.map(r => r.total), 1);
@@ -1004,18 +991,14 @@ function renderBeraterRanking() {
 function renderBeraterGrid() {
     const grid = document.getElementById('beraterGrid');
     const maxKontakte = Math.max(...allBerater.map(b =>
-        allLeads.filter(l => l.berater_id === b.id).length + allKunden.filter(k => k.berater_id === b.id).length
+        allKontakte.filter(k => k.berater_id === b.id).length
     ), 1);
 
     grid.innerHTML = allBerater.map(b => {
-        const beraterLeads = allLeads.filter(l => l.berater_id === b.id);
-        const beraterKunden = allKunden.filter(k => k.berater_id === b.id);
-        const totalKontakte = beraterLeads.length + beraterKunden.length;
-        const abschluesse = beraterLeads.filter(l => l.status === 'abgeschlossen').length;
-        const neueKontakte = beraterLeads.filter(l => l.status === 'neu').length + beraterKunden.filter(k => {
-            const d = new Date(k.created_at); const now = new Date();
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        }).length;
+        const beraterKontakte = allKontakte.filter(k => k.berater_id === b.id);
+        const totalKontakte = beraterKontakte.length;
+        const abschluesse = beraterKontakte.filter(k => k.status === 'abgeschlossen').length;
+        const neueKontakte = beraterKontakte.filter(k => k.status === 'neu').length;
         const barWidth = (totalKontakte / maxKontakte * 100).toFixed(0);
 
         // Online-Status
@@ -1072,12 +1055,7 @@ function renderBeraterGrid() {
    ALLE KONTAKTE (merged Kunden + Leads)
    ================================================================== */
 function buildKontakteList() {
-    // Merge kunden and leads into one list
-    const kontakte = [];
-    allLeads.forEach(l => kontakte.push({ ...l, _type: 'lead' }));
-    allKunden.forEach(k => kontakte.push({ ...k, _type: 'kunde' }));
-    kontakte.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    return kontakte;
+    return [...allKontakte].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
 function renderAlleKontakte() {
@@ -1116,12 +1094,11 @@ function renderAlleKontakte() {
             : '\u2013';
         const statusLabel = k.status || 'neu';
         const statusClass = `status-${k.status || 'neu'}`;
-        const table = k._type === 'kunde' ? 'kunden' : 'leads';
         const beraterOptions = allBerater.map(b =>
             `<option value="${b.id}" ${b.id === k.berater_id ? 'selected' : ''}>${esc(b.vorname)} ${esc(b.nachname)}</option>`
         ).join('');
 
-        return `<tr onclick="openKontaktSidebar('${k._type}','${k.id}')" style="cursor:pointer;">
+        return `<tr onclick="openKontaktSidebar('${k.id}')" style="cursor:pointer;">
             <td style="font-size:.82rem;">${dateStr}</td>
             <td style="font-weight:600;">${esc(k.vorname)} ${esc(k.nachname)}</td>
             <td>
@@ -1129,7 +1106,7 @@ function renderAlleKontakte() {
                 ${k.telefon ? `<div style="font-size:.75rem;color:var(--g400);">${esc(k.telefon)}</div>` : ''}
             </td>
             <td onclick="event.stopPropagation();">
-                <select class="berater-select" onchange="reassignKontakt('${table}','${k.id}',this.value)">
+                <select class="berater-select" onchange="reassignKontakt('${k.id}',this.value)">
                     ${beraterOptions}
                 </select>
             </td>
@@ -1139,15 +1116,14 @@ function renderAlleKontakte() {
     }).join('');
 }
 
-async function reassignKontakt(table, id, newBeraterId) {
-    const { error } = await sb.from(table).update({ berater_id: newBeraterId }).eq('id', id);
+async function reassignKontakt(id, newBeraterId) {
+    const { error } = await sb.from('kontakte').update({ berater_id: newBeraterId }).eq('id', id);
     if (error) {
         alert('Fehler bei der Zuordnung: ' + error.message);
         return;
     }
     // Update local state
-    const list = table === 'kunden' ? allKunden : allLeads;
-    const item = list.find(x => x.id === id);
+    const item = allKontakte.find(x => x.id === id);
     if (item) item.berater_id = newBeraterId;
     renderBeraterGrid();
 }
@@ -1177,16 +1153,15 @@ async function openBeraterDetail(beraterId) {
         ` &middot; Slug: <strong>${esc(berater.slug)}</strong>`;
 
     // Stats
-    const bLeads = allLeads.filter(l => l.berater_id === beraterId);
-    const bKunden = allKunden.filter(k => k.berater_id === beraterId);
-    const totalKontakte = bLeads.length + bKunden.length;
-    const abschl = bLeads.filter(l => l.status === 'abgeschlossen').length;
-    const neueLeads = bLeads.filter(l => l.status === 'neu').length;
+    const bKontakte = allKontakte.filter(k => k.berater_id === beraterId);
+    const totalKontakte = bKontakte.length;
+    const abschl = bKontakte.filter(k => k.status === 'abgeschlossen').length;
+    const neueKontakte = bKontakte.filter(k => k.status === 'neu').length;
 
     document.getElementById('detailStats').innerHTML = `
         <div class="detail-stat"><div class="detail-stat-val">${totalKontakte}</div><div class="detail-stat-label">Kontakte</div></div>
         <div class="detail-stat"><div class="detail-stat-val">${abschl}</div><div class="detail-stat-label">Abschlüsse</div></div>
-        <div class="detail-stat"><div class="detail-stat-val">${neueLeads}</div><div class="detail-stat-label">Neue</div></div>
+        <div class="detail-stat"><div class="detail-stat-val">${neueKontakte}</div><div class="detail-stat-label">Neue</div></div>
     `;
 
     // Load emails for this berater
@@ -1228,11 +1203,8 @@ function switchDetailTab(tab) {
 
 function renderDetailKontakte() {
     const statusFilter = document.getElementById('detailKontakteStatusFilter').value;
-    // Merge leads + kunden for this berater
-    let kontakte = [];
-    allLeads.filter(l => l.berater_id === detailBeraterId).forEach(l => kontakte.push({ ...l, _type: 'lead' }));
-    allKunden.filter(k => k.berater_id === detailBeraterId).forEach(k => kontakte.push({ ...k, _type: 'kunde' }));
-    kontakte.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    let kontakte = allKontakte.filter(k => k.berater_id === detailBeraterId);
+    kontakte = [...kontakte].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     if (statusFilter !== 'alle') kontakte = kontakte.filter(k => k.status === statusFilter);
 
@@ -1251,7 +1223,7 @@ function renderDetailKontakte() {
             : '\u2013';
         const statusLabel = k.status || 'neu';
         const statusClass = `status-${k.status || 'neu'}`;
-        return `<tr onclick="openKontaktSidebar('${k._type}','${k.id}')" style="cursor:pointer;">
+        return `<tr onclick="openKontaktSidebar('${k.id}')" style="cursor:pointer;">
             <td style="font-size:.82rem;">${dateStr}</td>
             <td style="font-weight:600;">${esc(k.vorname)} ${esc(k.nachname)}</td>
             <td>
@@ -1275,9 +1247,9 @@ function renderDetailEmails() {
 
     document.getElementById('detailEmailsBody').innerHTML = detailEmails.map(email => {
         const dateStr = new Date(email.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-        // Find kunde name
-        const kunde = allKunden.find(k => k.id === email.kunde_id);
-        const empfaenger = kunde ? `${kunde.vorname} ${kunde.nachname}` : '\u2013';
+        // Find kontakt name
+        const kontakt = allKontakte.find(k => k.id === email.kontakt_id);
+        const empfaenger = kontakt ? `${kontakt.vorname} ${kontakt.nachname}` : '\u2013';
         const statusColors = {
             sent: 'var(--g400)', delivered: 'var(--primary)', opened: 'var(--warning)',
             clicked: 'var(--success)', bounced: 'var(--danger)', error: 'var(--danger)'
@@ -1567,8 +1539,8 @@ async function uploadExcelKunden() {
     statusEl.className = 'upload-status info';
     statusEl.textContent = 'Prüfe auf Duplikate...';
 
-    // Duplikat-Prüfung gegen bestehende Kunden des gewählten Beraters
-    const beraterKunden = allKunden.filter(k => k.berater_id === beraterId);
+    // Duplikat-Prüfung gegen bestehende Kontakte des gewählten Beraters
+    const beraterKunden = allKontakte.filter(k => k.berater_id === beraterId);
     const existingSet = new Set(
         beraterKunden.map(k => (k.vorname + '|' + k.nachname + '|' + (k.email || '')).toLowerCase())
     );
@@ -1605,7 +1577,7 @@ async function uploadExcelKunden() {
             .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
         const code = slug + '-' + Math.random().toString(36).substr(2, 4);
 
-        const { error } = await sb.from('kunden').insert({
+        const { error } = await sb.from('kontakte').insert({
             berater_id: beraterId,
             code,
             vorname: kunde.vorname,
@@ -1680,37 +1652,26 @@ function editableField(label, fieldName, rawValue, displayValue) {
     </div>`;
 }
 
-async function openKontaktSidebar(type, id) {
-    let kontakt;
-    if (type === 'lead') {
-        kontakt = allLeads.find(l => l.id === id);
-    } else {
-        kontakt = allKunden.find(k => k.id === id);
-    }
+async function openKontaktSidebar(id) {
+    const kontakt = allKontakte.find(k => k.id === id);
     if (!kontakt) return;
 
-    sidebarKontakt = { type, id, data: kontakt };
-    const isKunde = type === 'kunde';
+    sidebarKontakt = { id, data: kontakt };
     document.getElementById('sidebarTitle').innerHTML =
         `<span class="editable" data-field="vorname" data-original="${esc(kontakt.vorname)}" onclick="startFieldEdit(this)" style="cursor:pointer;padding:2px 4px;border-radius:4px;">${esc(kontakt.vorname)}</span> ` +
         `<span class="editable" data-field="nachname" data-original="${esc(kontakt.nachname)}" onclick="startFieldEdit(this)" style="cursor:pointer;padding:2px 4px;border-radius:4px;">${esc(kontakt.nachname)}</span>`;
 
-    // Load emails, berechnungen, aenderungen
-    const promises = [
-        sb.from('kontakt_aenderungen').select('*').eq('kontakt_type', type).eq('kontakt_id', id).order('created_at', { ascending: false }),
-    ];
-    if (isKunde) {
-        promises.push(
-            sb.from('kunden_emails').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
-            sb.from('kunden_berechnungen').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
-            sb.from('kunden_dokumente').select('*').eq('kunde_id', id).order('created_at', { ascending: false }),
-        );
-    }
-    const results = await Promise.all(promises);
+    // Load emails, berechnungen, aenderungen, dokumente
+    const results = await Promise.all([
+        sb.from('kontakt_aenderungen').select('*').eq('kontakt_id', id).order('created_at', { ascending: false }),
+        sb.from('kunden_emails').select('*').eq('kontakt_id', id).order('created_at', { ascending: false }),
+        sb.from('kunden_berechnungen').select('*').eq('kontakt_id', id).order('created_at', { ascending: false }),
+        sb.from('kontakt_dokumente').select('*').eq('kontakt_id', id).order('created_at', { ascending: false }),
+    ]);
     const aenderungen = results[0].data || [];
-    const emails = isKunde ? (results[1].data || []) : [];
-    const berechnungen = isKunde ? (results[2].data || []) : [];
-    const dokumente = isKunde ? (results[3]?.data || []) : [];
+    const emails = results[1].data || [];
+    const berechnungen = results[2].data || [];
+    const dokumente = results[3].data || [];
 
     const berater = allBerater.find(b => b.id === kontakt.berater_id);
     const beraterName = berater ? `${berater.vorname} ${berater.nachname}` : '–';
@@ -1727,7 +1688,17 @@ async function openKontaktSidebar(type, id) {
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(kontakt.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
-    // Eckdaten
+    // Eckdaten: Aus neuester Berechnung ergänzen falls Felder fehlen
+    if (berechnungen.length > 0) {
+        const lb = berechnungen[0];
+        if (!kontakt.gehalt) kontakt.gehalt = lb.gehalt;
+        if (!kontakt.beschaeftigung) kontakt.beschaeftigung = lb.beschaeftigung;
+        if (!kontakt.familienstand) kontakt.familienstand = lb.familienstand;
+        if (kontakt.kinder == null) kontakt.kinder = lb.kinder;
+        if (!kontakt.aktuelle_kasse) kontakt.aktuelle_kasse = lb.aktuelle_kasse;
+        if (!kontakt.gewaehlte_kasse) kontakt.gewaehlte_kasse = lb.guenstigste_kasse;
+        if (!kontakt.sparpotenzial_jahr) kontakt.sparpotenzial_jahr = lb.sparpotenzial_jahr;
+    }
     if (kontakt.gehalt || kontakt.sparpotenzial_jahr || kontakt.aktuelle_kasse || kontakt.gewaehlte_kasse || kontakt.beschaeftigung || kontakt.familienstand) {
         const beschLabels = { angestellt: 'Angestellt', selbststaendig: 'Selbstständig', beamter: 'Beamter', rentner: 'Rentner', student: 'Student' };
         const famLabels = { ledig: 'Ledig', verheiratet: 'Verheiratet', geschieden: 'Geschieden', verwitwet: 'Verwitwet' };
@@ -1745,13 +1716,15 @@ async function openKontaktSidebar(type, id) {
         </div>`;
     }
 
-    // Beratungsprotokoll PDF Button
-    html += `<div class="sidebar-section">
-        <button onclick="generateProtokoll('${kontakt._type}','${kontakt.id}')" style="width:100%;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:var(--primary);background:var(--primary-light);border:1px solid rgba(0,66,131,.15);border-radius:var(--r-sm);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.background='rgba(0,66,131,.12)'" onmouseout="this.style.background='var(--primary-light)'">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Beratungsprotokoll (PDF)
-        </button>
-    </div>`;
+    // Beratungsprotokoll PDF Button (nur bei abgeschlossen)
+    if (kontakt.status === 'abgeschlossen') {
+        html += `<div class="sidebar-section">
+            <button onclick="generateProtokoll('${kontakt.id}')" style="width:100%;padding:10px;font-size:.82rem;font-weight:600;font-family:var(--font);color:var(--primary);background:var(--primary-light);border:1px solid rgba(0,66,131,.15);border-radius:var(--r-sm);cursor:pointer;transition:var(--ease);display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.background='rgba(0,66,131,.12)'" onmouseout="this.style.background='var(--primary-light)'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Beratungsprotokoll (PDF)
+            </button>
+        </div>`;
+    }
 
     // Timeline (for all types)
     const timelineItems = [];
@@ -1865,7 +1838,7 @@ async function openKontaktSidebar(type, id) {
         <div class="sidebar-section-title">Notizen</div>
         <textarea style="width:100%;min-height:80px;padding:10px;font-size:.85rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);background:var(--g50);resize:vertical;"
             placeholder="Notizen hinzufügen..."
-            onblur="updateKontaktNotizen('${type === 'kunde' ? 'kunden' : 'leads'}','${id}',this.value)">${esc(kontakt.notizen || '')}</textarea>
+            onblur="updateKontaktNotizen('${id}',this.value)">${esc(kontakt.notizen || '')}</textarea>
     </div>`;
 
     document.getElementById('sidebarBody').innerHTML = html;
@@ -1879,15 +1852,24 @@ function closeSidebar() {
     sidebarKontakt = null;
 }
 
-async function generateProtokoll(kontaktType, kontaktId) {
+async function generateProtokoll(kontaktId) {
     try {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { alert('Nicht eingeloggt'); return; }
+        // Prüfen ob bereits ein Protokoll existiert
+        const { data: existing } = await sb.from('kontakt_dokumente')
+            .select('id')
+            .eq('kontakt_id', kontaktId)
+            .eq('typ', 'beratungsprotokoll')
+            .limit(1);
+        if (existing && existing.length > 0) {
+            if (!confirm('Es existiert bereits ein Beratungsprotokoll. Neues erstellen?')) return;
+        }
         showToast('Beratungsprotokoll wird erstellt...');
         const res = await fetch('/api/generate-protokoll', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-            body: JSON.stringify({ kontakt_type: kontaktType, kontakt_id: kontaktId }),
+            body: JSON.stringify({ kontakt_id: kontaktId }),
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'PDF-Fehler');
@@ -1952,11 +1934,10 @@ async function saveFieldEdit(el, input) {
         return;
     }
 
-    const table = sidebarKontakt.type === 'kunde' ? 'kunden' : 'leads';
     const updateVal = field === 'gehalt' ? (newValue ? parseFloat(newValue) : null) : (newValue || null);
 
     // Save to DB
-    const { error } = await sb.from(table).update({ [field]: updateVal }).eq('id', sidebarKontakt.id);
+    const { error } = await sb.from('kontakte').update({ [field]: updateVal }).eq('id', sidebarKontakt.id);
     if (error) {
         alert('Fehler beim Speichern: ' + error.message);
         cancelFieldEdit(el, original, field);
@@ -1965,7 +1946,6 @@ async function saveFieldEdit(el, input) {
 
     // Log change
     await sb.from('kontakt_aenderungen').insert({
-        kontakt_type: sidebarKontakt.type,
         kontakt_id: sidebarKontakt.id,
         feld: field,
         alter_wert: original || null,
@@ -2010,8 +1990,8 @@ function groupChangesByTime(changes) {
     return groups;
 }
 
-async function updateKontaktNotizen(table, id, notizen) {
-    await sb.from(table).update({ notizen }).eq('id', id);
+async function updateKontaktNotizen(id, notizen) {
+    await sb.from('kontakte').update({ notizen }).eq('id', id);
 }
 
 async function downloadDokument(storagePath, filename) {

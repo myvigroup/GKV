@@ -53,7 +53,6 @@ export default async function handler(req, res) {
                 duration: parseInt(duration) || 0,
                 hangup_type: type || null,
                 peer: peer || null,
-                kontakt_type: kontakt ? kontakt.type : null,
                 kontakt_id: kontakt ? kontakt.id : null,
                 berater_id: kontakt ? kontakt.berater_id : null,
             }),
@@ -61,7 +60,6 @@ export default async function handler(req, res) {
 
         // Berater benachrichtigen bei verpasstem Anruf
         if (type === 'missed' && kontakt && kontakt.berater_id) {
-            const kontaktName = `${kontakt.vorname} ${kontakt.nachname}`;
             fetch(`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/api/notify-berater`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -85,13 +83,12 @@ export default async function handler(req, res) {
 function normalizePhone(phone) {
     if (!phone) return '';
     let p = phone.replace(/[\s\-\/\(\)]/g, '');
-    // +49 → 0
     if (p.startsWith('+49')) p = '0' + p.slice(3);
     if (p.startsWith('0049')) p = '0' + p.slice(4);
     return p;
 }
 
-// Kontakt über Telefonnummer in leads + kunden suchen
+// Kontakt über Telefonnummer in kontakte suchen
 async function findKontaktByPhone(supabaseUrl, serviceKey, phone) {
     if (!phone) return null;
 
@@ -104,24 +101,13 @@ async function findKontaktByPhone(supabaseUrl, serviceKey, phone) {
     const variants = buildPhoneVariants(phone);
     const likeFilter = variants.map(v => `telefon.like.*${v}*`).join(',');
 
-    // In leads suchen
-    const leadsRes = await fetch(
-        `${supabaseUrl}/rest/v1/leads?or=(${encodeURIComponent(likeFilter)})&select=id,vorname,nachname,telefon,berater_id&limit=1`,
+    const kontakteRes = await fetch(
+        `${supabaseUrl}/rest/v1/kontakte?or=(${encodeURIComponent(likeFilter)})&select=id,vorname,nachname,telefon,berater_id&limit=1`,
         { headers }
     );
-    const leads = await leadsRes.json();
-    if (leads && leads.length > 0) {
-        return { ...leads[0], type: 'lead' };
-    }
-
-    // In kunden suchen
-    const kundenRes = await fetch(
-        `${supabaseUrl}/rest/v1/kunden?or=(${encodeURIComponent(likeFilter)})&select=id,vorname,nachname,telefon,berater_id&limit=1`,
-        { headers }
-    );
-    const kunden = await kundenRes.json();
-    if (kunden && kunden.length > 0) {
-        return { ...kunden[0], type: 'kunde' };
+    const kontakte = await kontakteRes.json();
+    if (kontakte && kontakte.length > 0) {
+        return kontakte[0];
     }
 
     return null;
@@ -132,13 +118,11 @@ function buildPhoneVariants(phone) {
     const clean = phone.replace(/[\s\-\/\(\)\+]/g, '');
     const variants = [clean];
 
-    // Ohne führende 0
     if (clean.startsWith('0')) {
         variants.push(clean.slice(1));
         variants.push('+49' + clean.slice(1));
     }
 
-    // Letzten 8-10 Ziffern (Kernrufnummer)
     if (clean.length >= 8) {
         variants.push(clean.slice(-8));
     }
