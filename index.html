@@ -153,6 +153,9 @@
         }
         .btn-calc:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,66,131,.4); }
         .btn-calc:active { transform:translateY(0); }
+        .btn-calc:disabled { opacity:.8; cursor:wait; transform:none; }
+        .calc-loader { display:inline-block; width:16px; height:16px; border:2.5px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:calc-spin .6s linear infinite; vertical-align:middle; margin-right:6px; }
+        @keyframes calc-spin { to { transform:rotate(360deg); } }
 
         /* Validation */
         .v-msg { font-size:.76rem; color:var(--danger); margin-top:3px; display:none; }
@@ -1875,6 +1878,20 @@ function berechnen() {
     }
     fgGehalt.classList.remove('error');
 
+    // Ladebalken anzeigen
+    const btn = document.getElementById('btnCalc');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="calc-loader"></span> Vergleiche Kassen...';
+
+    // Ergebnisse kurz verzögern für visuelles Feedback
+    setTimeout(() => {
+        _berechneUndZeige(eingaben);
+        btn.disabled = false;
+        btn.textContent = 'Jetzt Beitrag berechnen';
+    }, 800);
+}
+
+function _berechneUndZeige(eingaben) {
     // Für alle Kassen berechnen
     ergebnisse = KASSEN_DATEN.map(kasse => berechneKasse(kasse, eingaben));
 
