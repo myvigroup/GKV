@@ -339,6 +339,16 @@
         .pipeline-card-spar { font-size:.82rem; font-weight:700; color:var(--success); }
         .pipeline-card-date { font-size:.65rem; color:var(--g400); margin-top:6px; display:flex; justify-content:space-between; align-items:center; }
         .pipeline-card-badge { font-size:.6rem; padding:1px 5px; border-radius:3px; font-weight:600; }
+        .substatus-select {
+            width:100%; padding:3px 6px; font-size:.68rem; font-family:var(--font); font-weight:600;
+            border:1px solid var(--g200); border-radius:4px; background:#fff; cursor:pointer;
+            color:var(--g600); margin-top:4px; transition:var(--ease);
+        }
+        .substatus-select:focus { outline:none; border-color:var(--primary); }
+        .substatus-tag {
+            display:inline-block; font-size:.62rem; font-weight:600; padding:1px 6px;
+            border-radius:3px; margin-top:4px;
+        }
         .pipeline-empty { text-align:center; padding:24px 8px; font-size:.75rem; color:var(--g400); font-style:italic; }
 
         /* Loading & empty states */
@@ -1433,6 +1443,25 @@ function openSidebar(uid) {
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
+    // Sub-Status (Kontaktgrund)
+    if (contact.status === 'neu') {
+        const subVal = contact._raw?.sub_status || '';
+        html += `<div class="sidebar-section">
+            <div class="sidebar-section-title">Kontaktgrund</div>
+            <select class="substatus-select" style="font-size:.82rem;padding:8px 12px;" onchange="updateSubStatus('${contact.id}',this.value);renderPipeline();">
+                <option value="" ${!subVal ? 'selected' : ''}>– Grund wählen –</option>
+                <option value="nicht_erreicht" ${subVal==='nicht_erreicht' ? 'selected' : ''}>📞 Nicht erreicht</option>
+                <option value="mailbox" ${subVal==='mailbox' ? 'selected' : ''}>📞 Mailbox besprochen</option>
+                <option value="rueckruf" ${subVal==='rueckruf' ? 'selected' : ''}>🔄 Rückruf vereinbart</option>
+                <option value="email_gesendet" ${subVal==='email_gesendet' ? 'selected' : ''}>✉️ E-Mail gesendet</option>
+                <option value="wartet_unterlagen" ${subVal==='wartet_unterlagen' ? 'selected' : ''}>📋 Wartet auf Unterlagen</option>
+                <option value="kein_interesse" ${subVal==='kein_interesse' ? 'selected' : ''}>❌ Kein Interesse</option>
+                <option value="falsche_nummer" ${subVal==='falsche_nummer' ? 'selected' : ''}>⚠️ Falsche Nummer</option>
+                <option value="sonstiges" ${subVal==='sonstiges' ? 'selected' : ''}>💬 Sonstiges</option>
+            </select>
+        </div>`;
+    }
+
     // Versicherungsdaten
     if (contact.gehalt || contact.sparpotenzial_jahr || contact.aktuelle_kasse || contact.gewaehlte_kasse || contact.beschaeftigung || contact.familienstand) {
         const beschLabels = { angestellt: 'Angestellt', selbststaendig: 'Selbstständig', beamter: 'Beamter', rentner: 'Rentner', student: 'Student' };
@@ -2063,6 +2092,28 @@ function renderPipeline() {
             // Kasse
             const kasseInfo = c.gewaehlte_kasse ? `<div class="pipeline-card-detail">${esc(c.gewaehlte_kasse)}</div>` : '';
 
+            // Sub-Status für "Neu"-Kontakte
+            let subStatusHtml = '';
+            if (c.status === 'neu') {
+                const subVal = c._raw?.sub_status || '';
+                subStatusHtml = `<select class="substatus-select" onclick="event.stopPropagation()" onchange="updateSubStatus('${c.id}',this.value)">
+                    <option value="" ${!subVal ? 'selected' : ''}>– Grund wählen –</option>
+                    <option value="nicht_erreicht" ${subVal==='nicht_erreicht' ? 'selected' : ''}>📞 Nicht erreicht</option>
+                    <option value="mailbox" ${subVal==='mailbox' ? 'selected' : ''}>📞 Mailbox besprochen</option>
+                    <option value="rueckruf" ${subVal==='rueckruf' ? 'selected' : ''}>🔄 Rückruf vereinbart</option>
+                    <option value="email_gesendet" ${subVal==='email_gesendet' ? 'selected' : ''}>✉️ E-Mail gesendet</option>
+                    <option value="wartet_unterlagen" ${subVal==='wartet_unterlagen' ? 'selected' : ''}>📋 Wartet auf Unterlagen</option>
+                    <option value="kein_interesse" ${subVal==='kein_interesse' ? 'selected' : ''}>❌ Kein Interesse</option>
+                    <option value="falsche_nummer" ${subVal==='falsche_nummer' ? 'selected' : ''}>⚠️ Falsche Nummer</option>
+                    <option value="sonstiges" ${subVal==='sonstiges' ? 'selected' : ''}>💬 Sonstiges</option>
+                </select>`;
+            } else if (c._raw?.sub_status) {
+                // Zeige Sub-Status als Tag wenn Kontakt aus "Neu" verschoben wurde
+                const subLabels = { nicht_erreicht:'Nicht erreicht', mailbox:'Mailbox', rueckruf:'Rückruf', email_gesendet:'E-Mail gesendet', wartet_unterlagen:'Wartet auf Unterlagen', kein_interesse:'Kein Interesse', falsche_nummer:'Falsche Nr.', sonstiges:'Sonstiges' };
+                const label = subLabels[c._raw.sub_status];
+                if (label) subStatusHtml = `<div class="substatus-tag" style="background:var(--g100);color:var(--g600);">${label}</div>`;
+            }
+
             return `<div class="pipeline-card${selectedClass}" draggable="true" data-uid="${uid}" data-id="${c.id}"
                         ondragstart="onDragStart(event)" onclick="openSidebar('${uid}')">
                 <div class="pipeline-card-top">
@@ -2071,6 +2122,7 @@ function renderPipeline() {
                 </div>
                 ${c.email ? `<div class="pipeline-card-email">${esc(c.email)}</div>` : ''}
                 ${kasseInfo}${emailInfo}
+                ${subStatusHtml}
                 ${sparText ? `<div class="pipeline-card-spar">${sparText}</div>` : ''}
                 <div class="pipeline-card-date"><span>${dateStr}</span>${badges}</div>
             </div>`;
@@ -2182,6 +2234,14 @@ function updateAbschlussBeitrag() {
         ? spar.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €' : (spar !== null ? '0,00 €' : '–');
     document.getElementById('abschlussSparpotenzial').style.color = spar > 0 ? 'var(--success)' : 'var(--g500)';
     infoDiv.style.display = 'block';
+}
+
+async function updateSubStatus(id, subStatus) {
+    await sb.from('kontakte').update({ sub_status: subStatus || null }).eq('id', id);
+    const k = allKontakte.find(x => x.id === id);
+    if (k) k.sub_status = subStatus || null;
+    const contact = allContacts.find(c => c.id === id);
+    if (contact && contact._raw) contact._raw.sub_status = subStatus || null;
 }
 
 async function updateContactStatus(id, newStatus) {
