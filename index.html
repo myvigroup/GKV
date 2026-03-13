@@ -499,30 +499,6 @@
         }
         .consent-text a { color:var(--primary); text-decoration:underline; }
 
-        /* Partner-Bereich */
-        .partner-section {
-            overflow:hidden; transition:max-height .3s ease, opacity .3s ease;
-            max-height:400px; opacity:1;
-        }
-        .partner-section.collapsed { max-height:0; opacity:0; pointer-events:none; }
-        .partner-card {
-            background:var(--g50); border:1px solid var(--g200);
-            border-radius:var(--r-sm); padding:14px; margin-bottom:14px;
-        }
-        .partner-header {
-            display:flex; align-items:center; gap:8px; font-size:.82rem;
-            font-weight:700; color:var(--primary); margin-bottom:12px;
-        }
-        .partner-info-box {
-            display:flex; align-items:center; gap:8px; padding:10px 12px;
-            background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px;
-            font-size:.78rem; color:#15803D; margin-top:10px;
-        }
-        .partner-info-box.warn {
-            background:#FFFBEB; border-color:#FDE68A; color:#92400E;
-        }
-        .partner-info-box.warn svg { stroke:#D97706; }
-
         /* Dokument-Upload */
         .dok-upload-section { margin-top:24px; }
         .dok-upload-card {
@@ -746,54 +722,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Persönliche Angaben
             </div>
-            <div class="fg">
-                <label>Familienstand</label>
-                <select id="familienstand" onchange="togglePartnerSection()">
-                    <option value="ledig" selected>Ledig</option>
-                    <option value="verheiratet">Verheiratet / Lebenspartnerschaft</option>
-                    <option value="geschieden">Geschieden</option>
-                    <option value="verwitwet">Verwitwet</option>
-                </select>
-            </div>
-
-            <!-- Partner-Bereich (klappt bei Verheiratet auf) -->
-            <div id="partnerSection" class="partner-section">
-                <div class="partner-card">
-                    <div class="partner-header">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#004283" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                        <span>Angaben zum Partner</span>
-                    </div>
-                    <div class="fg">
-                        <label>Ist dein Partner berufstätig?</label>
-                        <div class="toggle-group" data-field="partnerBeruf">
-                            <button class="toggle-btn" data-val="ja">Ja</button>
-                            <button class="toggle-btn active" data-val="nein">Nein</button>
-                        </div>
-                    </div>
-                    <div id="partnerGehaltWrap" class="hidden">
-                        <div class="fg">
-                            <label>Brutto-Monatsgehalt Partner (in €)</label>
-                            <div class="input-wrap">
-                                <input type="number" id="partnerGehalt" placeholder="z.B. 3000" min="0" step="50">
-                                <span class="input-suffix">€</span>
-                            </div>
-                        </div>
-                        <div class="fg">
-                            <label>Versicherungsart Partner</label>
-                            <select id="partnerVersicherung">
-                                <option value="gkv">Gesetzlich versichert (GKV)</option>
-                                <option value="pkv">Privat versichert (PKV)</option>
-                                <option value="famvers">Familienversichert</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="partnerFamversInfo" class="partner-info-box">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span>Dein Partner kann <strong>beitragsfrei familienversichert</strong> werden.</span>
-                    </div>
-                </div>
-            </div>
-
             <div class="form-row">
                 <div class="fg">
                     <label>Anzahl Kinder</label>
@@ -1776,37 +1704,6 @@ function berechneKasse(kasse, eingaben) {
     const gesamtAG = gkvAG + pvAG;   // Was der Arbeitgeber zahlt
     const gesamt = gesamtAN + gesamtAG;
 
-    // ──────────────────────────────────────────
-    // e) Haushalt: Partner-Beitrag berechnen
-    // ──────────────────────────────────────────
-    const { hatPartner, partnerFamvers, partnerGehalt: pGehalt, partnerVersicherung: pVers } = eingaben;
-    let partnerBeitragAN = 0;
-    let haushaltHinweis = null;
-
-    if (hatPartner) {
-        if (partnerFamvers) {
-            haushaltHinweis = 'famvers'; // Partner beitragsfrei mitversichert
-        } else if (pVers === 'pkv') {
-            haushaltHinweis = 'pkv'; // PKV, kein GKV-Beitrag berechenbar
-        } else if (pVers === 'gkv' && pGehalt > 0) {
-            // Partner eigenständig GKV: Beitrag berechnen (gleiche Kasse angenommen)
-            const pBpfl = Math.min(pGehalt, PARAMS.bbgMonat);
-            const pGkvAN = pBpfl * (PARAMS.allgemeinerSatz / 2 + zusatzbeitragSatz / 2);
-            // PV für Partner: gleiche Kinder-Logik (gemeinsamer Haushalt)
-            let pPvSatz = PARAMS.pflegeSatz;
-            if (kinder >= 2) {
-                const abschlag = Math.min(kinder, PARAMS.pflegeMaxKinderAbschlag) - 1;
-                pPvSatz -= abschlag * PARAMS.pflegeAbschlagProKind;
-            }
-            pPvSatz = Math.max(pPvSatz, 0);
-            const pPvAN = pBpfl * (pPvSatz / 2);
-            partnerBeitragAN = pGkvAN + pPvAN;
-            haushaltHinweis = 'eigene_gkv';
-        }
-    }
-
-    const haushaltAN = gesamtAN + partnerBeitragAN;
-
     return {
         name: kasse.name,
         typ: kasse.typ,
@@ -1824,11 +1721,6 @@ function berechneKasse(kasse, eingaben) {
         gesamt: round2(gesamt),
         jahresAN: round2(gesamtAN * 12),
         jahresGesamt: round2(gesamt * 12),
-        // Haushalt
-        partnerBeitragAN: round2(partnerBeitragAN),
-        haushaltAN: round2(haushaltAN),
-        haushaltJahr: round2(haushaltAN * 12),
-        haushaltHinweis,
     };
 }
 
@@ -1853,20 +1745,12 @@ let hatAktuelleKasse = false;  // Ob eine aktuelle Kasse gewählt wurde
 function leseEingaben() {
     const gehalt = parseFloat(document.getElementById('gehalt').value) || 0;
     const employment = getToggleValue('employment');
-    const familienstand = document.getElementById('familienstand').value;
     const kinder = parseInt(document.getElementById('kinder').value) || 0;
     const famversichert = getToggleValue('famversichert');
     const kinderlos23 = getToggleValue('kinderlos23') === 'ja';
 
-    // Partner-Daten
-    const hatPartner = familienstand === 'verheiratet';
-    const partnerBeruf = hatPartner ? getToggleValue('partnerBeruf') === 'ja' : false;
-    const partnerGehalt = hatPartner && partnerBeruf ? (parseFloat(document.getElementById('partnerGehalt').value) || 0) : 0;
-    const partnerVersicherung = hatPartner && partnerBeruf ? document.getElementById('partnerVersicherung').value : 'famvers';
-    const partnerFamvers = hatPartner && (!partnerBeruf || partnerGehalt <= 538 || partnerVersicherung === 'famvers');
-
-    return { gehalt, employment, familienstand, kinder, famversichert, kinderlos23,
-             hatPartner, partnerBeruf, partnerGehalt, partnerVersicherung, partnerFamvers };
+    return { gehalt, employment, familienstand: 'ledig', kinder, famversichert, kinderlos23,
+             hatPartner: false, partnerBeruf: false, partnerGehalt: 0, partnerVersicherung: 'famvers', partnerFamvers: false };
 }
 
 /**
@@ -2045,26 +1929,7 @@ function renderSummary(guenstigste, teuerste, aktuelleKasse, eingaben) {
             </div>
         </div>`;
 
-    // Karte 4: Haushalt (nur wenn Partner eigenen Beitrag zahlt)
-    let card4 = '';
-    if (eingaben.hatPartner && !eingaben.partnerFamvers) {
-        if (guenstigste.haushaltHinweis === 'pkv') {
-            card4 = `<div class="s-card" style="border:1px solid #FDE68A;background:#FFFBEB;">
-                <div>
-                    <div class="s-label" style="color:#92400E;">Partner privat versichert</div>
-                    <div class="s-val" style="color:#92400E;font-size:1.1rem;">PKV-Beitrag separat</div>
-                    <div class="s-sub" style="color:#92400E;">Dein GKV-Beitrag: ${formatEuro(guenstigste.gesamtAN)}</div>
-                </div>
-            </div>`;
-        } else if (guenstigste.partnerBeitragAN > 0) {
-            card4 = `<div class="s-card" style="border:1px solid #BAE6FD;background:#F0F9FF;">
-                <div>
-                    <div class="s-label" style="color:#004283;">Haushalt gesamt</div>
-                    <div class="s-val" style="color:#004283;">${formatEuro(guenstigste.haushaltAN)}</div>
-                    <div class="s-sub" style="color:#004283;">Du: ${formatEuro(guenstigste.gesamtAN)} + Partner: ${formatEuro(guenstigste.partnerBeitragAN)}</div>
-                </div>
-            </div>`;
-        }
+    let card4 = ''; // Haushalt-Karte entfernt (kein Familienstand mehr)
     }
 
     container.innerHTML = card1 + card2 + card3 + card4;
@@ -2295,18 +2160,6 @@ function zeigeDetail(name) {
             <div style="font-size:.8rem;color:#15803D;font-weight:600;margin-bottom:4px;">Dein Sparpotenzial vs. ${aktuelleKasseName}</div>
             <div style="font-size:1.3rem;font-weight:800;color:#00B67A;">${formatEuro(diffJahr)} / Jahr</div>
             <div style="font-size:.8rem;color:#64748B;margin-top:2px;">(${formatEuro(diffMonat)} / Monat)</div>
-        </div>`;
-    }
-
-    // Haushalt-Info im Detail
-    if (e.haushaltHinweis === 'famvers') {
-        html += `<div style="margin-top:12px;padding:10px 14px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;font-size:.8rem;color:#15803D;display:flex;align-items:center;gap:8px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            Partner beitragsfrei familienversichert
-        </div>`;
-    } else if (e.partnerBeitragAN > 0) {
-        html += `<div style="margin-top:12px;padding:10px 14px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:10px;font-size:.8rem;color:#004283;">
-            <strong>Haushalt:</strong> ${formatEuro(e.haushaltAN)} / Monat (Du: ${formatEuro(e.gesamtAN)} + Partner: ${formatEuro(e.partnerBeitragAN)})
         </div>`;
     }
 
@@ -2825,77 +2678,6 @@ function syncKinderlosField() {
     }
 }
 
-/** Partner-Bereich ein-/ausblenden */
-function togglePartnerSection() {
-    const val = document.getElementById('familienstand').value;
-    const section = document.getElementById('partnerSection');
-    if (val === 'verheiratet') {
-        section.classList.remove('collapsed');
-    } else {
-        section.classList.add('collapsed');
-    }
-    updatePartnerInfo();
-}
-
-/** Zeigt/versteckt Partner-Gehalt-Felder und Info-Box */
-function updatePartnerInfo() {
-    const beruf = getToggleValue('partnerBeruf');
-    const gehaltWrap = document.getElementById('partnerGehaltWrap');
-    const infoBox = document.getElementById('partnerFamversInfo');
-
-    if (beruf === 'ja') {
-        gehaltWrap.classList.remove('hidden');
-        const gehalt = parseFloat(document.getElementById('partnerGehalt').value) || 0;
-        const versicherung = document.getElementById('partnerVersicherung').value;
-        // Familienversicherung: Partner darf max. 538€/Monat (Minijob) verdienen
-        if (versicherung === 'famvers') {
-            infoBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Dein Partner ist bereits <strong>familienversichert</strong>.</span>`;
-            infoBox.className = 'partner-info-box';
-            infoBox.style.display = 'flex';
-        } else if (gehalt <= 538) {
-            infoBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Dein Partner kann <strong>beitragsfrei familienversichert</strong> werden (Minijob bis 538 €).</span>`;
-            infoBox.className = 'partner-info-box';
-            infoBox.style.display = 'flex';
-        } else if (versicherung === 'pkv') {
-            infoBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                <span>Dein Partner ist privat versichert und zahlt einen eigenen PKV-Beitrag.</span>`;
-            infoBox.className = 'partner-info-box warn';
-            infoBox.style.display = 'flex';
-        } else {
-            infoBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                <span>Dein Partner zahlt einen eigenen GKV-Beitrag (ab 538 € Einkommen).</span>`;
-            infoBox.className = 'partner-info-box warn';
-            infoBox.style.display = 'flex';
-        }
-    } else {
-        gehaltWrap.classList.add('hidden');
-        infoBox.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Dein Partner kann <strong>beitragsfrei familienversichert</strong> werden.</span>`;
-        infoBox.className = 'partner-info-box';
-        infoBox.style.display = 'flex';
-    }
-}
-
-// Toggle-Listener für Partner-Beruf
-document.addEventListener('DOMContentLoaded', () => {
-    const partnerBerufGroup = document.querySelector('[data-field="partnerBeruf"]');
-    if (partnerBerufGroup) {
-        partnerBerufGroup.addEventListener('click', (e) => {
-            const btn = e.target.closest('.toggle-btn');
-            if (!btn) return;
-            setTimeout(updatePartnerInfo, 10);
-        });
-    }
-    const partnerGehalt = document.getElementById('partnerGehalt');
-    if (partnerGehalt) partnerGehalt.addEventListener('input', updatePartnerInfo);
-    const partnerVers = document.getElementById('partnerVersicherung');
-    if (partnerVers) partnerVers.addEventListener('change', updatePartnerInfo);
-
-    // Initial state
-    togglePartnerSection();
-});
 </script>
 
 <!-- ================================================================
