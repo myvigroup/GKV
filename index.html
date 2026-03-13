@@ -722,33 +722,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Persönliche Angaben
             </div>
-            <div class="form-row">
-                <div class="fg">
-                    <label>Anzahl Kinder</label>
-                    <select id="kinder" onchange="syncKinderlosField()">
-                        <option value="0" selected>0</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5+</option>
-                    </select>
-                </div>
-                <div class="fg" id="fgFamVers">
-                    <label>Familienversichert? <span class="tip" data-tip="Kinder und nicht berufstätige Ehepartner können beitragsfrei mitversichert werden.">?</span></label>
-                    <div class="toggle-group" data-field="famversichert">
-                        <button class="toggle-btn active" data-val="ja">Ja</button>
-                        <button class="toggle-btn" data-val="nein">Nein</button>
-                    </div>
-                </div>
-            </div>
-            <div class="fg" id="fgKinderlos">
-                <label>Kinderlos und über 23 Jahre? <span class="tip" data-tip="Zuschlag von 0,6 % auf die Pflegeversicherung für kinderlose Personen ab 23 Jahren.">?</span></label>
-                <div class="toggle-group" data-field="kinderlos23">
-                    <button class="toggle-btn" data-val="ja">Ja</button>
-                    <button class="toggle-btn active" data-val="nein">Nein</button>
-                </div>
-            </div>
         </div>
 
         <!-- AKTUELLE KASSE (optional) -->
@@ -1745,11 +1718,7 @@ let hatAktuelleKasse = false;  // Ob eine aktuelle Kasse gewählt wurde
 function leseEingaben() {
     const gehalt = parseFloat(document.getElementById('gehalt').value) || 0;
     const employment = getToggleValue('employment');
-    const kinder = parseInt(document.getElementById('kinder').value) || 0;
-    const famversichert = getToggleValue('famversichert');
-    const kinderlos23 = getToggleValue('kinderlos23') === 'ja';
-
-    return { gehalt, employment, familienstand: 'ledig', kinder, famversichert, kinderlos23,
+    return { gehalt, employment, familienstand: 'ledig', kinder: 0, famversichert: 'nein', kinderlos23: true,
              hatPartner: false, partnerBeruf: false, partnerGehalt: 0, partnerVersicherung: 'famvers', partnerFamvers: false };
 }
 
@@ -2613,14 +2582,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // Kinderlos-Feld verstecken wenn Kinder > 0
-                syncKinderlosField();
             });
         });
     });
-
-    // ── Kinder-Dropdown: Kinderlos-Feld synchronisieren ──
-    document.getElementById('kinder').addEventListener('change', syncKinderlosField);
 
     // ── Dropdown mit Kassennamen befüllen ──
     const select = document.getElementById('aktuelleKasse');
@@ -2640,8 +2604,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── PKV-Hinweis bei Gehaltseingabe prüfen ──
     document.getElementById('gehalt').addEventListener('input', checkPkvHint);
 
-    // ── Initial: Kinderlos-Feld sync + PKV-Check ──
-    syncKinderlosField();
+    // ── Initial: PKV-Check ──
     checkPkvHint();
 });
 
@@ -2658,25 +2621,6 @@ function checkPkvHint() {
     }
 }
 
-/**
- * Zeigt/versteckt das "Kinderlos über 23"-Feld basierend auf Kinderanzahl.
- */
-function syncKinderlosField() {
-    const kinder = parseInt(document.getElementById('kinder').value) || 0;
-    const fg = document.getElementById('fgKinderlos');
-
-    if (kinder > 0) {
-        fg.style.opacity = '0.4';
-        fg.style.pointerEvents = 'none';
-        const group = fg.querySelector('.toggle-group');
-        group.querySelectorAll('.toggle-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.val === 'nein');
-        });
-    } else {
-        fg.style.opacity = '1';
-        fg.style.pointerEvents = 'auto';
-    }
-}
 
 </script>
 
