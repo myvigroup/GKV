@@ -1710,8 +1710,7 @@ let hatAktuelleKasse = false;  // Ob eine aktuelle Kasse gewählt wurde
 function leseEingaben() {
     const gehalt = parseFloat(document.getElementById('gehalt').value) || 0;
     const employment = getToggleValue('employment');
-    return { gehalt, employment, familienstand: 'ledig', kinder: 0, famversichert: 'nein', kinderlos23: true,
-             hatPartner: false, partnerBeruf: false, partnerGehalt: 0, partnerVersicherung: 'famvers', partnerFamvers: false };
+    return { gehalt, employment, familienstand: 'ledig', kinder: 0, famversichert: 'nein', kinderlos23: true };
 }
 
 /**

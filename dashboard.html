@@ -1454,15 +1454,7 @@ function openSidebar(uid) {
         html += `<div class="sidebar-section">
             <div class="sidebar-section-title">Aktivität</div>
             <select class="substatus-select" style="font-size:.82rem;padding:8px 12px;" onchange="updateSubStatus('${contact.id}',this.value)">
-                <option value="" ${!subVal ? 'selected' : ''}>– Aktivität wählen –</option>
-                <option value="nicht_erreicht" ${subVal==='nicht_erreicht' ? 'selected' : ''}>📞 Nicht erreicht</option>
-                <option value="mailbox" ${subVal==='mailbox' ? 'selected' : ''}>📞 Mailbox besprochen</option>
-                <option value="rueckruf" ${subVal==='rueckruf' ? 'selected' : ''}>🔄 Rückruf vereinbart</option>
-                <option value="email_gesendet" ${subVal==='email_gesendet' ? 'selected' : ''}>✉️ E-Mail gesendet</option>
-                <option value="wartet_unterlagen" ${subVal==='wartet_unterlagen' ? 'selected' : ''}>📋 Wartet auf Unterlagen</option>
-                <option value="kein_interesse" ${subVal==='kein_interesse' ? 'selected' : ''}>❌ Kein Interesse</option>
-                <option value="falsche_nummer" ${subVal==='falsche_nummer' ? 'selected' : ''}>⚠️ Falsche Nummer</option>
-                <option value="sonstiges" ${subVal==='sonstiges' ? 'selected' : ''}>💬 Sonstiges</option>
+                ${buildSubStatusOptions(subVal)}
             </select>
         </div>`;
     }
@@ -2113,17 +2105,7 @@ function renderPipeline() {
             // Aktivität auf Pipeline-Karte
             let subStatusHtml = '';
             if (c._raw?.sub_status && SUB_STATUS_LABELS[c._raw.sub_status]) {
-                const colors = {
-                    nicht_erreicht: 'background:#FEF3C7;color:#92400E;',
-                    mailbox: 'background:#FEF3C7;color:#92400E;',
-                    rueckruf: 'background:#DBEAFE;color:#1E40AF;',
-                    email_gesendet: 'background:#E0F2FE;color:#0369A1;',
-                    wartet_unterlagen: 'background:#F3F4F6;color:#374151;',
-                    kein_interesse: 'background:#FEE2E2;color:#DC2626;',
-                    falsche_nummer: 'background:#FEE2E2;color:#DC2626;',
-                    sonstiges: 'background:#F3F4F6;color:#6B7280;',
-                };
-                const style = colors[c._raw.sub_status] || 'background:var(--g100);color:var(--g600);';
+                const style = SUB_STATUS_COLORS[c._raw.sub_status] || 'background:var(--g100);color:var(--g600);';
                 subStatusHtml = `<div class="substatus-tag" style="${style}">${SUB_STATUS_LABELS[c._raw.sub_status]}</div>`;
             }
 
@@ -2259,6 +2241,19 @@ const SUB_STATUS_LABELS = {
     falsche_nummer: 'Falsche Nummer',
     sonstiges: 'Sonstiges'
 };
+const SUB_STATUS_ICONS = { nicht_erreicht:'📞', mailbox:'📞', rueckruf:'🔄', email_gesendet:'✉️', wartet_unterlagen:'📋', kein_interesse:'❌', falsche_nummer:'⚠️', sonstiges:'💬' };
+const SUB_STATUS_COLORS = {
+    nicht_erreicht:'background:#FEF3C7;color:#92400E;', mailbox:'background:#FEF3C7;color:#92400E;',
+    rueckruf:'background:#DBEAFE;color:#1E40AF;', email_gesendet:'background:#E0F2FE;color:#0369A1;',
+    wartet_unterlagen:'background:#F3F4F6;color:#374151;', kein_interesse:'background:#FEE2E2;color:#DC2626;',
+    falsche_nummer:'background:#FEE2E2;color:#DC2626;', sonstiges:'background:#F3F4F6;color:#6B7280;'
+};
+function buildSubStatusOptions(selectedVal) {
+    return `<option value="" ${!selectedVal ? 'selected' : ''}>– Aktivität wählen –</option>` +
+        Object.entries(SUB_STATUS_LABELS).map(([k, v]) =>
+            `<option value="${k}" ${selectedVal === k ? 'selected' : ''}>${SUB_STATUS_ICONS[k]} ${v}</option>`
+        ).join('');
+}
 
 async function updateSubStatus(id, subStatus) {
     const now = subStatus ? new Date().toISOString() : null;

@@ -2020,10 +2020,33 @@ async function saveFieldEdit(el, input) {
 
     const updateVal = field === 'gehalt' ? (newValue ? parseFloat(newValue) : null) : (newValue || null);
 
-    // Save to DB
-    const { error } = await sb.from('kontakte').update({ [field]: updateVal }).eq('id', sidebarKontakt.id);
+    // Build update payload (combine field update + sparpotenzial in one call)
+    const updatePayload = { [field]: updateVal };
+
+    // Update in-memory first so sparpotenzial calc uses new value
+    sidebarKontakt.data[field] = updateVal;
+
+    // Sparpotenzial neu berechnen wenn Kasse oder Gehalt geändert
+    let sparUpdated = false;
+    if (field === 'gewaehlte_kasse' || field === 'aktuelle_kasse' || field === 'gehalt') {
+        const k = sidebarKontakt.data;
+        if (k.gehalt && k.gewaehlte_kasse && k.aktuelle_kasse) {
+            const neuerBeitrag = berechneANBeitrag(k.gehalt, k.gewaehlte_kasse);
+            const alterBeitrag = berechneANBeitrag(k.gehalt, k.aktuelle_kasse);
+            if (neuerBeitrag !== null && alterBeitrag !== null) {
+                const spar = Math.round((alterBeitrag - neuerBeitrag) * 12 * 100) / 100;
+                updatePayload.sparpotenzial_jahr = spar;
+                sidebarKontakt.data.sparpotenzial_jahr = spar;
+                sparUpdated = true;
+            }
+        }
+    }
+
+    // Single DB call for field + sparpotenzial
+    const { error } = await sb.from('kontakte').update(updatePayload).eq('id', sidebarKontakt.id);
     if (error) {
         alert('Fehler beim Speichern: ' + error.message);
+        sidebarKontakt.data[field] = original || null; // revert
         cancelFieldEdit(el, original, field);
         return;
     }
@@ -2037,33 +2060,16 @@ async function saveFieldEdit(el, input) {
         geaendert_von: adminRecord.id,
     });
 
-    // Update in-memory data
-    sidebarKontakt.data[field] = updateVal;
-
     // Update display
     el.classList.remove('sidebar-field-editing');
     el.dataset.original = newValue;
     const display = field === 'gehalt' && newValue ? Number(newValue).toLocaleString('de-DE') + ' €' : (newValue || '–');
     el.innerHTML = esc(display);
 
-    // Sparpotenzial neu berechnen wenn Kasse oder Gehalt geändert
-    if (field === 'gewaehlte_kasse' || field === 'aktuelle_kasse' || field === 'gehalt') {
-        const k = sidebarKontakt.data;
-        const gehalt = k.gehalt;
-        const gewaehlte = k.gewaehlte_kasse;
-        const aktuelle = k.aktuelle_kasse;
-        if (gehalt && gewaehlte && aktuelle) {
-            const neuerBeitrag = berechneANBeitrag(gehalt, gewaehlte);
-            const alterBeitrag = berechneANBeitrag(gehalt, aktuelle);
-            if (neuerBeitrag !== null && alterBeitrag !== null) {
-                const spar = Math.round((alterBeitrag - neuerBeitrag) * 12 * 100) / 100;
-                await sb.from('kontakte').update({ sparpotenzial_jahr: spar }).eq('id', sidebarKontakt.id);
-                sidebarKontakt.data.sparpotenzial_jahr = spar;
-                // Sparpotenzial-Anzeige in Sidebar aktualisieren
-                const sparEl = document.querySelector('.sidebar-field-val[style*="color:var(--success)"]');
-                if (sparEl) sparEl.textContent = spar.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr';
-            }
-        }
+    // Update sparpotenzial display if recalculated
+    if (sparUpdated) {
+        const sparEl = document.querySelector('.sidebar-field-val[style*="color:var(--success)"]');
+        if (sparEl) sparEl.textContent = sidebarKontakt.data.sparpotenzial_jahr.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr';
     }
 
     // Update title if name changed
