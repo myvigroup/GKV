@@ -425,6 +425,7 @@
         .timeline-item.email::before { background:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
         .timeline-item.calc::before { background:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
         .timeline-item.termin::before { background:var(--success); box-shadow:0 0 0 2px var(--success-light); }
+        .timeline-item.aktivitaet::before { background:#F59E0B; box-shadow:0 0 0 2px #FEF3C7; }
         .timeline-date { font-size:.7rem; color:var(--g400); font-weight:600; }
         .timeline-content { font-size:.82rem; color:var(--g700); margin-top:2px; }
         .timeline-content strong { color:var(--g800); }
@@ -1447,13 +1448,13 @@ function openSidebar(uid) {
         <div class="sidebar-field"><div class="sidebar-field-label">Erstellt</div><div class="sidebar-field-val">${new Date(contact.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div></div>
     </div>`;
 
-    // Sub-Status (Kontaktgrund)
-    if (contact.status === 'neu') {
+    // Aktivität (für alle Kontakte die noch keinen Termin haben)
+    if (contact.status === 'neu' || contact.status === 'kontaktiert') {
         const subVal = contact._raw?.sub_status || '';
         html += `<div class="sidebar-section">
-            <div class="sidebar-section-title">Kontaktgrund</div>
-            <select class="substatus-select" style="font-size:.82rem;padding:8px 12px;" onchange="updateSubStatus('${contact.id}',this.value);renderPipeline();">
-                <option value="" ${!subVal ? 'selected' : ''}>– Grund wählen –</option>
+            <div class="sidebar-section-title">Aktivität</div>
+            <select class="substatus-select" style="font-size:.82rem;padding:8px 12px;" onchange="updateSubStatus('${contact.id}',this.value)">
+                <option value="" ${!subVal ? 'selected' : ''}>– Aktivität wählen –</option>
                 <option value="nicht_erreicht" ${subVal==='nicht_erreicht' ? 'selected' : ''}>📞 Nicht erreicht</option>
                 <option value="mailbox" ${subVal==='mailbox' ? 'selected' : ''}>📞 Mailbox besprochen</option>
                 <option value="rueckruf" ${subVal==='rueckruf' ? 'selected' : ''}>🔄 Rückruf vereinbart</option>
@@ -1608,6 +1609,19 @@ function openSidebar(uid) {
                     <div class="timeline-content"><strong>${istUmgebucht ? 'Termin umgebucht' : 'Termin gebucht'}</strong><br>
                         ${terminInfo}
                     </div>
+                </div>`
+            });
+        }
+
+        // Aktivität / Sub-Status
+        if (contact._raw?.sub_status_at && contact._raw?.sub_status) {
+            const d = new Date(contact._raw.sub_status_at);
+            const label = SUB_STATUS_LABELS[contact._raw.sub_status] || contact._raw.sub_status;
+            timelineItems.push({
+                date: d,
+                html: `<div class="timeline-item aktivitaet">
+                    <div class="timeline-date">${d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="timeline-content"><strong>Aktivität: ${esc(label)}</strong></div>
                 </div>`
             });
         }
@@ -2096,26 +2110,21 @@ function renderPipeline() {
             // Kasse
             const kasseInfo = c.gewaehlte_kasse ? `<div class="pipeline-card-detail">${esc(c.gewaehlte_kasse)}</div>` : '';
 
-            // Sub-Status für "Neu"-Kontakte
+            // Aktivität auf Pipeline-Karte
             let subStatusHtml = '';
-            if (c.status === 'neu') {
-                const subVal = c._raw?.sub_status || '';
-                subStatusHtml = `<select class="substatus-select" onclick="event.stopPropagation()" onchange="updateSubStatus('${c.id}',this.value)">
-                    <option value="" ${!subVal ? 'selected' : ''}>– Grund wählen –</option>
-                    <option value="nicht_erreicht" ${subVal==='nicht_erreicht' ? 'selected' : ''}>📞 Nicht erreicht</option>
-                    <option value="mailbox" ${subVal==='mailbox' ? 'selected' : ''}>📞 Mailbox besprochen</option>
-                    <option value="rueckruf" ${subVal==='rueckruf' ? 'selected' : ''}>🔄 Rückruf vereinbart</option>
-                    <option value="email_gesendet" ${subVal==='email_gesendet' ? 'selected' : ''}>✉️ E-Mail gesendet</option>
-                    <option value="wartet_unterlagen" ${subVal==='wartet_unterlagen' ? 'selected' : ''}>📋 Wartet auf Unterlagen</option>
-                    <option value="kein_interesse" ${subVal==='kein_interesse' ? 'selected' : ''}>❌ Kein Interesse</option>
-                    <option value="falsche_nummer" ${subVal==='falsche_nummer' ? 'selected' : ''}>⚠️ Falsche Nummer</option>
-                    <option value="sonstiges" ${subVal==='sonstiges' ? 'selected' : ''}>💬 Sonstiges</option>
-                </select>`;
-            } else if (c._raw?.sub_status) {
-                // Zeige Sub-Status als Tag wenn Kontakt aus "Neu" verschoben wurde
-                const subLabels = { nicht_erreicht:'Nicht erreicht', mailbox:'Mailbox', rueckruf:'Rückruf', email_gesendet:'E-Mail gesendet', wartet_unterlagen:'Wartet auf Unterlagen', kein_interesse:'Kein Interesse', falsche_nummer:'Falsche Nr.', sonstiges:'Sonstiges' };
-                const label = subLabels[c._raw.sub_status];
-                if (label) subStatusHtml = `<div class="substatus-tag" style="background:var(--g100);color:var(--g600);">${label}</div>`;
+            if (c._raw?.sub_status && SUB_STATUS_LABELS[c._raw.sub_status]) {
+                const colors = {
+                    nicht_erreicht: 'background:#FEF3C7;color:#92400E;',
+                    mailbox: 'background:#FEF3C7;color:#92400E;',
+                    rueckruf: 'background:#DBEAFE;color:#1E40AF;',
+                    email_gesendet: 'background:#E0F2FE;color:#0369A1;',
+                    wartet_unterlagen: 'background:#F3F4F6;color:#374151;',
+                    kein_interesse: 'background:#FEE2E2;color:#DC2626;',
+                    falsche_nummer: 'background:#FEE2E2;color:#DC2626;',
+                    sonstiges: 'background:#F3F4F6;color:#6B7280;',
+                };
+                const style = colors[c._raw.sub_status] || 'background:var(--g100);color:var(--g600);';
+                subStatusHtml = `<div class="substatus-tag" style="${style}">${SUB_STATUS_LABELS[c._raw.sub_status]}</div>`;
             }
 
             return `<div class="pipeline-card${selectedClass}" draggable="true" data-uid="${uid}" data-id="${c.id}"
@@ -2240,12 +2249,27 @@ function updateAbschlussBeitrag() {
     infoDiv.style.display = 'block';
 }
 
+const SUB_STATUS_LABELS = {
+    nicht_erreicht: 'Nicht erreicht',
+    mailbox: 'Mailbox besprochen',
+    rueckruf: 'Rückruf vereinbart',
+    email_gesendet: 'E-Mail gesendet',
+    wartet_unterlagen: 'Wartet auf Unterlagen',
+    kein_interesse: 'Kein Interesse',
+    falsche_nummer: 'Falsche Nummer',
+    sonstiges: 'Sonstiges'
+};
+
 async function updateSubStatus(id, subStatus) {
-    await sb.from('kontakte').update({ sub_status: subStatus || null }).eq('id', id);
+    const now = subStatus ? new Date().toISOString() : null;
+    await sb.from('kontakte').update({ sub_status: subStatus || null, sub_status_at: now }).eq('id', id);
     const k = allKontakte.find(x => x.id === id);
-    if (k) k.sub_status = subStatus || null;
+    if (k) { k.sub_status = subStatus || null; k.sub_status_at = now; }
     const contact = allContacts.find(c => c.id === id);
-    if (contact && contact._raw) contact._raw.sub_status = subStatus || null;
+    if (contact && contact._raw) { contact._raw.sub_status = subStatus || null; contact._raw.sub_status_at = now; }
+    // Pipeline + Sidebar aktualisieren
+    renderPipeline();
+    if (openSidebarContact && openSidebarContact.id === id) openSidebar('k-' + id);
 }
 
 async function updateContactStatus(id, newStatus) {
