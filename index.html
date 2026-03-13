@@ -1890,10 +1890,7 @@ function renderSummary(guenstigste, teuerste, aktuelleKasse, eingaben) {
             </div>
         </div>`;
 
-    let card4 = ''; // Haushalt-Karte entfernt (kein Familienstand mehr)
-    }
-
-    container.innerHTML = card1 + card2 + card3 + card4;
+    container.innerHTML = card1 + card2 + card3;
 }
 
 /**
@@ -2567,6 +2564,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         AffiliateTracker.trackEvent('page_view');
     }
 
+    // ── Dropdown mit Kassennamen befüllen (vor async Calls, damit es immer läuft) ──
+    const select = document.getElementById('aktuelleKasse');
+    const sorted = [...KASSEN_DATEN].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    sorted.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k.name;
+        opt.textContent = k.name;
+        select.appendChild(opt);
+    });
+
     // ── Toggle-Buttons interaktiv machen ──
     document.querySelectorAll('.toggle-group').forEach(group => {
         group.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -2576,16 +2583,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             });
         });
-    });
-
-    // ── Dropdown mit Kassennamen befüllen ──
-    const select = document.getElementById('aktuelleKasse');
-    const sorted = [...KASSEN_DATEN].sort((a, b) => a.name.localeCompare(b.name, 'de'));
-    sorted.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k.name;
-        opt.textContent = k.name;
-        select.appendChild(opt);
     });
 
     // ── Enter-Taste zum Berechnen ──
