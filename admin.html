@@ -713,8 +713,18 @@ const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Kassen-Daten für Dropdowns
-const KASSEN_NAMEN = ["AOK Baden-Württemberg","AOK Bayern","AOK Bremen/Bremerhaven","AOK Hessen","AOK Niedersachsen","AOK Nordost","AOK NordWest","AOK PLUS","AOK Rheinland/Hamburg","AOK Rheinland-Pfalz/Saarland","AOK Sachsen-Anhalt","Audi BKK","BAHN-BKK","BARMER","BERGISCHE KRANKENKASSE","Bertelsmann BKK","BIG direkt gesund","BKK Akzo Nobel Bayern","BKK B. BRAUN | AESCULAP","BKK Deutsche Bank AG","BKK Diakonie","BKK EUREGIO","BKK EVM","BKK EWE","BKK exklusiv","BKK Faber-Castell & Partner","BKK firmus","BKK Freudenberg","BKK GILDEMEISTER SEIDENSTICKER","BKK Groz-Beckert","BKK Herkules","BKK Linde","BKK MAHLE","BKK Miele","BKK MTU","BKK PFAFF","BKK Pfalz","BKK ProVita","BKK Public","BKK PwC","BKK Rieker.RICOSTA.Weisser","BKK Salzgitter","BKK SBH","BKK Scheufelen","BKK Technoform","BKK VDN","BKK VerbundPlus","BKK Werra-Meissner","BKK Wirtschaft & Finanzen","BKK Würth","BKK_DürkoppAdler","BKK24","BMW BKK","bkk melitta hmr","Bosch BKK","Continentale Betriebskrankenkasse","DAK-Gesundheit","Debeka BKK","energie-BKK","EY BKK","HEK – Hanseatische Krankenkasse","Heimat Krankenkasse","hkk Krankenkasse","IKK – Die Innovationskasse","IKK Brandenburg und Berlin","IKK classic","IKK gesund plus","IKK Südwest","KARL MAYER BKK","KKH Kaufmännische Krankenkasse","KNAPPSCHAFT","Koenig & Bauer BKK","KRONES BKK","Mercedes-Benz BKK","Merck BKK","mhplus Betriebskrankenkasse","mkk – meine krankenkasse","Mobil Krankenkasse","novitas bkk","Pronova BKK","R+V Betriebskrankenkasse","Salus BKK","SBK","SECURVITA Krankenkasse","SKD BKK","Südzucker BKK","TK – Techniker Krankenkasse","TUI BKK","VIACTIV Krankenkasse","vivida bkk","WMF BKK","ZF BKK"].sort((a,b) => a.localeCompare(b,'de'));
+// Kassen-Daten für Dropdowns und Beitragsberechnung
+const KASSEN_DATEN = {"AOK Baden-Württemberg":0.1759,"AOK Bayern":0.1729,"AOK Bremen/Bremerhaven":0.1789,"AOK Hessen":0.1758,"AOK Niedersachsen":0.1758,"AOK Nordost":0.181,"AOK NordWest":0.1759,"AOK PLUS":0.177,"AOK Rheinland/Hamburg":0.1789,"AOK Rheinland-Pfalz/Saarland":0.1707,"AOK Sachsen-Anhalt":0.1749,"Audi BKK":0.172,"BAHN-BKK":0.1825,"Bertelsmann BKK":0.178,"BIG direkt gesund":0.1829,"BKK Akzo Nobel Bayern":0.1799,"BKK B. BRAUN | AESCULAP":0.1825,"BKK Deutsche Bank AG":0.18,"BKK Diakonie":0.184,"BKK EUREGIO":0.1799,"BKK EVM":0.171,"BKK EWE":0.1779,"BKK exklusiv":0.1809,"BKK Faber-Castell & Partner":0.1708,"BKK firmus":0.1678,"BKK Freudenberg":0.1759,"BKK GILDEMEISTER SEIDENSTICKER":0.18,"BKK Groz-Beckert":0.18,"BKK Herkules":0.1898,"BKK Linde":0.1759,"BKK MAHLE":0.188,"bkk melitta hmr":0.185,"BKK Miele":0.178,"BKK MTU":0.174,"BKK PFAFF":0.1738,"BKK Pfalz":0.185,"BKK ProVita":0.1839,"BKK Public":0.171,"BKK PwC":0.174,"BKK Rieker.RICOSTA.Weisser":0.188,"BKK Salzgitter":0.181,"BKK SBH":0.1739,"BKK Scheufelen":0.1859,"BKK Technoform":0.1809,"BKK VDN":0.1779,"BKK VerbundPlus":0.1849,"BKK Werra-Meissner":0.1895,"BKK Wirtschaft & Finanzen":0.1859,"BKK Würth":0.1749,"BKK_DürkoppAdler":0.1848,"BKK24":0.1899,"BMW BKK":0.185,"Bosch BKK":0.1778,"Continentale Betriebskrankenkasse":0.1793,"Debeka BKK":0.1785,"energie-BKK":0.1858,"EY BKK":0.1735,"Heimat Krankenkasse":0.185,"KARL MAYER BKK":0.1759,"Koenig & Bauer BKK":0.1778,"KRONES BKK":0.168,"Mercedes-Benz BKK":0.178,"Merck BKK":0.1857,"mhplus Betriebskrankenkasse":0.1846,"mkk – meine krankenkasse":0.181,"Mobil Krankenkasse":0.1849,"novitas bkk":0.182,"Pronova BKK":0.183,"R+V Betriebskrankenkasse":0.1809,"Salus BKK":0.1789,"SBK":0.184,"SECURVITA Krankenkasse":0.185,"SKD BKK":0.1758,"Südzucker BKK":0.175,"TUI BKK":0.171,"vivida bkk":0.1839,"WMF BKK":0.1745,"ZF BKK":0.18,"IKK – Die Innovationskasse":0.189,"IKK Brandenburg und Berlin":0.1895,"IKK classic":0.18,"IKK gesund plus":0.1799,"IKK Südwest":0.1785,"BARMER":0.1789,"BERGISCHE KRANKENKASSE":0.1839,"DAK-Gesundheit":0.178,"HEK – Hanseatische Krankenkasse":0.1749,"hkk Krankenkasse":0.1719,"KKH Kaufmännische Krankenkasse":0.1838,"TK – Techniker Krankenkasse":0.1729,"VIACTIV Krankenkasse":0.1879,"KNAPPSCHAFT":0.189};
+const KASSEN_NAMEN = Object.keys(KASSEN_DATEN).sort((a,b) => a.localeCompare(b,'de'));
+
+function berechneANBeitrag(gehalt, kassenName) {
+    const beitragssatz = KASSEN_DATEN[kassenName];
+    if (!beitragssatz || !gehalt) return null;
+    const bpfl = Math.min(gehalt, 5512.50);
+    const gkvAN = bpfl * (beitragssatz / 2);
+    const pvAN = bpfl * 0.024;
+    return Math.round((gkvAN + pvAN) * 100) / 100;
+}
 
 // State
 let adminRecord = null;
@@ -2035,6 +2045,26 @@ async function saveFieldEdit(el, input) {
     el.dataset.original = newValue;
     const display = field === 'gehalt' && newValue ? Number(newValue).toLocaleString('de-DE') + ' €' : (newValue || '–');
     el.innerHTML = esc(display);
+
+    // Sparpotenzial neu berechnen wenn Kasse oder Gehalt geändert
+    if (field === 'gewaehlte_kasse' || field === 'aktuelle_kasse' || field === 'gehalt') {
+        const k = sidebarKontakt.data;
+        const gehalt = k.gehalt;
+        const gewaehlte = k.gewaehlte_kasse;
+        const aktuelle = k.aktuelle_kasse;
+        if (gehalt && gewaehlte && aktuelle) {
+            const neuerBeitrag = berechneANBeitrag(gehalt, gewaehlte);
+            const alterBeitrag = berechneANBeitrag(gehalt, aktuelle);
+            if (neuerBeitrag !== null && alterBeitrag !== null) {
+                const spar = Math.round((alterBeitrag - neuerBeitrag) * 12 * 100) / 100;
+                await sb.from('kontakte').update({ sparpotenzial_jahr: spar }).eq('id', sidebarKontakt.id);
+                sidebarKontakt.data.sparpotenzial_jahr = spar;
+                // Sparpotenzial-Anzeige in Sidebar aktualisieren
+                const sparEl = document.querySelector('.sidebar-field-val[style*="color:var(--success)"]');
+                if (sparEl) sparEl.textContent = spar.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Jahr';
+            }
+        }
+    }
 
     // Update title if name changed
     if (field === 'vorname' || field === 'nachname') {
