@@ -792,6 +792,96 @@
     </div>
 </div>
 
+<!-- ===== ABSCHLUSS MODAL ===== -->
+<div class="modal-overlay" id="abschlussModal" onclick="if(event.target===this)cancelAbschluss()">
+    <div class="modal-box" style="max-width:560px;">
+        <h3>Abschluss erfassen</h3>
+        <p class="modal-sub">Bitte Daten prüfen und Abschluss-Details erfassen. Diese Daten fließen in das Beratungsprotokoll ein.</p>
+        <input type="hidden" id="abschlussKontaktId">
+
+        <!-- Daten-Validierung -->
+        <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--r-sm);padding:16px;margin-bottom:16px;">
+            <div style="font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.03em;">Kundendaten prüfen</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="modal-fg" style="margin:0;">
+                    <label>Gehalt (brutto/Monat)</label>
+                    <input type="number" id="abschlussGehalt" step="0.01" style="width:100%;padding:8px 12px;font-size:.85rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);" onchange="updateAbschlussBeitrag()">
+                </div>
+                <div class="modal-fg" style="margin:0;">
+                    <label>Beschäftigung</label>
+                    <select id="abschlussBeschaeftigung" style="width:100%;padding:8px 12px;font-size:.85rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);">
+                        <option value="angestellt">Angestellt</option>
+                        <option value="selbststaendig">Selbstständig</option>
+                        <option value="rentner">Rentner</option>
+                    </select>
+                </div>
+                <div class="modal-fg" style="margin:0;">
+                    <label>Aktuelle Kasse</label>
+                    <select id="abschlussAktuelleKasse" style="width:100%;padding:8px 12px;font-size:.85rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);" onchange="updateAbschlussBeitrag()">
+                        <option value="">– keine –</option>
+                    </select>
+                </div>
+                <div class="modal-fg" style="margin:0;">
+                    <label>Gewählte Kasse (Wechsel zu)</label>
+                    <select id="abschlussGewaehlteKasse" style="width:100%;padding:8px 12px;font-size:.85rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);" onchange="updateAbschlussBeitrag()">
+                        <option value="">– bitte wählen –</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Live Beitragsberechnung -->
+            <div id="abschlussBeitragInfo" style="margin-top:12px;display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div style="padding:10px 14px;background:#fff;border:1px solid var(--g200);border-radius:8px;">
+                        <div style="font-size:.72rem;color:var(--g500);font-weight:600;">Neuer Beitrag (AN)</div>
+                        <div id="abschlussNeuerBeitrag" style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-top:2px;">–</div>
+                    </div>
+                    <div style="padding:10px 14px;background:#fff;border:1px solid var(--g200);border-radius:8px;">
+                        <div style="font-size:.72rem;color:var(--g500);font-weight:600;">Sparpotenzial / Jahr</div>
+                        <div id="abschlussSparpotenzial" style="font-size:1.1rem;font-weight:700;color:var(--success);margin-top:2px;">–</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abschluss-Details -->
+        <div class="modal-fg">
+            <label>Art des Abschlusses *</label>
+            <select id="abschlussArt" style="width:100%;padding:10px 14px;font-size:.88rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);">
+                <option value="abgeschlossen">Abgeschlossen</option>
+                <option value="zusatzverkauf">Abgeschlossen mit Zusatzverkauf</option>
+                <option value="weitere_termine">Abgeschlossen mit weiteren Beratungsterminen</option>
+            </select>
+        </div>
+
+        <div class="modal-fg">
+            <label>Empfehlungen aus dem Termin gezogen?</label>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:500;cursor:pointer;">
+                    <input type="radio" name="abschlussEmpfehlung" value="nein" checked onchange="document.getElementById('empfehlungenAnzahlWrap').style.display='none'"> Nein
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:500;cursor:pointer;">
+                    <input type="radio" name="abschlussEmpfehlung" value="ja" onchange="document.getElementById('empfehlungenAnzahlWrap').style.display='flex'"> Ja
+                </label>
+            </div>
+        </div>
+
+        <div class="modal-fg" id="empfehlungenAnzahlWrap" style="display:none;align-items:center;gap:10px;">
+            <label style="white-space:nowrap;">Anzahl Empfehlungen</label>
+            <input type="number" id="empfehlungenAnzahl" min="1" max="50" value="1" style="width:80px;padding:10px 14px;font-size:.88rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);">
+        </div>
+
+        <div class="modal-fg">
+            <label>Notiz (optional)</label>
+            <textarea id="abschlussNotiz" rows="2" placeholder="z.B. Details zum Zusatzverkauf..." style="width:100%;padding:10px 14px;font-size:.88rem;font-family:var(--font);border:1.5px solid var(--g200);border-radius:var(--r-sm);resize:vertical;"></textarea>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="cancelAbschluss()">Abbrechen</button>
+            <button type="button" class="btn-send" id="abschlussSubmitBtn" onclick="confirmAbschluss()">Abschließen</button>
+        </div>
+    </div>
+</div>
+
 <!-- Profil-Modal -->
 <div class="modal-overlay" id="profilModal" onclick="if(event.target===this)closeProfil()">
     <div style="background:#fff;border-radius:16px;max-width:480px;width:90%;margin:auto;padding:28px;position:relative;box-shadow:var(--shadow-lg);">
@@ -882,6 +972,21 @@
 const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Kassen-Daten für Beitragsberechnung
+const KASSEN_DATEN = {"AOK Baden-Württemberg":0.1759,"AOK Bayern":0.1729,"AOK Bremen/Bremerhaven":0.1789,"AOK Hessen":0.1758,"AOK Niedersachsen":0.1758,"AOK Nordost":0.181,"AOK NordWest":0.1759,"AOK PLUS":0.177,"AOK Rheinland/Hamburg":0.1789,"AOK Rheinland-Pfalz/Saarland":0.1707,"AOK Sachsen-Anhalt":0.1749,"Audi BKK":0.172,"BAHN-BKK":0.1825,"Bertelsmann BKK":0.178,"BIG direkt gesund":0.1829,"BKK Akzo Nobel Bayern":0.1799,"BKK B. BRAUN | AESCULAP":0.1825,"BKK Deutsche Bank AG":0.18,"BKK Diakonie":0.184,"BKK EUREGIO":0.1799,"BKK EVM":0.171,"BKK EWE":0.1779,"BKK exklusiv":0.1809,"BKK Faber-Castell & Partner":0.1708,"BKK firmus":0.1678,"BKK Freudenberg":0.1759,"BKK GILDEMEISTER SEIDENSTICKER":0.18,"BKK Groz-Beckert":0.18,"BKK Herkules":0.1898,"BKK Linde":0.1759,"BKK MAHLE":0.188,"bkk melitta hmr":0.185,"BKK Miele":0.178,"BKK MTU":0.174,"BKK PFAFF":0.1738,"BKK Pfalz":0.185,"BKK ProVita":0.1839,"BKK Public":0.171,"BKK PwC":0.174,"BKK Rieker.RICOSTA.Weisser":0.188,"BKK Salzgitter":0.181,"BKK SBH":0.1739,"BKK Scheufelen":0.1859,"BKK Technoform":0.1809,"BKK VDN":0.1779,"BKK VerbundPlus":0.1849,"BKK Werra-Meissner":0.1895,"BKK Wirtschaft & Finanzen":0.1859,"BKK Würth":0.1749,"BKK_DürkoppAdler":0.1848,"BKK24":0.1899,"BMW BKK":0.185,"Bosch BKK":0.1778,"Continentale Betriebskrankenkasse":0.1793,"Debeka BKK":0.1785,"energie-BKK":0.1858,"EY BKK":0.1735,"Heimat Krankenkasse":0.185,"KARL MAYER BKK":0.1759,"Koenig & Bauer BKK":0.1778,"KRONES BKK":0.168,"Mercedes-Benz BKK":0.178,"Merck BKK":0.1857,"mhplus Betriebskrankenkasse":0.1846,"mkk – meine krankenkasse":0.181,"Mobil Krankenkasse":0.1849,"novitas bkk":0.182,"Pronova BKK":0.183,"R+V Betriebskrankenkasse":0.1809,"Salus BKK":0.1789,"SBK":0.184,"SECURVITA Krankenkasse":0.185,"SKD BKK":0.1758,"Südzucker BKK":0.175,"TUI BKK":0.171,"vivida bkk":0.1839,"WMF BKK":0.1745,"ZF BKK":0.18,"IKK – Die Innovationskasse":0.189,"IKK Brandenburg und Berlin":0.1895,"IKK classic":0.18,"IKK gesund plus":0.1799,"IKK Südwest":0.1785,"BARMER":0.1789,"BERGISCHE KRANKENKASSE":0.1839,"DAK-Gesundheit":0.178,"HEK – Hanseatische Krankenkasse":0.1749,"hkk Krankenkasse":0.1719,"KKH Kaufmännische Krankenkasse":0.1838,"TK – Techniker Krankenkasse":0.1729,"VIACTIV Krankenkasse":0.1879,"KNAPPSCHAFT":0.189};
+const KASSEN_NAMEN = Object.keys(KASSEN_DATEN).sort((a,b) => a.localeCompare(b, 'de'));
+
+function berechneANBeitrag(gehalt, kassenName) {
+    const beitragssatz = KASSEN_DATEN[kassenName];
+    if (!beitragssatz || !gehalt) return null;
+    const bbg = 5512.50;
+    const bpfl = Math.min(gehalt, bbg);
+    const gkvAN = bpfl * (beitragssatz / 2);
+    // PV: Basis 3,6% / 2 + Kinderlos-Zuschlag 0,6% (AN allein) = 0.018 + 0.006
+    const pvAN = bpfl * 0.024;
+    return Math.round((gkvAN + pvAN) * 100) / 100;
+}
 
 // State
 let allContacts = [];
@@ -2045,7 +2150,68 @@ async function deleteContact(id) {
     await loadAllData();
 }
 
+let _abschlussRevertSelect = null;
+let _abschlussKassenPopulated = false;
+
+function populateAbschlussKassen() {
+    if (_abschlussKassenPopulated) return;
+    const aktSelect = document.getElementById('abschlussAktuelleKasse');
+    const neuSelect = document.getElementById('abschlussGewaehlteKasse');
+    KASSEN_NAMEN.forEach(name => {
+        aktSelect.add(new Option(name, name));
+        neuSelect.add(new Option(name, name));
+    });
+    _abschlussKassenPopulated = true;
+}
+
+function updateAbschlussBeitrag() {
+    const gehalt = parseFloat(document.getElementById('abschlussGehalt').value) || 0;
+    const gewaehlte = document.getElementById('abschlussGewaehlteKasse').value;
+    const aktuelle = document.getElementById('abschlussAktuelleKasse').value;
+    const infoDiv = document.getElementById('abschlussBeitragInfo');
+
+    if (!gewaehlte || !gehalt) { infoDiv.style.display = 'none'; return; }
+
+    const neuerBeitrag = berechneANBeitrag(gehalt, gewaehlte);
+    const aktuellerBeitrag = aktuelle ? berechneANBeitrag(gehalt, aktuelle) : null;
+    const spar = aktuellerBeitrag ? Math.round((aktuellerBeitrag - neuerBeitrag) * 12 * 100) / 100 : null;
+
+    document.getElementById('abschlussNeuerBeitrag').textContent = neuerBeitrag
+        ? neuerBeitrag.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €/Monat' : '–';
+    document.getElementById('abschlussSparpotenzial').textContent = spar !== null && spar > 0
+        ? spar.toLocaleString('de-DE', { minimumFractionDigits: 2 }) + ' €' : (spar !== null ? '0,00 €' : '–');
+    document.getElementById('abschlussSparpotenzial').style.color = spar > 0 ? 'var(--success)' : 'var(--g500)';
+    infoDiv.style.display = 'block';
+}
+
 async function updateContactStatus(id, newStatus) {
+    // Bei "abgeschlossen": Erst Popup öffnen
+    if (newStatus === 'abgeschlossen') {
+        populateAbschlussKassen();
+        const contact = allContacts.find(c => c.id === id);
+        document.getElementById('abschlussKontaktId').value = id;
+
+        // Felder mit bestehenden Kontakt-Daten befüllen
+        document.getElementById('abschlussGehalt').value = contact?.gehalt || '';
+        document.getElementById('abschlussBeschaeftigung').value = contact?.beschaeftigung || 'angestellt';
+        document.getElementById('abschlussAktuelleKasse').value = contact?.aktuelle_kasse || '';
+        document.getElementById('abschlussGewaehlteKasse').value = contact?.gewaehlte_kasse || '';
+
+        // Abschluss-Felder zurücksetzen
+        document.getElementById('abschlussArt').value = 'abgeschlossen';
+        document.querySelectorAll('input[name="abschlussEmpfehlung"]').forEach(r => r.checked = r.value === 'nein');
+        document.getElementById('empfehlungenAnzahlWrap').style.display = 'none';
+        document.getElementById('empfehlungenAnzahl').value = '1';
+        document.getElementById('abschlussNotiz').value = '';
+
+        // Beitrag sofort berechnen
+        updateAbschlussBeitrag();
+
+        _abschlussRevertSelect = document.querySelector(`select.status-select[onchange*="${id}"]`);
+        openModal('abschlussModal');
+        return;
+    }
+
     await sb.from('kontakte').update({ status: newStatus }).eq('id', id);
 
     const k = allKontakte.find(x => x.id === id);
@@ -2053,19 +2219,88 @@ async function updateContactStatus(id, newStatus) {
     const contact = allContacts.find(c => c.id === id);
     if (contact) contact.status = newStatus;
     updateStats();
+}
 
-    // Bei "abgeschlossen": Automatisch Beratungsprotokoll PDF generieren
-    if (newStatus === 'abgeschlossen') {
-        const { data: existing } = await sb.from('kontakt_dokumente')
-            .select('id')
-            .eq('kontakt_id', id)
-            .eq('typ', 'beratungsprotokoll')
-            .limit(1);
-        if (existing && existing.length > 0) {
-            if (!confirm('Es existiert bereits ein Beratungsprotokoll. Neues erstellen?')) return;
-        }
-        generateProtokoll(id, true);
+function cancelAbschluss() {
+    closeModal('abschlussModal');
+    const id = document.getElementById('abschlussKontaktId').value;
+    const contact = allContacts.find(c => c.id === id);
+    if (contact && _abschlussRevertSelect) {
+        _abschlussRevertSelect.value = contact.status;
     }
+    _abschlussRevertSelect = null;
+}
+
+async function confirmAbschluss() {
+    const id = document.getElementById('abschlussKontaktId').value;
+    const gehalt = parseFloat(document.getElementById('abschlussGehalt').value) || null;
+    const beschaeftigung = document.getElementById('abschlussBeschaeftigung').value;
+    const aktuelleKasse = document.getElementById('abschlussAktuelleKasse').value || null;
+    const gewaehlteKasse = document.getElementById('abschlussGewaehlteKasse').value || null;
+    const abschlussArt = document.getElementById('abschlussArt').value;
+    const hatEmpfehlungen = document.querySelector('input[name="abschlussEmpfehlung"]:checked').value === 'ja';
+    const empfehlungenAnzahl = hatEmpfehlungen ? (parseInt(document.getElementById('empfehlungenAnzahl').value) || 0) : 0;
+    const abschlussNotiz = document.getElementById('abschlussNotiz').value.trim() || null;
+
+    // Sparpotenzial berechnen
+    let sparpotenzialJahr = null;
+    if (gehalt && gewaehlteKasse && aktuelleKasse) {
+        const neuerBeitrag = berechneANBeitrag(gehalt, gewaehlteKasse);
+        const alterBeitrag = berechneANBeitrag(gehalt, aktuelleKasse);
+        if (neuerBeitrag !== null && alterBeitrag !== null) {
+            sparpotenzialJahr = Math.round((alterBeitrag - neuerBeitrag) * 12 * 100) / 100;
+        }
+    }
+
+    const btn = document.getElementById('abschlussSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Wird gespeichert...';
+
+    const updateData = {
+        status: 'abgeschlossen',
+        gehalt,
+        beschaeftigung,
+        aktuelle_kasse: aktuelleKasse,
+        gewaehlte_kasse: gewaehlteKasse,
+        sparpotenzial_jahr: sparpotenzialJahr,
+        abschluss_art: abschlussArt,
+        empfehlungen_anzahl: empfehlungenAnzahl,
+        abschluss_notiz: abschlussNotiz,
+        abgeschlossen_at: new Date().toISOString(),
+    };
+
+    await sb.from('kontakte').update(updateData).eq('id', id);
+
+    // Lokale Daten aktualisieren
+    const k = allKontakte.find(x => x.id === id);
+    if (k) Object.assign(k, updateData);
+    const contact = allContacts.find(c => c.id === id);
+    if (contact) {
+        contact.status = 'abgeschlossen';
+        contact.gehalt = gehalt;
+        contact.beschaeftigung = beschaeftigung;
+        contact.aktuelle_kasse = aktuelleKasse;
+        contact.gewaehlte_kasse = gewaehlteKasse;
+        contact.sparpotenzial_jahr = sparpotenzialJahr;
+        if (contact._raw) Object.assign(contact._raw, updateData);
+    }
+    updateStats();
+
+    btn.disabled = false;
+    btn.textContent = 'Abschließen';
+    closeModal('abschlussModal');
+    _abschlussRevertSelect = null;
+
+    // Automatisch Beratungsprotokoll PDF generieren
+    const { data: existing } = await sb.from('kontakt_dokumente')
+        .select('id')
+        .eq('kontakt_id', id)
+        .eq('typ', 'beratungsprotokoll')
+        .limit(1);
+    if (existing && existing.length > 0) {
+        if (!confirm('Es existiert bereits ein Beratungsprotokoll. Neues erstellen?')) return;
+    }
+    generateProtokoll(id, true);
 }
 
 async function generateProtokoll(kontaktId, skipCheck) {
@@ -2146,6 +2381,9 @@ function openExcelModal() {
     document.getElementById('excelModal').classList.add('active');
 }
 
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
 function closeModal(id) {
     document.getElementById(id).classList.remove('active');
 }
