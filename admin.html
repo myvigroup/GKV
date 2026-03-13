@@ -713,6 +713,9 @@ const SUPABASE_URL = 'https://mvakwhbykvidtjvhagsl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12YWt3aGJ5a3ZpZHRqdmhhZ3NsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgyNzMsImV4cCI6MjA4ODI4NDI3M30.MdWekvhWU3iFMixlXXy13RPNgMBMKz9pi7Yq8MpzXXI';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Kassen-Daten für Dropdowns
+const KASSEN_NAMEN = ["AOK Baden-Württemberg","AOK Bayern","AOK Bremen/Bremerhaven","AOK Hessen","AOK Niedersachsen","AOK Nordost","AOK NordWest","AOK PLUS","AOK Rheinland/Hamburg","AOK Rheinland-Pfalz/Saarland","AOK Sachsen-Anhalt","Audi BKK","BAHN-BKK","BARMER","BERGISCHE KRANKENKASSE","Bertelsmann BKK","BIG direkt gesund","BKK Akzo Nobel Bayern","BKK B. BRAUN | AESCULAP","BKK Deutsche Bank AG","BKK Diakonie","BKK EUREGIO","BKK EVM","BKK EWE","BKK exklusiv","BKK Faber-Castell & Partner","BKK firmus","BKK Freudenberg","BKK GILDEMEISTER SEIDENSTICKER","BKK Groz-Beckert","BKK Herkules","BKK Linde","BKK MAHLE","BKK Miele","BKK MTU","BKK PFAFF","BKK Pfalz","BKK ProVita","BKK Public","BKK PwC","BKK Rieker.RICOSTA.Weisser","BKK Salzgitter","BKK SBH","BKK Scheufelen","BKK Technoform","BKK VDN","BKK VerbundPlus","BKK Werra-Meissner","BKK Wirtschaft & Finanzen","BKK Würth","BKK_DürkoppAdler","BKK24","BMW BKK","bkk melitta hmr","Bosch BKK","Continentale Betriebskrankenkasse","DAK-Gesundheit","Debeka BKK","energie-BKK","EY BKK","HEK – Hanseatische Krankenkasse","Heimat Krankenkasse","hkk Krankenkasse","IKK – Die Innovationskasse","IKK Brandenburg und Berlin","IKK classic","IKK gesund plus","IKK Südwest","KARL MAYER BKK","KKH Kaufmännische Krankenkasse","KNAPPSCHAFT","Koenig & Bauer BKK","KRONES BKK","Mercedes-Benz BKK","Merck BKK","mhplus Betriebskrankenkasse","mkk – meine krankenkasse","Mobil Krankenkasse","novitas bkk","Pronova BKK","R+V Betriebskrankenkasse","Salus BKK","SBK","SECURVITA Krankenkasse","SKD BKK","Südzucker BKK","TK – Techniker Krankenkasse","TUI BKK","VIACTIV Krankenkasse","vivida bkk","WMF BKK","ZF BKK"].sort((a,b) => a.localeCompare(b,'de'));
+
 // State
 let adminRecord = null;
 let allBerater = [];
@@ -1958,20 +1961,34 @@ function showToast(msg) {
 }
 
 function startFieldEdit(el) {
-    if (el.querySelector('input')) return;
+    if (el.querySelector('input') || el.querySelector('select')) return;
     const field = el.dataset.field;
     const original = el.dataset.original || '';
-    const inputType = field === 'gehalt' ? 'number' : (field === 'email' ? 'email' : 'text');
+    const isKasse = field === 'gewaehlte_kasse' || field === 'aktuelle_kasse';
 
     el.classList.add('sidebar-field-editing');
-    el.innerHTML = `<input type="${inputType}" value="${esc(original)}" ${field === 'gehalt' ? 'step="any"' : ''}>`;
-    const input = el.querySelector('input');
-    input.focus();
-    input.addEventListener('blur', () => saveFieldEdit(el, input));
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-        if (e.key === 'Escape') { cancelFieldEdit(el, original, field); }
-    });
+
+    if (isKasse) {
+        const options = KASSEN_NAMEN.map(n => `<option value="${esc(n)}" ${n === original ? 'selected' : ''}>${esc(n)}</option>`).join('');
+        el.innerHTML = `<select style="width:100%;padding:6px 8px;font-size:.82rem;font-family:var(--font);border:1.5px solid var(--primary);border-radius:4px;"><option value="">– Keine –</option>${options}</select>`;
+        const select = el.querySelector('select');
+        select.focus();
+        select.addEventListener('blur', () => saveFieldEdit(el, select));
+        select.addEventListener('change', () => select.blur());
+        select.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { cancelFieldEdit(el, original, field); }
+        });
+    } else {
+        const inputType = field === 'gehalt' ? 'number' : (field === 'email' ? 'email' : 'text');
+        el.innerHTML = `<input type="${inputType}" value="${esc(original)}" ${field === 'gehalt' ? 'step="any"' : ''}>`;
+        const input = el.querySelector('input');
+        input.focus();
+        input.addEventListener('blur', () => saveFieldEdit(el, input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            if (e.key === 'Escape') { cancelFieldEdit(el, original, field); }
+        });
+    }
 }
 
 function cancelFieldEdit(el, original, field) {
